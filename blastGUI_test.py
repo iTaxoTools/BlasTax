@@ -17,19 +17,32 @@ from PIL import ImageTk, Image
 from tkinter import ttk
 from tkinter.ttk import Combobox
 
-def make_db():
-    def make_db_button_cmd():
+
+def start_processing():
+    if run_blast_var.get() == 1:
+        print("Enter first frame")
+        star()
+    elif run_batch_var.get() == 1:
+        print("Enter second frame")
+    elif build_db_var.get() == 1:
+        make_db_button_cmd()
+
+    else:
+        print("Select a checkbox")
+
+def make_db_button_cmd():
         if fndb == '':
+            print("Input: ", fndb)
             return showinfo(title='warning', message='The build database file is not selected!')
-        if mkdb_type.get() != 'Nucleic acid sequence' and mkdb_type.get() != 'Protein sequence':
+        if database_type.get() != 'Nucleic acid sequence' and database_type.get() != 'Protein sequence':
             return showinfo(title='warning', message='The database type is not selected!')
-        if db_name_input.get() == '':
+        if database_name.get() == '':
             return showinfo(title='warning', message='Database name is not set!')
-        if mkdb_type.get() == 'Nucleic acid sequence':
+        if database_type.get() == 'Nucleic acid sequence':
             t = 'nucl'
-        if mkdb_type.get() == 'Protein sequence':
+        if database_type.get() == 'Protein sequence':
             t = 'prot'
-        n = db_name_input.get()
+        n = database_name.get()
         p = subprocess.Popen(
             "makeblastdb -parse_seqids -in " + fndb + " -dbtype " + t + " -title " + n + " -out " + n,
             shell=True, stdout=subprocess.PIPE)
@@ -37,23 +50,26 @@ def make_db():
         out = p.stdout.readlines()
         if p.returncode == 0:
             showinfo(title="info", message="Database built successfully!")
-            makedb_state.delete(0.0, END)
-            for line in out:
-                makedb_state.insert("insert", line)
+#            makedb_state.delete(0.0, END)
+#            for line in out:
+#                makedb_state.insert("insert", line)
         else:
             showinfo(title="info", message="Database creation failed!")
+#def make_db():
 
-    def select_fadb_button_cmd():
-        global fndb
-        fndb = tkinter.filedialog.askopenfilename()
-        make_db_label.config(text="The files you selected:\n" + fndb)
+#    def select_fadb_button_cmd():
+#        global fndb
+#        fndb = tkinter.filedialog.askopenfilename()
+#        make_db_label.config(text="The files you selected:\n" + fndb)
 
-    def mkdb_instruction():
+### MAKE an Instruction depending on what checkbox is clicked
+
+def mkdb_instruction():
         makedb_state.insert('1.0', "1. Click select file button to select FASTA file \n\n2. Select database type \n\
             \n3. Enter the name of the database (no Spaces)\n\
             \n4. Click Build database button to start database building \n\
             \n5.After the database construction is completed, please restart this program to refresh the database list")
-
+'''
     dbwindow = Tk()
     dbwindow.title('Build database')
     dbwindow.geometry('600x400')
@@ -92,6 +108,8 @@ def make_db():
     make_db_label.place(relx=0.041, rely=0.048, relwidth=0.602, relheight=0.105)
 
     dbwindow.mainloop()
+'''
+
 ##### NEW CODE #####
 def select_fadb_button_cmd(type,number):
         global fndb
@@ -167,24 +185,37 @@ def get_db_name():
 # blast process
 def star():
     fnfa_stat = "The files you selected:" + fnfa
-    fain_stat = fa_input.get()
-
+#    fain_stat = fa_input.get()
+    fain_stat = select_query.get()
     if fnfa_stat == fain_stat:
         fa = fnfa
     else:
         fa = 'tmp.txt'
 
-    b = subprocess.Popen(blast_type.get() + " -out result.txt -query " + fa + " -outfmt " + outfmt_input.get() +
-                         " -evalue " + evalue.get() + " -db " + db_type.get() + ' -num_threads ' + threat_input.get() + 
-                         ' ' + othercmd_input.get(),
+#    b = subprocess.Popen(blast_type.get() + " -out result.txt -query " + fa + " -outfmt " + outfmt_input.get() +
+#                         " -evalue " + evalue.get() + " -db " + db_type.get() + ' -num_threads ' + threat_input.get() +
+#                         ' ' + othercmd_input.get(),
+#                         shell=True, stdout=subprocess.PIPE)
+    print("blast type; ", blast_type.get())
+    print("query: ", str(select_query.get()))
+    print("outfmt: ", outfmt.get())
+    print("evalue: ", evalue.get())
+    print("db: ", str(select_db.get()))
+    print("Threads: ", threads.get())
+    print("Other cmd", other.get())
+    db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
+    b = subprocess.Popen(str(blast_type.get()) + " -out result.txt -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
+                         " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
+                         ' ' + str(other.get()),
                          shell=True, stdout=subprocess.PIPE)
     b.wait()
 
     if b.returncode == 0:
-        result_output.delete(0.0, END)
-        with open("result.txt", "r") as result:
-            for line in result:
-                result_output.insert('insert', line)
+        pass
+#        result_output.delete(0.0, END)
+#        with open("result.txt", "r") as result:
+#            for line in result:
+#                result_output.insert('insert', line)
     else:
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
@@ -204,26 +235,16 @@ def star_blast_cmd():
 def select_fa_button_Cmd():
     global fnfa
     fnfa = tkinter.filedialog.askopenfilename()
-    fa_input.delete(0, END)
+    query_sequence.delete(0, END)
     if fnfa != '':
-        fa_input.insert(END, "The files you selected:" + fnfa)
+#        fa_input.insert(END, "The files you selected:" + fnfa)
+        select_query.insert(END, "The files you selected:" + fnfa)
     else:
-        fa_input.insert(END, "Enter a sequence here or select a sequence file:")
+        select_query.insert(END, "Enter a sequence here or select a sequence file:")
+#        fa_input.insert(END, "Enter a sequence here or select a sequence file:")
     pass
 
 
-
-def about_cmd():
-    showinfo(title='Abount', message='BlstaGUI\n\nAuthor：Wu Qing\n\nSichuan agricultural university,China\n\nVersion:V1.0')
-
-'''
-def main_instructions():
-    result_output.insert('1.0', 'Instructions:\n\n1. Please click the [Build database] button to set up the database for the first time\n \
-    \n2.Input the sequence to be aligned into the text box or select the sequence file through the [Select file] button \
-     \n\n3.Select the database to be compared and the comparison method.\n\n4.Set the e-value Value, output format and number of threads.The default e-value =1e-5, and the default output format is 0 and the default of threads is 4\n \
-     \n5.(Optional) Any other command of BLAST like: -max_target_seqs 20 \n\n6.Click [Start] button for comparison, and the comparison results will be displayed here and saved in result.txt\n\n7.Alignment time depends on sequence size and computer performance \
-     \n')
-'''
 ### INSTRUCTIONS FOR A HELP BUTTON ###
 def main_instructions():
     top = Toplevel()
@@ -245,15 +266,15 @@ def on_checkbox_click(frame, checkbox, all_frames):
                 widget.configure(state='disable' if state == 1 else 'normal')
 
 def create_checkbox(frame, text, row, column, variable, all_frames):
-    checkbox = Checkbutton(frame, text=text, bg="#fffacd", variable=variable)
+    checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
     checkbox.grid(row=row, column=column, columnspan=6, sticky="w", padx=(6, 0), pady=1)
     checkbox.var = variable
     checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
     return checkbox
 
 
-def mkdb_window_cmd():
-    make_db()
+#def mkdb_window_cmd():
+#    make_db()
 
 ###GUI part of the program ###
 top = Tk()
@@ -320,7 +341,7 @@ fifth_frame.columnconfigure(4, weight=1)
 ### CHECKBOXES ###
 main_frames = [second_frame, third_frame, fourth_frame]
 run_blast_var = IntVar()
-run_blast_checkbox = create_checkbox(second_frame, "Run regular BLAST", 0, 0, run_blast_var, main_frames)
+run_blast_checkbox = create_checkbox(second_frame, "Run regular BLAST", 0, 0, run_blast_var,  main_frames)
 
 run_batch_var = IntVar()
 run_batch_checkbox = create_checkbox(third_frame, "Run batch BLAST-Align", 0, 0, run_batch_var, main_frames)
@@ -531,7 +552,7 @@ button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, 
 button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(5, 25))
 
 
-button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=lambda: browse_files(select_query3))
+button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
 button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
 ###############################
 
