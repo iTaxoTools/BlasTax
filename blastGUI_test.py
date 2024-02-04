@@ -24,7 +24,6 @@ def get_blast_env() -> dict:
     bin = here / "bin"
     env = os.environ.copy()
     env["PATH"] += f";{bin}"
-    print("ENV:", env["PATH"])
     return env
 BLAST_ENV = get_blast_env()
 
