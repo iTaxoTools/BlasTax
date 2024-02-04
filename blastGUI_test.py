@@ -20,15 +20,14 @@ from tkinter.ttk import Combobox
 
 def start_processing():
     if run_blast_var.get() == 1:
-        print("Enter first frame")
         star()
     elif run_batch_var.get() == 1:
-        print("Enter second frame")
+        loop_blast()
     elif build_db_var.get() == 1:
         make_db_button_cmd()
 
     else:
-        print("Select a checkbox")
+        showinfo(title='warning', message='Please select a checkbox')
 
 def make_db_button_cmd():
         if fndb == '':
@@ -183,7 +182,7 @@ def get_db_name():
 
 
 # blast process
-def star():
+def star(type=None,query=None):
     fnfa_stat = "The files you selected:" + fnfa
 #    fain_stat = fa_input.get()
     fain_stat = select_query.get()
@@ -191,11 +190,8 @@ def star():
         fa = fnfa
     else:
         fa = 'tmp.txt'
-
-#    b = subprocess.Popen(blast_type.get() + " -out result.txt -query " + fa + " -outfmt " + outfmt_input.get() +
-#                         " -evalue " + evalue.get() + " -db " + db_type.get() + ' -num_threads ' + threat_input.get() +
-#                         ' ' + othercmd_input.get(),
-#                         shell=True, stdout=subprocess.PIPE)
+#    if
+#        blast_q
     print("blast type; ", blast_type.get())
     print("query: ", str(select_query.get()))
     print("outfmt: ", outfmt.get())
@@ -219,6 +215,34 @@ def star():
     else:
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
+def loop_blast():
+    directory = str(select_query2.get())
+    # Check if the directory exists
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    for file in os.listdir(directory):
+        if file.endswith(('.fa', '.fas','.fasta')):
+            output_file = file.split('.')[0] + ".out"
+            input_file = os.path.join(directory,file)
+            output_file = os.path.join(str(select_out2.get()),output_file)
+            print("db: ", select_db2.get())
+            print("inpit file: ", input_file)
+            b = subprocess.Popen(
+                str(blast_type2.get()) + " -out " + output_file + " -query " + input_file + " -outfmt 0 " +
+                " -evalue " + str(evalue2.get()) + " -db " + str(select_db2.get()) + ' -num_threads ' + str(
+                    threads2.get()), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            b.wait()
+
+            if b.returncode == 0:
+                print("BLAST execution successful.")
+                # Print the content of the output file
+                with open(output_file, 'r') as f:
+                    print("Content of the output file:")
+                    print(f.read())
+
+            else:
+                showinfo(title='warning',
+                         message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
 def star_blast_cmd():
     try:
