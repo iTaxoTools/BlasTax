@@ -5,6 +5,7 @@
 import os
 import re
 import subprocess
+from pathlib import Path
 from tkinter import *
 from tkinter.font import Font
 #from tkinter.ttk import *
@@ -16,6 +17,23 @@ import shutil
 from PIL import ImageTk, Image
 from tkinter import ttk
 from tkinter.ttk import Combobox
+
+
+def get_blast_env() -> dict:
+    here = Path(__file__).parent
+    bin = here / "bin"
+    env = os.environ.copy()
+    env["PATH"] += f";{bin}"
+    print("ENV:", env["PATH"])
+    return env
+BLAST_ENV = get_blast_env()
+
+def get_itaxotools_logo() -> str:
+    here = Path(__file__).parent
+    logo = "iTaxoTools Digital linneaeus MICROLOGO.png"
+    path = Path(here / logo)
+    return str(path)
+LOGO = get_itaxotools_logo()
 
 
 def start_processing():
@@ -45,7 +63,7 @@ def make_db_button_cmd():
         n = database_name.get()
         p = subprocess.Popen(
             "makeblastdb -parse_seqids -in " + fndb + " -dbtype " + t + " -title " + n + " -out " + n,
-            shell=True, stdout=subprocess.PIPE)
+            shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
         p.wait()
         out = p.stdout.readlines()
         if p.returncode == 0:
@@ -207,7 +225,7 @@ def star():
     b = subprocess.Popen(str(blast_type.get()) + " -out result.txt -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
                          " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
                          ' ' + str(other.get()),
-                         shell=True, stdout=subprocess.PIPE)
+                         shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
     b.wait()
 
     if b.returncode == 0:
@@ -351,7 +369,7 @@ run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0
 
 ### Title Frame ###
 banner_frame = LabelFrame(top,bg="#f0f0f0")
-banner_img = ImageTk.PhotoImage(Image.open("iTaxoTools Digital linneaeus MICROLOGO.png"))
+banner_img = ImageTk.PhotoImage(Image.open(LOGO))
 
 
 my_image_label = Label(banner_frame, image=banner_img).grid(row=0, column=0, rowspan=3, sticky="nsew")
