@@ -51,16 +51,11 @@ def get_version() -> str:
         raise Exception("Cannot retrieve latest BLAST+ version") from e
 
 
-def get_tarball(path: Path, version: str, os: OS = "win64", dry: bool = False) -> Path:
+def get_tarball(path: Path, version: str, os: OS = "win64") -> Path:
     tarball = f"ncbi-blast-{version}+-x64-{os}.tar.gz"
     url = BLAST_URL + version + "/" + tarball
 
-    path.mkdir(exist_ok=True)
     target = path / tarball
-
-    if dry:
-        print(f"Using existing tarball: {target}")
-        return target
 
     try:
         print("Requesting:", tarball)
@@ -109,16 +104,19 @@ def copy_binaries(src: Path, dst: Path, extensions: list[str]):
         if file.suffix in extensions:
             shutil.copy(file, dst)
             count += 1
-    print(f"Copied {count} binaries to: {bin}")
+    print(f"Copied {count} binaries to: {dst}")
 
 
-def get_blast(version: str, os: OS, dry: bool):
+def get_blast(version: str, os: OS):
     version = version or get_version()
-    path = get_tarball(BIN, version, os, dry)
 
     with tempfile.TemporaryDirectory() as work_dir:
-        bin = extract_tarball(path, Path(work_dir))
+        work_path = Path(work_dir)
+        path = get_tarball(work_path, version, os)
+        bin = extract_tarball(path, work_path)
         extensions = get_os_extensions(os)
+
+        BIN.mkdir(exist_ok=True)
         copy_binaries(bin, BIN, extensions)
 
     print("Done!")
@@ -127,13 +125,12 @@ def get_blast(version: str, os: OS, dry: bool):
 def main():
     parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
 
-    parser.add_argument("-d", "--dry", action="store_true", help="Only extract, do not download")
     parser.add_argument("-s", "--os", type=str, default="win64", help="Specify target operating system")
     parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
 
     args = parser.parse_args()
 
-    get_blast(args.version, args.os, args.dry)
+    get_blast(args.version, args.os,)
 
 
 if __name__ == "__main__":
