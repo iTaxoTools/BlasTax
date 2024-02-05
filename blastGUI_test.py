@@ -247,7 +247,7 @@ def loop_blast():
             b = subprocess.Popen(
                 str(blast_type2.get()) + " -out " + output_file + " -query " + input_file + " -outfmt 0 " +
                 " -evalue " + str(evalue2.get()) + " -db " + str(select_db2.get()) + ' -num_threads ' + str(
-                    threads2.get()), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    threads2.get()), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
             b.wait()
 
             if b.returncode == 0:
