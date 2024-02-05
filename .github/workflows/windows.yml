@@ -28,10 +28,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Get BLAST+ binaries
+        run: python tools/get_blast_binaries.py
+
       - name: Make executable
-        run: |
-          python tools/get_blast_binaries.py
-          pyinstaller blastGUI_test.spec
+        run: pyinstaller blastGUI_test.spec
 
       - uses: actions/upload-artifact@v3
         with:
