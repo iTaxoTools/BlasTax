@@ -180,6 +180,32 @@ def get_db_name():
             namelist.append(fn)
     return namelist
 
+# add up blast hits to the input files
+def blast_parse(input_file,blast_result,outfile_name):
+    if blast_type2.get() == "blastn":
+    # copy the content of the input file to a new output file
+        db_name = select_db2.get()
+        db_name = db_name.rsplit("/", 1)[-1]
+        blastfile = open(blast_result, "r")
+        try:
+            shutil.copyfile(input_file, outfile_name)
+            print(f"Content of {input_file} copied to {outfile_name} successfully.")
+        except IOError as e:
+            print(f"Error: {e}")
+    # add upp blast hits to the new output file
+        outfile = open(outfile_name, "a")
+        for line in blastfile:
+            splitti = line.split('\t')
+            print(splitti, splitti[3])
+            pident = splitti[1]
+
+            header_line = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+            sequence_line = f'{splitti[4]}\n'
+
+            outfile.writelines([header_line, sequence_line])
+
+        outfile.close()
+        blastfile.close()
 
 # blast process
 def star(type=None,query=None):
@@ -226,11 +252,12 @@ def loop_blast():
             input_file = os.path.join(directory,file)
             output_file = os.path.join(str(select_out2.get()),output_file)
             print("db: ", select_db2.get())
+
             print("inpit file: ", input_file)
-            b = subprocess.Popen(
-                str(blast_type2.get()) + " -out " + output_file + " -query " + input_file + " -outfmt 0 " +
-                " -evalue " + str(evalue2.get()) + " -db " + str(select_db2.get()) + ' -num_threads ' + str(
-                    threads2.get()), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            b=subprocess.Popen(
+                    f"{blast_type2.get()} -out {output_file} -query {input_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+                    f"-evalue {evalue2.get()} -db {select_db2.get()} -num_threads {int(threads2.get())}",
+                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             b.wait()
 
             if b.returncode == 0:
@@ -243,6 +270,13 @@ def loop_blast():
             else:
                 showinfo(title='warning',
                          message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+        # modification of output files
+#          filesplit = input_file.rsplit("/", 1)[-1]
+            filesplit = file.split('.')
+            modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+            modified_output =  os.path.join(str(select_out2.get()),modified_output)
+            blast_parse(input_file, output_file, modified_output)
+
 
 def star_blast_cmd():
     try:
