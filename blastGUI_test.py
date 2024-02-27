@@ -16,7 +16,7 @@ import shutil
 from PIL import ImageTk, Image
 from tkinter import ttk
 from tkinter.ttk import Combobox
-
+from tkinter import filedialog
 
 def start_processing():
     if run_blast_var.get() == 1:
@@ -110,6 +110,13 @@ def mkdb_instruction():
 '''
 
 ##### NEW CODE #####
+
+### CREATE A NEW OUTPUT FILE FOR THE REGULAR BLAST ###
+def get_new_filename():
+    new_filename = filedialog.asksaveasfilename(defaultextension=".out", filetypes=[("Text files", "*.txt")])
+    return new_filename
+
+### BROWSE FILES ###
 def select_fadb_button_cmd(type,number):
         global fndb
         global db
@@ -135,11 +142,12 @@ def select_fadb_button_cmd(type,number):
                 select_db2.insert(tkinter.END, db)
 
         elif type == "output":
-            outp = tkinter.filedialog.askopenfilename()
             if number == 1:
+                outp = get_new_filename()
                 select_out.delete(0, tkinter.END)
                 select_out.insert(tkinter.END, outp)
             elif number == 3:
+                outp = tkinter.filedialog.askopenfilename()
                 select_out3.delete(0, tkinter.END)
                 select_out3.insert(tkinter.END, outp)
 
@@ -179,7 +187,19 @@ def get_db_name():
             fn = os.path.splitext(fn)[0]
             namelist.append(fn)
     return namelist
+# remove all gaps from the input files
+def remove_gaps(input,temporary):
+    with open(input, 'r') as infile, open(temporary, 'w') as outfile:
+        for line in infile:
+            if not line.startswith(">"):
+                modified_line = line.replace("-", "")
+                outfile.write(modified_line)
+            else:
+                outfile.write(line)
 
+# keep only the hit with the highest length and hisghets match score
+def output_preprocessing():
+    pass
 # add up blast hits to the input files
 def blast_parse(input_file,blast_result,outfile_name):
     if blast_type2.get() == "blastn":
@@ -194,15 +214,40 @@ def blast_parse(input_file,blast_result,outfile_name):
             print(f"Error: {e}")
     # add upp blast hits to the new output file
         outfile = open(outfile_name, "a")
+        dict_head_pident = {}
+        dict_head_seq = {}
+#        list_of_headers = []
         for line in blastfile:
             splitti = line.split('\t')
             print(splitti, splitti[3])
             pident = splitti[1]
 
-            header_line = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+#            header_line = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
             sequence_line = f'{splitti[4]}\n'
 
-            outfile.writelines([header_line, sequence_line])
+            short_header = f'>{db_name}_{splitti[3]}'
+
+            if short_header in dict_head_seq:
+                old_seqlen = len(dict_head_seq[short_header])
+                old_pident = dict_head_pident[short_header]
+                if len(sequence_line) > old_seqlen:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                elif pident[:-2] > old_pident:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                else:
+                    continue
+
+            else:
+                dict_head_pident[short_header] = pident[:-2]
+                dict_head_seq[short_header] = sequence_line
+#                list_of_headers.append(short_header)
+
+#            outfile.writelines([header_line, sequence_line])
+        outfile.write("\n")
+        for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
+            outfile.write(f'{header}_pident_{dict_head_pident[header]}\n{sequence}')
 
         outfile.close()
         blastfile.close()
@@ -226,7 +271,7 @@ def star(type=None,query=None):
     print("Threads: ", threads.get())
     print("Other cmd", other.get())
     db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
-    b = subprocess.Popen(str(blast_type.get()) + " -out result.txt -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
+    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
                          " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
                          ' ' + str(other.get()),
                          shell=True, stdout=subprocess.PIPE)
@@ -253,12 +298,30 @@ def loop_blast():
             output_file = os.path.join(str(select_out2.get()),output_file)
             print("db: ", select_db2.get())
 
-            print("inpit file: ", input_file)
+            print("input file: ", input_file)
+            # remove gaps and store new sequences into temporary file
+            base, ext = os.path.splitext(file)
+            temporary_file =  os.path.join(directory, f"{base}_temp{ext}")
+            remove_gaps(input_file,temporary_file)
             b=subprocess.Popen(
-                    f"{blast_type2.get()} -out {output_file} -query {input_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+                    f"{blast_type2.get()} -out {output_file} -query {temporary_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
                     f"-evalue {evalue2.get()} -db {select_db2.get()} -num_threads {int(threads2.get())}",
                     shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
             b.wait()
+            # Capture the stdout and stderr
+            stdout, stderr = b.communicate()
+
+            # Print the stdout and stderr
+            print("BLAST Standard Output:")
+            print(stdout.decode('utf-8'))
+
+            print("\nBLAST Standard Error:")
+            print(stderr.decode('utf-8'))
+
+            # Check the return code
+            return_code = b.returncode
+            print(f"\nBLAST Return Code: {return_code}")
 
             if b.returncode == 0:
                 print("BLAST execution successful.")
@@ -272,6 +335,7 @@ def loop_blast():
                          message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
         # modification of output files
 #          filesplit = input_file.rsplit("/", 1)[-1]
+            os.remove(temporary_file)
             filesplit = file.split('.')
             modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
             modified_output =  os.path.join(str(select_out2.get()),modified_output)
@@ -336,7 +400,7 @@ def create_checkbox(frame, text, row, column, variable, all_frames):
 
 ###GUI part of the program ###
 top = Tk()
-top.title('BlAST-Align')
+top.title('BLAST-Align')
 top.geometry('960x560')
 
 #top.rowconfigure(0, weight=1)  # Add a configuration for the first row
@@ -402,7 +466,7 @@ run_blast_var = IntVar()
 run_blast_checkbox = create_checkbox(second_frame, "Run regular BLAST", 0, 0, run_blast_var,  main_frames)
 
 run_batch_var = IntVar()
-run_batch_checkbox = create_checkbox(third_frame, "Run batch BLAST-Align", 0, 0, run_batch_var, main_frames)
+run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_batch_var, main_frames)
 
 build_db_var = IntVar()
 run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
@@ -415,14 +479,14 @@ banner_img = ImageTk.PhotoImage(Image.open("iTaxoTools Digital linneaeus MICROLO
 my_image_label = Label(banner_frame, image=banner_img).grid(row=0, column=0, rowspan=3, sticky="nsew")
 banner_frame.grid(column=0, row=0,  sticky="nsew")
 
-program_name = Label(banner_frame, text="BlAST-Align",bg="#f0f0f0",font=Font(size=20))
+program_name = Label(banner_frame, text="BLAST-Align",bg="#f0f0f0",font=Font(size=20))
 program_name.grid(row=1, column=1)
 program_description = Label(banner_frame, text="Add sequences to alignment if matching in Blast search",bg="#f0f0f0")
 program_description.grid(row=1, column=2,  sticky="nsew", ipady=4, ipadx=15)
 
 author = Label(banner_frame, text="Code by Nikita Kulikov, Anja-Kristina Schulz and Stefanos Patmanidis \nGUI modified from BLAST-GUI by Du et al. (2020) / https://github.com/byemaxx/BlastGUI",
-        font=Font(size=8),bg="#f0f0f0")
-author.grid(row=2, column=1, columnspan=2,  sticky="w")
+        font=Font(size=8),bg="#f0f0f0", anchor="w", justify="left")
+author.grid(row=2, column=1, columnspan=2)
 
 
 ###### SECOND FRAME ######
@@ -482,7 +546,7 @@ threads.grid(row=4, column=4, sticky="e", padx=(10,0), pady=(10, 0))
 
 threads = Entry(second_frame, width=25)
 threads.insert(0, "4")  # Default value
-threads.grid(row=4, column=5, sticky="we", pady=(10, 0))
+threads.grid(row=4, column=5, sticky="we",padx=(0,10), pady=(10, 0))
 
 # next row
 outfmt = Label(second_frame, text="Outfmt:",bg="#fffacd")
@@ -505,8 +569,8 @@ method.grid(row=5, column=4, sticky="e")
 
 blast_typeList = ['blastn', 'blastp', 'blastx', 'tblastn', 'tblastx', ]
 blast_typeVar = StringVar(value='blastn')
-blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typeList, font=('', 13))
-blast_type.grid(row=5, column=5, sticky="w")
+blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typeList) #, font=('', 13))
+blast_type.grid(row=5, column=5, padx=(0,10), sticky="w")
 
 ###############################
 
@@ -548,7 +612,7 @@ button3_2.grid(row=2, column=5, sticky="we", padx=(5, 10))
 
 # 3d row
 
-button_3d = Button(third_frame, text="Browse input directory\nfor batch conversions", width=12, height=2, command=lambda: select_directory("query"))
+button_3d = Button(third_frame, text="Browse input directory\nfor batch processing", width=12, height=2, command=lambda: select_directory("query"))
 button_3d.grid(row=3, column=1, sticky="we", padx=(5, 25))
 
 # 4th row
@@ -557,7 +621,7 @@ method2 = Label(third_frame, text="Methods:",bg="#fffacd")
 method2.grid(row=4, column=0, sticky="e")
 
 blast_typeVar2 = StringVar(value='blastn')
-blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList, font=('', 13))
+blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList) # , font=('', 13))
 blast_type2.grid(row=4, column=1, sticky="we")
 
 evalue2 = Label(third_frame, text="E-value:",bg="#fffacd")
@@ -572,7 +636,7 @@ threads2.grid(row=4, column=4, sticky="e", padx=(10,0), pady=(10, 0))
 
 threads2 = Entry(third_frame, width=25)
 threads2.insert(0, "4")  # Default value
-threads2.grid(row=4, column=5, sticky="w", pady=(10, 0))
+threads2.grid(row=4, column=5, sticky="w", padx=(0,10), pady=(10, 0))
 
 
 
@@ -602,16 +666,23 @@ database_name = Label(fourth_frame, text="Select database name: ",bg="#fffacd")
 database_name.grid(row=2, column=4, sticky="w", padx=(10,0))
 
 database_name = Entry(fourth_frame, width=25)
-database_name.grid(row=2, column=5, sticky="we")
+database_name.grid(row=2, column=5, padx=(0,10), sticky="we")
 
 ###### FIFTH FRAME ######
 
-button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
-button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(5, 25))
+#button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
+#button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(5, 25))
 
+
+#button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
+#button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
+
+button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
+button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
 
 button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
-button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
+button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
+
 ###############################
 
 ##### BUTTONS AND ENTRY FIELDS CONTROL #####
