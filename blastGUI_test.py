@@ -121,6 +121,7 @@ def select_fadb_button_cmd(type,number):
         global fndb
         global db
         global outp
+        global extnucl
         if type == "query":
             fndb = tkinter.filedialog.askopenfilename()
             if number ==1:
@@ -150,6 +151,10 @@ def select_fadb_button_cmd(type,number):
                 outp = tkinter.filedialog.askopenfilename()
                 select_out3.delete(0, tkinter.END)
                 select_out3.insert(tkinter.END, outp)
+        elif type == "extra_nucleotide_file":
+            extnucl = tkinter.filedialog.askopenfilename()
+            extra_nucleotide_entry.delete(0, tkinter.END)
+            extra_nucleotide_entry.insert(tkinter.END, extnucl)
 
 def select_directory(type):
     global seldir
@@ -200,6 +205,226 @@ def remove_gaps(input,temporary):
 # keep only the hit with the highest length and hisghets match score
 def output_preprocessing():
     pass
+
+
+
+### EXTRA NUCLEOTIDE FILE WIDGETS FOR LOOP-BLASTX ###
+def switch_nucleotide_widgets(state):
+    if blast_typeVar2.get() == 'blastx':
+        # Make the widgets for extra nucleotide file active
+        extra_nucleotide_entry.grid(row=3, column=2, sticky="we", pady=(10, 0))
+        extra_nucleotide_browse_button.grid(row=3, column=3, sticky="we", padx=(5, 25), pady=(10, 0))
+    else:
+        # Remove or hide the widgets for extra nucleotide file
+        extra_nucleotide_entry.grid_forget()
+        extra_nucleotide_browse_button.grid_forget()
+
+### LOOP-BLASTX FILE POSTPROCESSING ###
+# FUNKTIONEN TRANSLATE
+# Triplett Zuordnung AS
+def trans_triplett(triplett):
+	amino='X'
+	if (len(triplett))==3:
+		if triplett[0]=='T':
+			if triplett[1]=='T':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='F'
+				elif triplett[2]=='A' or triplett[2]=='G':
+					amino='L'
+			if triplett[1]=='C':
+				amino='S'
+			if triplett[1]=='A':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='Y'
+			if triplett[1]=='G':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='C'
+				elif triplett[2]=='G':
+					amino='W'
+		if triplett[0]=='C':
+			if triplett[1]=='T':
+				amino='L'
+			if triplett[1]=='C':
+				amino='P'
+			if triplett[1]=='A':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='H'
+				elif triplett[2]=='A' or triplett[2]=='G':
+					amino='Q'
+			if triplett[1]=='G':
+				amino='R'
+		if triplett[0]=='A':
+			if triplett[1]=='T':
+				if triplett[2]=='T' or triplett[2]=='C' or triplett[2]=='A':
+					amino='I'
+				else:
+					amino='M'
+			if triplett[1]=='C':
+				amino='T'
+			if triplett[1]=='A':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='N'
+				elif triplett[2]=='A' or triplett[2]=='G':
+					amino='K'
+			if triplett[1]=='G':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='S'
+				elif triplett[2]=='A' or triplett[2]=='G':
+					amino='R'
+		if triplett[0]=='G':
+			if triplett[1]=='T':
+				amino='V'
+			if triplett[1]=='C':
+				amino='A'
+			if triplett[1]=='A':
+				if triplett[2]=='T' or triplett[2]=='C':
+					amino='D'
+				elif triplett[2]=='A' or triplett[2]=='G':
+					amino='E'
+			if triplett[1]=='G':
+				amino='G'
+	return(amino)
+
+def complement(seq):
+	comp=''
+	for i in range (0,len(seq)):
+		if seq[i]=='A':
+			comp=comp+'T'
+		elif seq[i]=='T':
+			comp=comp+'A'
+		elif seq[i]=='G':
+			comp=comp+'C'
+		elif seq[i]=='C':
+			comp=comp+'G'
+	return(comp)
+
+def translate(line):
+	prot_list=[]
+	ami_string_frame1=''
+	for i in range(0,len(line)-1,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame1=ami_string_frame1+ami
+	prot_list.append(ami_string_frame1)
+	ami_string_frame2=''
+	for i in range(1,len(line)-3,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame2=ami_string_frame2+ami
+	prot_list.append(ami_string_frame2)
+	ami_string_frame3=''
+	for i in range(2,len(line)-3,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame3=ami_string_frame3+ami
+	prot_list.append(ami_string_frame3)
+	compi=complement(line)
+	reverse=compi[::-1]
+	ami_string_frame1r=''
+	for i in range(0,len(reverse)-1,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame1r=ami_string_frame1r+ami
+	prot_list.append(ami_string_frame1r)
+	ami_string_frame2r=''
+	for i in range(1,len(reverse)-3,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame2r=ami_string_frame2r+ami
+	prot_list.append(ami_string_frame2r)
+	ami_string_frame3r=''
+	for i in range(2,len(reverse)-3,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame3r=ami_string_frame3r+ami
+	prot_list.append(ami_string_frame3r)
+	return(prot_list)
+# ENDE TRANSLATE
+def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
+    infile = open(infile_name, "r")
+    infile2 = open(infile2_name, "r")
+    resultfile = open(resultfile_name, "r")
+    outfile = open(outfile_name, "w")
+
+    # Query-Sequences into output file
+    for line in infile:
+        outfile.write(line)
+
+    sseqid_list = []
+    for line in resultfile:
+        splitti = line.split('\t')
+        sseqid_list.append(splitti[3])
+    name_list = []
+    for eintrag in sseqid_list:
+        #	elem=eintrag.split('|')
+        #	print(elem[2])
+        name_list.append(eintrag)
+    ns_list = []
+    labels = []
+    for nam in name_list:
+        nam_split = nam.split('_')
+        if nam_split[0] in ns_list:
+            labels.append(nam_split[0])
+        ns_list.append(nam_split[0])
+
+    resultfile.close()
+
+    resultfile = open(resultfile_name, "r")
+
+    infile.close()
+    infile = open(infile_name, "a")
+
+    # good hits are appended to the query sequences
+    for line in resultfile:
+        splitti = line.split('\t')
+        pident = splitti[1]
+        if (float(pident) >= 70.) and (float(splitti[0]) >= 100.):
+            infile2 = open(infile2_name, "r")
+            for line2 in infile2:
+                if splitti[3] in line2:
+                    seq = infile2.readline()
+                    print(seq)
+            infile2.close()
+            outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+            outfile.write(seq + '\n')
+            if (len(seq) % 3) != 0:
+                print('len', len(seq), seq)
+            erg = translate(seq)
+            r53 = erg[0:3]
+            r35 = erg[3:]
+            print('auftei', erg)
+            print('auftei', r53, r35)
+            for orient in r53:
+                index = orient.find(splitti[4])
+                print('ori', len(orient), len(splitti[4]), orient, index, splitti[4])
+                if index > 0:
+                    offset = (index * 3) + 1
+                elif index == 0:
+                    offset = (index * 3)
+                if index >= 0:
+                    outfile.write(
+                        'Treffer' + splitti[2] + str(index) + seq[offset:((len(splitti[4]) * 3) + offset)] + '\n')
+                    # Output into Query
+                    infile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+                    infile.write(seq[offset:((len(splitti[4]) * 3) + offset)] + '\n')
+            for orient in r35:
+                index = orient.find(splitti[4])
+                #			print('ori',len(orient),len(splitti[4]),orient,index,splitti[4])
+                if index > 0:
+                    offset = (index * 3) + 1
+                elif index == 0:
+                    offset = (index * 3)
+                if index >= 0:
+                    compiseq = complement(seq)
+                    fragment = compiseq[offset:((len(splitti[4]) * 3) + offset)]
+                    revcompseq = fragment[::-1]
+                    outfile.write('Treffer' + splitti[2] + str(index) + revcompseq + '\n')
+                    #				print('rev',compiseq[0:10],revcompseq[0:10],seq[0:10])
+                    #				print('revausg',revcompseq)
+                    #				print('seqausg',seq[offset:((len(splitti[4])*3)+offset)])
+                    # Output into Query
+                    infile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+                    infile.write(revcompseq + '\n')
+
+    infile.close()
+    outfile.close()
+    resultfile.close()
+
+
 # add up blast hits to the input files
 def blast_parse(input_file,blast_result,outfile_name):
     if blast_type2.get() == "blastn":
@@ -270,8 +495,13 @@ def star(type=None,query=None):
     print("db: ", str(select_db.get()))
     print("Threads: ", threads.get())
     print("Other cmd", other.get())
-    db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
-    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
+    #db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
+    # remove gaps 
+    input_file = str(select_query.get())
+    file_name, file_extension = input_file.rsplit('.', 1)
+    temporary_file  = file_name + "_tmp." + file_extension
+    remove_gaps(input_file, temporary_file)
+    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) +
                          " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
                          ' ' + str(other.get()),
                          shell=True, stdout=subprocess.PIPE)
@@ -287,6 +517,62 @@ def star(type=None,query=None):
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
 def loop_blast():
+# run single file
+  if os.path.isfile(select_query2.get()):
+      file = select_query2.get()
+      output_file = file.split('.')[0] + ".out"
+      input_file = file
+      print("db: ", select_db2.get())
+      print("input file: ", input_file)
+      # remove gaps and store new sequences into temporary file
+      base, ext = os.path.splitext(file)
+      temporary_file = base + "_temp" + ext
+      remove_gaps(input_file, temporary_file)
+      b = subprocess.Popen(
+          f"{blast_type2.get()} -out {output_file} -query {temporary_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+          f"-evalue {evalue2.get()} -db {select_db2.get()} -num_threads {int(threads2.get())}",
+          shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+      b.wait()
+      # Capture the stdout and stderr
+      stdout, stderr = b.communicate()
+
+      # Print the stdout and stderr
+      print("BLAST Standard Output:")
+      print(stdout.decode('utf-8'))
+
+      print("\nBLAST Standard Error:")
+      print(stderr.decode('utf-8'))
+
+      # Check the return code
+      return_code = b.returncode
+      print(f"\nBLAST Return Code: {return_code}")
+
+      if b.returncode == 0:
+          print("BLAST execution successful.")
+          # Print the content of the output file
+          with open(output_file, 'r') as f:
+              print("Content of the output file:")
+              print(f.read())
+
+      else:
+          showinfo(title='warning',
+                   message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+      # modification of output files
+      #          filesplit = input_file.rsplit("/", 1)[-1]
+      os.remove(temporary_file)
+      filesplit = file.split('.')
+      modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+
+      if blast_type2.get() == "blastx":
+          db_name = select_db2.get()
+          db_name = db_name.split('/')[-1]
+          db_name = db_name.rsplit('.',1)[0]
+          blastx_parse(input_file, output_file, modified_output, extra_nucleotide_entry.get(),db_name)
+      else:
+          blast_parse(input_file, output_file, modified_output)
+# run in the loop
+  else:
     directory = str(select_query2.get())
     # Check if the directory exists
     if not os.path.exists(directory):
@@ -339,7 +625,11 @@ def loop_blast():
             filesplit = file.split('.')
             modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
             modified_output =  os.path.join(str(select_out2.get()),modified_output)
-            blast_parse(input_file, output_file, modified_output)
+
+            if blast_type2.get() == "blastx":
+                blastx_parse(input_file, output_file, modified_output,extra_nucleotide_entry.get())
+            else:
+                blast_parse(input_file, output_file, modified_output)
 
 
 def star_blast_cmd():
@@ -623,6 +913,8 @@ method2.grid(row=4, column=0, sticky="e")
 blast_typeVar2 = StringVar(value='blastn')
 blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList) # , font=('', 13))
 blast_type2.grid(row=4, column=1, sticky="we")
+# Bind the event to toggle the visibility of extra nucleotide widgets
+blast_type2.bind("<<ComboboxSelected>>", switch_nucleotide_widgets)
 
 evalue2 = Label(third_frame, text="E-value:",bg="#fffacd")
 evalue2.grid(row=4, column=2, sticky="e", padx=(10,0), pady=(10, 0))
@@ -638,7 +930,13 @@ threads2 = Entry(third_frame, width=25)
 threads2.insert(0, "4")  # Default value
 threads2.grid(row=4, column=5, sticky="w", padx=(0,10), pady=(10, 0))
 
+### EXTRA NUCLEOTIDE WIDGET FOR BLASTX METHOD ###
+extra_nucleotide_entry = Entry(third_frame, width=40)
+extra_nucleotide_entry.insert(0, "Extra nucleotide file for blastx")
+extra_nucleotide_browse_button = Button(third_frame, text="Browse", width=8, height=2, command=lambda: select_fadb_button_cmd("extra_nucleotide_file",0))
 
+# Switch function initially to set the visibility of widgets
+switch_nucleotide_widgets(None)
 
 ###### FOURTH FRAME ######
 
