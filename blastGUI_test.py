@@ -223,67 +223,27 @@ def switch_nucleotide_widgets(state):
 # FUNKTIONEN TRANSLATE
 # Triplett Zuordnung AS
 def trans_triplett(triplett):
-	amino='X'
-	if (len(triplett))==3:
-		if triplett[0]=='T':
-			if triplett[1]=='T':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='F'
-				elif triplett[2]=='A' or triplett[2]=='G':
-					amino='L'
-			if triplett[1]=='C':
-				amino='S'
-			if triplett[1]=='A':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='Y'
-			if triplett[1]=='G':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='C'
-				elif triplett[2]=='G':
-					amino='W'
-		if triplett[0]=='C':
-			if triplett[1]=='T':
-				amino='L'
-			if triplett[1]=='C':
-				amino='P'
-			if triplett[1]=='A':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='H'
-				elif triplett[2]=='A' or triplett[2]=='G':
-					amino='Q'
-			if triplett[1]=='G':
-				amino='R'
-		if triplett[0]=='A':
-			if triplett[1]=='T':
-				if triplett[2]=='T' or triplett[2]=='C' or triplett[2]=='A':
-					amino='I'
-				else:
-					amino='M'
-			if triplett[1]=='C':
-				amino='T'
-			if triplett[1]=='A':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='N'
-				elif triplett[2]=='A' or triplett[2]=='G':
-					amino='K'
-			if triplett[1]=='G':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='S'
-				elif triplett[2]=='A' or triplett[2]=='G':
-					amino='R'
-		if triplett[0]=='G':
-			if triplett[1]=='T':
-				amino='V'
-			if triplett[1]=='C':
-				amino='A'
-			if triplett[1]=='A':
-				if triplett[2]=='T' or triplett[2]=='C':
-					amino='D'
-				elif triplett[2]=='A' or triplett[2]=='G':
-					amino='E'
-			if triplett[1]=='G':
-				amino='G'
-	return(amino)
+    # Dictionary mapping triplet codes to amino acids
+    codon_map = {
+        'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L',
+        'TCT': 'S', 'TCC': 'S', 'TCA': 'S', 'TCG': 'S',
+        'TAT': 'Y', 'TAC': 'Y', 'TAA': 'X', 'TAG': 'X',
+        'TGT': 'C', 'TGC': 'C', 'TGA': 'X', 'TGG': 'W',
+        'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
+        'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P',
+        'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
+        'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
+        'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M',
+        'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T',
+        'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K',
+        'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R',
+        'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
+        'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A',
+        'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
+        'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'
+    }
+#    print("AMINO ACID: ", codon_map.get(triplett))
+    return codon_map.get(triplett, 'X')
 
 def complement(seq):
 	comp=''
@@ -487,58 +447,6 @@ def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
     outfile.close()
     resultfile.close()
 
-'''
-            for orient in r35:
-                index = orient.find(splitti[4])
-                #			print('ori',len(orient),len(splitti[4]),orient,index,splitti[4])
-                if index > 0:
-                    offset = (index * 3) + 1
-                elif index == 0:
-                    offset = (index * 3)
-                if index >= 0:
-                    compiseq = complement(seq)
-                    fragment = compiseq[offset:((len(splitti[4]) * 3) + offset)]
-                    revcompseq = fragment[::-1]
-#                    outfile.write('Treffer' + splitti[2] + str(index) + revcompseq + '\n')
-                    #				print('rev',compiseq[0:10],revcompseq[0:10],seq[0:10])
-                    #				print('revausg',revcompseq)
-                    #				print('seqausg',seq[offset:((len(splitti[4])*3)+offset)])
-                    sequence_line35 = f'{splitti[4]}\n'
-                    short_header35 = f'>{db_name}_{splitti[3]}'
-                    if short_header35 in dict_head_seq35:
-                        old_seqlen35 = len(dict_head_seq35[short_header35])
-                        old_pident35 = dict_head_pident35[short_header35]
-                        if len(sequence_line35) > old_seqlen35:
-                            dict_head_pident35[short_header35] = pident[:-2]
-                            dict_head_seq35[short_header35] = sequence_line35
-                            head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
-                            head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
-                            dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
-                        elif pident[:-2] > old_pident35:
-                            dict_head_pident35[short_header35] = pident[:-2]
-                            dict_head_seq35[short_header35] = sequence_line35
-                            head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
-                            head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
-                            dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
-                        else:
-                            continue
-                    else:
-                        dict_head_pident35[short_header35] = pident[:-2]
-                        dict_head_seq35[short_header35] = sequence_line35
-                        head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
-                        head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
-                        dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
-                    # Output into Query
-#                    outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
-#                    outfile.write(revcompseq + '\n')
-
-#            for header, sequence in dict_35_added.items():
-#               outfile.write(f'{header}{sequence}')
-
-'''
-#    infile.close()
-#    outfile.close()
-#    resultfile.close()
 
 
 # add up blast hits to the input files
@@ -611,6 +519,7 @@ def star(type=None,query=None):
     print("db: ", str(select_db.get()))
     print("Threads: ", threads.get())
     print("Other cmd", other.get())
+    db = str(select_db.get().rsplit('.',1)[0])
     #db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
     # remove gaps 
     input_file = str(select_query.get())
@@ -618,7 +527,7 @@ def star(type=None,query=None):
     temporary_file  = file_name + "_tmp." + file_extension
     remove_gaps(input_file, temporary_file)
     b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) +
-                         " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
+                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get())+
                          ' ' + str(other.get()),
                          shell=True, stdout=subprocess.PIPE)
     b.wait()
@@ -636,7 +545,11 @@ def loop_blast():
 # run single file
   if os.path.isfile(select_query2.get()):
       file = select_query2.get()
-      output_file = file.split('.')[0] + ".out"
+
+      # Redirect output to the output folder
+      filebase = os.path.basename(file)
+      output_file = filebase.split('.')[0] + ".out"
+      output_file = os.path.join(select_out2.get(),output_file)
       input_file = file
       print("db: ", select_db2.get())
       print("input file: ", input_file)
@@ -644,9 +557,11 @@ def loop_blast():
       base, ext = os.path.splitext(file)
       temporary_file = base + "_temp" + ext
       remove_gaps(input_file, temporary_file)
+      # remove .ext from the db name
+      db = str(select_db2.get().rsplit('.', 1)[0])
       b = subprocess.Popen(
           f"{blast_type2.get()} -out {output_file} -query {temporary_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
-          f"-evalue {evalue2.get()} -db {select_db2.get()} -num_threads {int(threads2.get())}",
+          f"-evalue {evalue2.get()} -db {db} -num_threads {int(threads2.get())}",
           shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
       b.wait()
@@ -677,8 +592,9 @@ def loop_blast():
       # modification of output files
       #          filesplit = input_file.rsplit("/", 1)[-1]
       os.remove(temporary_file)
-      filesplit = file.split('.')
-      modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+      filesplit = filebase.split('.')
+      modified_output = str(select_out2.get()) + "/" + filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+#      modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
       print("output file: ", output_file)
       if blast_type2.get() == "blastx":
           db_name = select_db2.get()
@@ -1103,96 +1019,5 @@ button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(15, 25), p
 buttons = []
 entry_widgets = []
 
-'''
 
-db_typeList = get_db_name()
-db_type = Combobox(top, text='Select', values=db_typeList, font=('', 13))
-db_type.place(relx=0.129, rely=0.106, relwidth=0.11)
-
-blast_typeList = ['blastn', 'blastp', 'blastx', 'tblastn', 'tblastx', ]
-blast_typeVar = StringVar(value='blastn')
-blast_type = Combobox(top, textvariable=blast_typeVar, values=blast_typeList, font=('', 13))
-blast_type.place(relx=0.386, rely=0.1, relwidth=0.08)
-
-reault_scroll1 = Scrollbar(top, orient='vertical')
-reault_scroll1.place(relx=0.959, rely=0.212, relwidth=0.031, relheight=0.758)
-
-evalueVar = StringVar(value='1e-5')
-evalue = Entry(top, textvariable=evalueVar, font=('', 12))
-evalue.place(relx=0.129, rely=0.166, relwidth=0.11, relheight=0.034)
-
-result_outputFont = Font(font=('', 13))
-result_output = Text(top, yscrollcommand=reault_scroll1.set, font=result_outputFont)
-result_output.place(relx=0.02, rely=0.212, relwidth=0.931, relheight=0.773)
-main_instructions()
-reault_scroll1['command'] = result_output.yview
-
-#star_blastVar = StringVar(value='Start')
-#style.configure('Tstar_blast.TButton', background='#000000', font=('', 13))
-#star_blast = Button(top, text='Start', textvariable=star_blastVar, command=star_blast_cmd, style='Tstar_blast.TButton')
-#star_blast.place(relx=0.791, rely=0.015, relwidth=0.08, relheight=0.138)
-
-
-#style.configure('Tselect_fa_button.TButton', background='#000000', font=('', 13))
-#select_fa_button = Button(top, text='Select\n   file', command=select_fa_button_Cmd,
-#                          style='Tselect_fa_button.TButton')
-#select_fa_button.place(relx=0.692, rely=0.015, relwidth=0.09, relheight=0.138)
-
-# main enter bar
-#fa_inputVar = StringVar(value='Enter a sequence here or select a sequence file:')
-#fa_input = Entry(top, textvariable=fa_inputVar, font=('', 13))
-#fa_input.place(relx=0.02, rely=0.015, relwidth=0.654, relheight=0.078)
-
-#aboutVar = StringVar(value='About')
-#style.configure('Tabout.TButton', font=('', 13))
-#about = Button(top, text='About', textvariable=aboutVar, command=about_cmd, style='Tabout.TButton')
-#about.place(relx=0.88, rely=0.015, relwidth=0.11, relheight=0.065)
-
-#mkdb_windowVar = StringVar(value=' Build\ndatabase')
-#style.configure('Tmkdb_window.TButton', font=('', 13))
-#mkdb_window = Button(top, text='Build database', textvariable=mkdb_windowVar, command=mkdb_window_cmd, style='Tmkdb_window.TButton')
-#mkdb_window.place(relx=0.88, rely=0.091, relwidth=0.11, relheight=0.065)
-
-evalue_labelVar = StringVar(value='E-value：')
-style.configure('Tevalue_label.TLabel', anchor='w', font=('', 12))
-evalue_label = Label(top, text='E-value', textvariable=evalue_labelVar, style='Tevalue_label.TLabel')
-evalue_label.place(relx=0.02, rely=0.166, relwidth=0.09, relheight=0.032)
-
-blast_select_labelVar = StringVar(value='Methods：')
-style.configure('Tblast_select_label.TLabel', anchor='w', font=('', 12))
-blast_select_label = Label(top, text='Methods', textvariable=blast_select_labelVar, style='Tblast_select_label.TLabel')
-blast_select_label.place(relx=0.267, rely=0.106, relwidth=0.09, relheight=0.032)
-
-db_selectVar = StringVar(value='Database:')
-style.configure('Tdb_select.TLabel', anchor='w', font=('', 12))
-db_select = Label(top, text='Database', textvariable=db_selectVar, style='Tdb_select.TLabel')
-db_select.place(relx=0.02, rely=0.106, relwidth=0.09, relheight=0.032)
-
-outfmt_labelVar = StringVar(value='Outfmt:')
-style.configure('Toutfmt_label.TLabel', anchor='w', font=('', 12))
-outfmt_label = Label(top, text='Outfmt', textvariable=outfmt_labelVar, style='Toutfmt_label.TLabel')
-outfmt_label.place(relx=0.267, rely=0.166, relwidth=0.09, relheight=0.032)
-
-outfmt_inputVar = StringVar(value='0')
-outfmt_input = Entry(top, textvariable=outfmt_inputVar, font=('', 12))
-outfmt_input.place(relx=0.386, rely=0.166, relwidth=0.08, relheight=0.034)
-
-threat_labelVar = StringVar(value='Threads:')
-style.configure('Tthreat_label.TLabel', anchor='w', font=('', 12))
-threat_label = Label(top, text='Threads:', textvariable=threat_labelVar, style='Tthreat_label.TLabel')
-threat_label.place(relx=0.494, rely=0.106, relwidth=0.08, relheight=0.032)
-
-threat_inputVar = StringVar(value='4')
-threat_input = Entry(top, textvariable=threat_inputVar, font=('', 12))
-threat_input.place(relx=0.593, rely=0.106, relwidth=0.08, relheight=0.034)
-
-othercmd_labelVar = StringVar(value='Other cmd:')
-style.configure('Tothercmd_label.TLabel', anchor='w', font=('', 12))
-othercmd_label = Label(top, text='other cmd', textvariable=othercmd_labelVar, style='Tothercmd_label.TLabel')
-othercmd_label.place(relx=0.494, rely=0.166, relwidth=0.08, relheight=0.032)
-
-othercmd_inputVar = StringVar(value=' ')
-othercmd_input = Entry(top, textvariable=othercmd_inputVar, font=('', 12))
-othercmd_input.place(relx=0.593, rely=0.166, relwidth=0.19, relheight=0.034)
-'''
 top.mainloop()
