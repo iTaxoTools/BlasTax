@@ -362,25 +362,35 @@ def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
         ns_list.append(nam_split[0])
 
     resultfile.close()
-
     resultfile = open(resultfile_name, "r")
 
     infile.close()
     infile = open(infile_name, "a")
-
+    # de-duplication
+    dict_head_pident53 = {}
+    dict_head_seq53 = {}
+    dict_head_pident35 = {}
+    dict_head_seq35 = {}
+    dict_53_added = {}
+    dict_35_added = {}
     # good hits are appended to the query sequences
     for line in resultfile:
+#        print("BLAST OUTPUT LINE: ", line)
         splitti = line.split('\t')
         pident = splitti[1]
+#        print("SPLITTI 3: ", splitti[3])
         if (float(pident) >= 70.) and (float(splitti[0]) >= 100.):
             infile2 = open(infile2_name, "r")
             for line2 in infile2:
+                # Added. needed to be checked
+                line2 = line2.replace(" ","_")
+#                print("ADDITIONAL FILE LINE: ", line2)
                 if splitti[3] in line2:
                     seq = infile2.readline()
                     print(seq)
             infile2.close()
-            outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
-            outfile.write(seq + '\n')
+#            outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+#            outfile.write(seq + '\n')
             if (len(seq) % 3) != 0:
                 print('len', len(seq), seq)
             erg = translate(seq)
@@ -388,19 +398,96 @@ def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
             r35 = erg[3:]
             print('auftei', erg)
             print('auftei', r53, r35)
+
             for orient in r53:
                 index = orient.find(splitti[4])
                 print('ori', len(orient), len(splitti[4]), orient, index, splitti[4])
+                if index >= 0:
+                    # Determine the offset based on index
+                    offset = index * 3 if index == 0 else (index * 3) + 1
+
+                    # Prepare unique keys for dict_53_added
+                    shorter_pident = f'>{db_name}_{splitti[3]}_pident_'
+                    head_pident53_added = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+                    head_seq53_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
+                    any_key_starting_with_prefix = next((key for key in dict_53_added if key.startswith(shorter_pident)), None)
+#                    print("HEADER SHORT: ", shorter_pident)
+#                    print("HEADER: ", head_pident53_added)
+#                    print("SEQUENCE: ", head_seq53_added)
+#                    print("HEADER FROM DICT: ", any_key_starting_with_prefix)
+
+
+                    if any_key_starting_with_prefix:
+                        existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
+                        new_seq_length = len(head_seq53_added)
+#                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                        if new_seq_length > existing_seq_length:
+                            removed_value = dict_53_added.pop(any_key_starting_with_prefix, None)
+#                            print("The sequence was removed: ", removed_value)
+                            dict_53_added[head_pident53_added] = head_seq53_added
+                        elif new_seq_length == existing_seq_length:
+                            old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
+#                            print("OLD PIDENT: ", old_pident53)
+#                            print("NEW PIDENT: ", new_pident53)
+                            if new_pident53 > old_pident53:
+                                removed_value = dict_53_added.pop(any_key_starting_with_prefix, None)
+#                                print("The sequence was removed: ", removed_value)
+                                dict_53_added[head_pident53_added] = head_seq53_added
+                        else:
+                            continue
+                    else:
+                        dict_53_added[head_pident53_added] = head_seq53_added
+
+            for orient in r35:
+                index = orient.find(splitti[4])
+                print('ori',len(orient),len(splitti[4]),orient,index,splitti[4])
                 if index > 0:
                     offset = (index * 3) + 1
                 elif index == 0:
                     offset = (index * 3)
                 if index >= 0:
-                    outfile.write(
-                        'Treffer' + splitti[2] + str(index) + seq[offset:((len(splitti[4]) * 3) + offset)] + '\n')
-                    # Output into Query
-                    infile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
-                    infile.write(seq[offset:((len(splitti[4]) * 3) + offset)] + '\n')
+                    compiseq = complement(seq)
+                    fragment = compiseq[offset:((len(splitti[4]) * 3) + offset)]
+                    revcompseq = fragment[::-1]
+                    # deduplication
+                    shorter_pident = f'>{db_name}_{splitti[3]}_pident_'
+                    head_pident35_added = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+                    head_seq35_added = revcompseq + '\n'
+                    any_key_starting_with_prefix = next((key for key in dict_35_added if key.startswith(shorter_pident)), None)
+
+                    if any_key_starting_with_prefix:
+                        existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
+                        new_seq_length = len(head_seq35_added)
+#                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                        if new_seq_length > existing_seq_length:
+                            removed_value = dict_35_added.pop(any_key_starting_with_prefix, None)
+#                            print("The sequence was removed: ", removed_value)
+                            dict_35_added[head_pident35_added] = head_seq35_added
+                        elif new_seq_length == existing_seq_length:
+                            old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
+#                            print("OLD PIDENT: ", old_pident53)
+#                            print("NEW PIDENT: ", new_pident53)
+                            if new_pident35 > old_pident35:
+                                removed_value = dict_35_added.pop(any_key_starting_with_prefix, None)
+#                                print("The sequence was removed: ", removed_value)
+                                dict_35_added[head_pident35_added] = head_seq35_added
+                        else:
+                            continue
+                    else:
+                        dict_35_added[head_pident35_added] = head_seq35_added
+
+    for header, sequence in dict_53_added.items():
+                    outfile.write(f'{header}{sequence}')
+    for header, sequence in dict_35_added.items():
+         outfile.write(f'{header}{sequence}')
+
+    infile.close()
+    outfile.close()
+    resultfile.close()
+
+'''
             for orient in r35:
                 index = orient.find(splitti[4])
                 #			print('ori',len(orient),len(splitti[4]),orient,index,splitti[4])
@@ -412,17 +499,46 @@ def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
                     compiseq = complement(seq)
                     fragment = compiseq[offset:((len(splitti[4]) * 3) + offset)]
                     revcompseq = fragment[::-1]
-                    outfile.write('Treffer' + splitti[2] + str(index) + revcompseq + '\n')
+#                    outfile.write('Treffer' + splitti[2] + str(index) + revcompseq + '\n')
                     #				print('rev',compiseq[0:10],revcompseq[0:10],seq[0:10])
                     #				print('revausg',revcompseq)
                     #				print('seqausg',seq[offset:((len(splitti[4])*3)+offset)])
+                    sequence_line35 = f'{splitti[4]}\n'
+                    short_header35 = f'>{db_name}_{splitti[3]}'
+                    if short_header35 in dict_head_seq35:
+                        old_seqlen35 = len(dict_head_seq35[short_header35])
+                        old_pident35 = dict_head_pident35[short_header35]
+                        if len(sequence_line35) > old_seqlen35:
+                            dict_head_pident35[short_header35] = pident[:-2]
+                            dict_head_seq35[short_header35] = sequence_line35
+                            head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
+                            head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
+                            dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
+                        elif pident[:-2] > old_pident35:
+                            dict_head_pident35[short_header35] = pident[:-2]
+                            dict_head_seq35[short_header35] = sequence_line35
+                            head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
+                            head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
+                            dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
+                        else:
+                            continue
+                    else:
+                        dict_head_pident35[short_header35] = pident[:-2]
+                        dict_head_seq35[short_header35] = sequence_line35
+                        head_pident35_added = '>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n'
+                        head_seq35_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
+                        dict_35_added = dict(zip(head_pident35_added, head_seq35_added))
                     # Output into Query
-                    infile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
-                    infile.write(revcompseq + '\n')
+#                    outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+#                    outfile.write(revcompseq + '\n')
 
-    infile.close()
-    outfile.close()
-    resultfile.close()
+#            for header, sequence in dict_35_added.items():
+#               outfile.write(f'{header}{sequence}')
+
+'''
+#    infile.close()
+#    outfile.close()
+#    resultfile.close()
 
 
 # add up blast hits to the input files
@@ -563,7 +679,7 @@ def loop_blast():
       os.remove(temporary_file)
       filesplit = file.split('.')
       modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
-
+      print("output file: ", output_file)
       if blast_type2.get() == "blastx":
           db_name = select_db2.get()
           db_name = db_name.split('/')[-1]
@@ -625,7 +741,6 @@ def loop_blast():
             filesplit = file.split('.')
             modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
             modified_output =  os.path.join(str(select_out2.get()),modified_output)
-
             if blast_type2.get() == "blastx":
                 blastx_parse(input_file, output_file, modified_output,extra_nucleotide_entry.get())
             else:
