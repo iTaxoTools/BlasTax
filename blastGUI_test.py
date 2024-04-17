@@ -17,7 +17,7 @@ import shutil
 from PIL import ImageTk, Image
 from tkinter import ttk
 from tkinter.ttk import Combobox
-
+from tkinter import filedialog
 
 def get_blast_env() -> dict:
     here = Path(__file__).parent
@@ -33,7 +33,6 @@ def get_itaxotools_logo() -> str:
     path = Path(here / logo)
     return str(path)
 LOGO = get_itaxotools_logo()
-
 
 def start_processing():
     if run_blast_var.get() == 1:
@@ -127,10 +126,18 @@ def mkdb_instruction():
 '''
 
 ##### NEW CODE #####
+
+### CREATE A NEW OUTPUT FILE FOR THE REGULAR BLAST ###
+def get_new_filename():
+    new_filename = filedialog.asksaveasfilename(defaultextension=".out", filetypes=[("Text files", "*.txt")])
+    return new_filename
+
+### BROWSE FILES ###
 def select_fadb_button_cmd(type,number):
         global fndb
         global db
         global outp
+        global extnucl
         if type == "query":
             fndb = tkinter.filedialog.askopenfilename()
             if number ==1:
@@ -152,13 +159,18 @@ def select_fadb_button_cmd(type,number):
                 select_db2.insert(tkinter.END, db)
 
         elif type == "output":
-            outp = tkinter.filedialog.askopenfilename()
             if number == 1:
+                outp = get_new_filename()
                 select_out.delete(0, tkinter.END)
                 select_out.insert(tkinter.END, outp)
             elif number == 3:
+                outp = tkinter.filedialog.askopenfilename()
                 select_out3.delete(0, tkinter.END)
                 select_out3.insert(tkinter.END, outp)
+        elif type == "extra_nucleotide_file":
+            extnucl = tkinter.filedialog.askopenfilename()
+            extra_nucleotide_entry.delete(0, tkinter.END)
+            extra_nucleotide_entry.insert(tkinter.END, extnucl)
 
 def select_directory(type):
     global seldir
@@ -196,7 +208,314 @@ def get_db_name():
             fn = os.path.splitext(fn)[0]
             namelist.append(fn)
     return namelist
+# remove all gaps from the input files
+def remove_gaps(input,temporary):
+    with open(input, 'r') as infile, open(temporary, 'w') as outfile:
+        for line in infile:
+            if not line.startswith(">"):
+                modified_line = line.replace("-", "")
+                outfile.write(modified_line)
+            else:
+                outfile.write(line)
 
+# keep only the hit with the highest length and hisghets match score
+def output_preprocessing():
+    pass
+
+
+
+### EXTRA NUCLEOTIDE FILE WIDGETS FOR LOOP-BLASTX ###
+def switch_nucleotide_widgets(state):
+    if blast_typeVar2.get() == 'blastx':
+        # Make the widgets for extra nucleotide file active
+        extra_nucleotide_entry.grid(row=3, column=2, sticky="we", pady=(10, 0))
+        extra_nucleotide_browse_button.grid(row=3, column=3, sticky="we", padx=(5, 25), pady=(10, 0))
+    else:
+        # Remove or hide the widgets for extra nucleotide file
+        extra_nucleotide_entry.grid_forget()
+        extra_nucleotide_browse_button.grid_forget()
+
+### LOOP-BLASTX FILE POSTPROCESSING ###
+# FUNKTIONEN TRANSLATE
+# Triplett Zuordnung AS
+def trans_triplett(triplett):
+    # Dictionary mapping triplet codes to amino acids
+    codon_map = {
+        'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L',
+        'TCT': 'S', 'TCC': 'S', 'TCA': 'S', 'TCG': 'S',
+        'TAT': 'Y', 'TAC': 'Y', 'TAA': 'X', 'TAG': 'X',
+        'TGT': 'C', 'TGC': 'C', 'TGA': 'X', 'TGG': 'W',
+        'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
+        'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P',
+        'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
+        'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
+        'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M',
+        'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T',
+        'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K',
+        'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R',
+        'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
+        'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A',
+        'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
+        'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'
+    }
+#    print("AMINO ACID: ", codon_map.get(triplett))
+    return codon_map.get(triplett, 'X')
+
+def complement(seq):
+	comp=''
+	for i in range (0,len(seq)):
+		if seq[i]=='A':
+			comp=comp+'T'
+		elif seq[i]=='T':
+			comp=comp+'A'
+		elif seq[i]=='G':
+			comp=comp+'C'
+		elif seq[i]=='C':
+			comp=comp+'G'
+	return(comp)
+
+def translate(line):
+	prot_list=[]
+	ami_string_frame1=''
+	for i in range(0,len(line)-1,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame1=ami_string_frame1+ami
+	prot_list.append(ami_string_frame1)
+	ami_string_frame2=''
+	for i in range(1,len(line)-3,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame2=ami_string_frame2+ami
+	prot_list.append(ami_string_frame2)
+	ami_string_frame3=''
+	for i in range(2,len(line)-3,3):
+		ami=trans_triplett(line[i:i+3])
+		ami_string_frame3=ami_string_frame3+ami
+	prot_list.append(ami_string_frame3)
+	compi=complement(line)
+	reverse=compi[::-1]
+	ami_string_frame1r=''
+	for i in range(0,len(reverse)-1,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame1r=ami_string_frame1r+ami
+	prot_list.append(ami_string_frame1r)
+	ami_string_frame2r=''
+	for i in range(1,len(reverse)-3,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame2r=ami_string_frame2r+ami
+	prot_list.append(ami_string_frame2r)
+	ami_string_frame3r=''
+	for i in range(2,len(reverse)-3,3):
+		ami=trans_triplett(reverse[i:i+3])
+		ami_string_frame3r=ami_string_frame3r+ami
+	prot_list.append(ami_string_frame3r)
+	return(prot_list)
+# ENDE TRANSLATE
+def blastx_parse(infile_name,resultfile_name,outfile_name,infile2_name,db_name):
+    infile = open(infile_name, "r")
+    infile2 = open(infile2_name, "r")
+    resultfile = open(resultfile_name, "r")
+    outfile = open(outfile_name, "w")
+
+    # Query-Sequences into output file
+    for line in infile:
+        outfile.write(line)
+
+    sseqid_list = []
+    for line in resultfile:
+        splitti = line.split('\t')
+        sseqid_list.append(splitti[3])
+    name_list = []
+    for eintrag in sseqid_list:
+        #	elem=eintrag.split('|')
+        #	print(elem[2])
+        name_list.append(eintrag)
+    ns_list = []
+    labels = []
+    for nam in name_list:
+        nam_split = nam.split('_')
+        if nam_split[0] in ns_list:
+            labels.append(nam_split[0])
+        ns_list.append(nam_split[0])
+
+    resultfile.close()
+    resultfile = open(resultfile_name, "r")
+
+    infile.close()
+    infile = open(infile_name, "a")
+    # de-duplication
+    dict_head_pident53 = {}
+    dict_head_seq53 = {}
+    dict_head_pident35 = {}
+    dict_head_seq35 = {}
+    dict_53_added = {}
+    dict_35_added = {}
+    # good hits are appended to the query sequences
+    for line in resultfile:
+#        print("BLAST OUTPUT LINE: ", line)
+        splitti = line.split('\t')
+        pident = splitti[1]
+#        print("SPLITTI 3: ", splitti[3])
+        if (float(pident) >= 70.) and (float(splitti[0]) >= 100.):
+            infile2 = open(infile2_name, "r")
+            for line2 in infile2:
+                # Added. needed to be checked
+                line2 = line2.replace(" ","_")
+#                print("ADDITIONAL FILE LINE: ", line2)
+                if splitti[3] in line2:
+                    seq = infile2.readline()
+                    print(seq)
+            infile2.close()
+#            outfile.write('>' + db_name + '_' + splitti[3] + '_' + 'pident' + '_' + pident[:-2] + '\n')
+#            outfile.write(seq + '\n')
+            if (len(seq) % 3) != 0:
+                print('len', len(seq), seq)
+            erg = translate(seq)
+            r53 = erg[0:3]
+            r35 = erg[3:]
+            print('auftei', erg)
+            print('auftei', r53, r35)
+
+            for orient in r53:
+                index = orient.find(splitti[4])
+                print('ori', len(orient), len(splitti[4]), orient, index, splitti[4])
+                if index >= 0:
+                    # Determine the offset based on index
+                    offset = index * 3 if index == 0 else (index * 3) + 1
+
+                    # Prepare unique keys for dict_53_added
+                    shorter_pident = f'>{db_name}_{splitti[3]}_pident_'
+                    head_pident53_added = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+                    head_seq53_added = seq[offset:((len(splitti[4]) * 3) + offset)] + '\n'
+                    any_key_starting_with_prefix = next((key for key in dict_53_added if key.startswith(shorter_pident)), None)
+#                    print("HEADER SHORT: ", shorter_pident)
+#                    print("HEADER: ", head_pident53_added)
+#                    print("SEQUENCE: ", head_seq53_added)
+#                    print("HEADER FROM DICT: ", any_key_starting_with_prefix)
+
+
+                    if any_key_starting_with_prefix:
+                        existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
+                        new_seq_length = len(head_seq53_added)
+#                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                        if new_seq_length > existing_seq_length:
+                            removed_value = dict_53_added.pop(any_key_starting_with_prefix, None)
+#                            print("The sequence was removed: ", removed_value)
+                            dict_53_added[head_pident53_added] = head_seq53_added
+                        elif new_seq_length == existing_seq_length:
+                            old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
+#                            print("OLD PIDENT: ", old_pident53)
+#                            print("NEW PIDENT: ", new_pident53)
+                            if new_pident53 > old_pident53:
+                                removed_value = dict_53_added.pop(any_key_starting_with_prefix, None)
+#                                print("The sequence was removed: ", removed_value)
+                                dict_53_added[head_pident53_added] = head_seq53_added
+                        else:
+                            continue
+                    else:
+                        dict_53_added[head_pident53_added] = head_seq53_added
+
+            for orient in r35:
+                index = orient.find(splitti[4])
+                print('ori',len(orient),len(splitti[4]),orient,index,splitti[4])
+                if index > 0:
+                    offset = (index * 3) + 1
+                elif index == 0:
+                    offset = (index * 3)
+                if index >= 0:
+                    compiseq = complement(seq)
+                    fragment = compiseq[offset:((len(splitti[4]) * 3) + offset)]
+                    revcompseq = fragment[::-1]
+                    # deduplication
+                    shorter_pident = f'>{db_name}_{splitti[3]}_pident_'
+                    head_pident35_added = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+                    head_seq35_added = revcompseq + '\n'
+                    any_key_starting_with_prefix = next((key for key in dict_35_added if key.startswith(shorter_pident)), None)
+
+                    if any_key_starting_with_prefix:
+                        existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
+                        new_seq_length = len(head_seq35_added)
+#                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                        if new_seq_length > existing_seq_length:
+                            removed_value = dict_35_added.pop(any_key_starting_with_prefix, None)
+#                            print("The sequence was removed: ", removed_value)
+                            dict_35_added[head_pident35_added] = head_seq35_added
+                        elif new_seq_length == existing_seq_length:
+                            old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
+#                            print("OLD PIDENT: ", old_pident53)
+#                            print("NEW PIDENT: ", new_pident53)
+                            if new_pident35 > old_pident35:
+                                removed_value = dict_35_added.pop(any_key_starting_with_prefix, None)
+#                                print("The sequence was removed: ", removed_value)
+                                dict_35_added[head_pident35_added] = head_seq35_added
+                        else:
+                            continue
+                    else:
+                        dict_35_added[head_pident35_added] = head_seq35_added
+
+    for header, sequence in dict_53_added.items():
+                    outfile.write(f'{header}{sequence}')
+    for header, sequence in dict_35_added.items():
+         outfile.write(f'{header}{sequence}')
+
+    infile.close()
+    outfile.close()
+    resultfile.close()
+
+
+
+# add up blast hits to the input files
+def blast_parse(input_file,blast_result,outfile_name):
+    if blast_type2.get() == "blastn":
+    # copy the content of the input file to a new output file
+        db_name = select_db2.get()
+        db_name = db_name.rsplit("/", 1)[-1]
+        blastfile = open(blast_result, "r")
+        try:
+            shutil.copyfile(input_file, outfile_name)
+            print(f"Content of {input_file} copied to {outfile_name} successfully.")
+        except IOError as e:
+            print(f"Error: {e}")
+    # add upp blast hits to the new output file
+        outfile = open(outfile_name, "a")
+        dict_head_pident = {}
+        dict_head_seq = {}
+#        list_of_headers = []
+        for line in blastfile:
+            splitti = line.split('\t')
+            print(splitti, splitti[3])
+            pident = splitti[1]
+
+#            header_line = f'>{db_name}_{splitti[3]}_pident_{pident[:-2]}\n'
+            sequence_line = f'{splitti[4]}\n'
+
+            short_header = f'>{db_name}_{splitti[3]}'
+
+            if short_header in dict_head_seq:
+                old_seqlen = len(dict_head_seq[short_header])
+                old_pident = dict_head_pident[short_header]
+                if len(sequence_line) > old_seqlen:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                elif pident[:-2] > old_pident:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                else:
+                    continue
+
+            else:
+                dict_head_pident[short_header] = pident[:-2]
+                dict_head_seq[short_header] = sequence_line
+#                list_of_headers.append(short_header)
+
+#            outfile.writelines([header_line, sequence_line])
+        outfile.write("\n")
+        for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
+            outfile.write(f'{header}_pident_{dict_head_pident[header]}\n{sequence}')
+
+        outfile.close()
+        blastfile.close()
 
 # blast process
 def star(type=None,query=None):
@@ -216,9 +535,15 @@ def star(type=None,query=None):
     print("db: ", str(select_db.get()))
     print("Threads: ", threads.get())
     print("Other cmd", other.get())
-    db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
-    b = subprocess.Popen(str(blast_type.get()) + " -out result.txt -query " + str(select_query.get()) + " -outfmt " + str(outfmt.get()) +
-                         " -evalue " + str(evalue.get()) + " -db " + str(select_db.get()) + ' -num_threads ' + str(threads.get())+
+    db = str(select_db.get().rsplit('.',1)[0])
+    #db = "/home/nkulikov/Downloads/BlastGUI-master/BlastGUI/db/mala"
+    # remove gaps
+    input_file = str(select_query.get())
+    file_name, file_extension = input_file.rsplit('.', 1)
+    temporary_file  = file_name + "_tmp." + file_extension
+    remove_gaps(input_file, temporary_file)
+    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) +
+                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get())+
                          ' ' + str(other.get()),
                          shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
     b.wait()
@@ -233,6 +558,69 @@ def star(type=None,query=None):
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
 def loop_blast():
+# run single file
+  if os.path.isfile(select_query2.get()):
+      file = select_query2.get()
+
+      # Redirect output to the output folder
+      filebase = os.path.basename(file)
+      output_file = filebase.split('.')[0] + ".out"
+      output_file = os.path.join(select_out2.get(),output_file)
+      input_file = file
+      print("db: ", select_db2.get())
+      print("input file: ", input_file)
+      # remove gaps and store new sequences into temporary file
+      base, ext = os.path.splitext(file)
+      temporary_file = base + "_temp" + ext
+      remove_gaps(input_file, temporary_file)
+      # remove .ext from the db name
+      db = str(select_db2.get().rsplit('.', 1)[0])
+      b = subprocess.Popen(
+          f"{blast_type2.get()} -out {output_file} -query {temporary_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+          f"-evalue {evalue2.get()} -db {db} -num_threads {int(threads2.get())}",
+          shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
+
+      b.wait()
+      # Capture the stdout and stderr
+      stdout, stderr = b.communicate()
+
+      # Print the stdout and stderr
+      print("BLAST Standard Output:")
+      print(stdout.decode('utf-8'))
+
+      print("\nBLAST Standard Error:")
+      print(stderr.decode('utf-8'))
+
+      # Check the return code
+      return_code = b.returncode
+      print(f"\nBLAST Return Code: {return_code}")
+
+      if b.returncode == 0:
+          print("BLAST execution successful.")
+          # Print the content of the output file
+          with open(output_file, 'r') as f:
+              print("Content of the output file:")
+              print(f.read())
+
+      else:
+          showinfo(title='warning',
+                   message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+      # modification of output files
+      #          filesplit = input_file.rsplit("/", 1)[-1]
+      os.remove(temporary_file)
+      filesplit = filebase.split('.')
+      modified_output = str(select_out2.get()) + "/" + filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+#      modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+      print("output file: ", output_file)
+      if blast_type2.get() == "blastx":
+          db_name = select_db2.get()
+          db_name = db_name.split('/')[-1]
+          db_name = db_name.rsplit('.',1)[0]
+          blastx_parse(input_file, output_file, modified_output, extra_nucleotide_entry.get(),db_name)
+      else:
+          blast_parse(input_file, output_file, modified_output)
+# run in the loop
+  else:
     directory = str(select_query2.get())
     # Check if the directory exists
     if not os.path.exists(directory):
@@ -243,12 +631,31 @@ def loop_blast():
             input_file = os.path.join(directory,file)
             output_file = os.path.join(str(select_out2.get()),output_file)
             print("db: ", select_db2.get())
-            print("inpit file: ", input_file)
-            b = subprocess.Popen(
-                str(blast_type2.get()) + " -out " + output_file + " -query " + input_file + " -outfmt 0 " +
-                " -evalue " + str(evalue2.get()) + " -db " + str(select_db2.get()) + ' -num_threads ' + str(
-                    threads2.get()), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
+
+            print("input file: ", input_file)
+            # remove gaps and store new sequences into temporary file
+            base, ext = os.path.splitext(file)
+            temporary_file =  os.path.join(directory, f"{base}_temp{ext}")
+            remove_gaps(input_file,temporary_file)
+            b=subprocess.Popen(
+                    f"{blast_type2.get()} -out {output_file} -query {temporary_file} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+                    f"-evalue {evalue2.get()} -db {select_db2.get()} -num_threads {int(threads2.get())}",
+                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
+
             b.wait()
+            # Capture the stdout and stderr
+            stdout, stderr = b.communicate()
+
+            # Print the stdout and stderr
+            print("BLAST Standard Output:")
+            print(stdout.decode('utf-8'))
+
+            print("\nBLAST Standard Error:")
+            print(stderr.decode('utf-8'))
+
+            # Check the return code
+            return_code = b.returncode
+            print(f"\nBLAST Return Code: {return_code}")
 
             if b.returncode == 0:
                 print("BLAST execution successful.")
@@ -260,6 +667,17 @@ def loop_blast():
             else:
                 showinfo(title='warning',
                          message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+        # modification of output files
+#          filesplit = input_file.rsplit("/", 1)[-1]
+            os.remove(temporary_file)
+            filesplit = file.split('.')
+            modified_output = filesplit[0] + '_blastmatchesadded.' + filesplit[1]
+            modified_output =  os.path.join(str(select_out2.get()),modified_output)
+            if blast_type2.get() == "blastx":
+                blastx_parse(input_file, output_file, modified_output,extra_nucleotide_entry.get())
+            else:
+                blast_parse(input_file, output_file, modified_output)
+
 
 def star_blast_cmd():
     try:
@@ -319,7 +737,7 @@ def create_checkbox(frame, text, row, column, variable, all_frames):
 
 ###GUI part of the program ###
 top = Tk()
-top.title('BlAST-Align')
+top.title('BLAST-Align')
 top.geometry('960x560')
 
 #top.rowconfigure(0, weight=1)  # Add a configuration for the first row
@@ -385,7 +803,7 @@ run_blast_var = IntVar()
 run_blast_checkbox = create_checkbox(second_frame, "Run regular BLAST", 0, 0, run_blast_var,  main_frames)
 
 run_batch_var = IntVar()
-run_batch_checkbox = create_checkbox(third_frame, "Run batch BLAST-Align", 0, 0, run_batch_var, main_frames)
+run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_batch_var, main_frames)
 
 build_db_var = IntVar()
 run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
@@ -398,14 +816,14 @@ banner_img = ImageTk.PhotoImage(Image.open(LOGO))
 my_image_label = Label(banner_frame, image=banner_img).grid(row=0, column=0, rowspan=3, sticky="nsew")
 banner_frame.grid(column=0, row=0,  sticky="nsew")
 
-program_name = Label(banner_frame, text="BlAST-Align",bg="#f0f0f0",font=Font(size=20))
+program_name = Label(banner_frame, text="BLAST-Align",bg="#f0f0f0",font=Font(size=20))
 program_name.grid(row=1, column=1)
 program_description = Label(banner_frame, text="Add sequences to alignment if matching in Blast search",bg="#f0f0f0")
 program_description.grid(row=1, column=2,  sticky="nsew", ipady=4, ipadx=15)
 
 author = Label(banner_frame, text="Code by Nikita Kulikov, Anja-Kristina Schulz and Stefanos Patmanidis \nGUI modified from BLAST-GUI by Du et al. (2020) / https://github.com/byemaxx/BlastGUI",
-        font=Font(size=8),bg="#f0f0f0")
-author.grid(row=2, column=1, columnspan=2,  sticky="w")
+        font=Font(size=8),bg="#f0f0f0", anchor="w", justify="left")
+author.grid(row=2, column=1, columnspan=2)
 
 
 ###### SECOND FRAME ######
@@ -465,7 +883,7 @@ threads.grid(row=4, column=4, sticky="e", padx=(10,0), pady=(10, 0))
 
 threads = Entry(second_frame, width=25)
 threads.insert(0, "4")  # Default value
-threads.grid(row=4, column=5, sticky="we", pady=(10, 0))
+threads.grid(row=4, column=5, sticky="we",padx=(0,10), pady=(10, 0))
 
 # next row
 outfmt = Label(second_frame, text="Outfmt:",bg="#fffacd")
@@ -488,8 +906,8 @@ method.grid(row=5, column=4, sticky="e")
 
 blast_typeList = ['blastn', 'blastp', 'blastx', 'tblastn', 'tblastx', ]
 blast_typeVar = StringVar(value='blastn')
-blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typeList, font=('', 13))
-blast_type.grid(row=5, column=5, sticky="w")
+blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typeList) #, font=('', 13))
+blast_type.grid(row=5, column=5, padx=(0,10), sticky="w")
 
 ###############################
 
@@ -531,7 +949,7 @@ button3_2.grid(row=2, column=5, sticky="we", padx=(5, 10))
 
 # 3d row
 
-button_3d = Button(third_frame, text="Browse input directory\nfor batch conversions", width=12, height=2, command=lambda: select_directory("query"))
+button_3d = Button(third_frame, text="Browse input directory\nfor batch processing", width=12, height=2, command=lambda: select_directory("query"))
 button_3d.grid(row=3, column=1, sticky="we", padx=(5, 25))
 
 # 4th row
@@ -540,8 +958,10 @@ method2 = Label(third_frame, text="Methods:",bg="#fffacd")
 method2.grid(row=4, column=0, sticky="e")
 
 blast_typeVar2 = StringVar(value='blastn')
-blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList, font=('', 13))
+blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList) # , font=('', 13))
 blast_type2.grid(row=4, column=1, sticky="we")
+# Bind the event to toggle the visibility of extra nucleotide widgets
+blast_type2.bind("<<ComboboxSelected>>", switch_nucleotide_widgets)
 
 evalue2 = Label(third_frame, text="E-value:",bg="#fffacd")
 evalue2.grid(row=4, column=2, sticky="e", padx=(10,0), pady=(10, 0))
@@ -555,9 +975,15 @@ threads2.grid(row=4, column=4, sticky="e", padx=(10,0), pady=(10, 0))
 
 threads2 = Entry(third_frame, width=25)
 threads2.insert(0, "4")  # Default value
-threads2.grid(row=4, column=5, sticky="w", pady=(10, 0))
+threads2.grid(row=4, column=5, sticky="w", padx=(0,10), pady=(10, 0))
 
+### EXTRA NUCLEOTIDE WIDGET FOR BLASTX METHOD ###
+extra_nucleotide_entry = Entry(third_frame, width=40)
+extra_nucleotide_entry.insert(0, "Extra nucleotide file for blastx")
+extra_nucleotide_browse_button = Button(third_frame, text="Browse", width=8, height=2, command=lambda: select_fadb_button_cmd("extra_nucleotide_file",0))
 
+# Switch function initially to set the visibility of widgets
+switch_nucleotide_widgets(None)
 
 ###### FOURTH FRAME ######
 
@@ -585,16 +1011,23 @@ database_name = Label(fourth_frame, text="Select database name: ",bg="#fffacd")
 database_name.grid(row=2, column=4, sticky="w", padx=(10,0))
 
 database_name = Entry(fourth_frame, width=25)
-database_name.grid(row=2, column=5, sticky="we")
+database_name.grid(row=2, column=5, padx=(0,10), sticky="we")
 
 ###### FIFTH FRAME ######
 
-button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
-button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(5, 25))
+#button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
+#button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(5, 25))
 
+
+#button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
+#button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
+
+button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
+button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
 
 button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
-button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
+button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
+
 ###############################
 
 ##### BUTTONS AND ENTRY FIELDS CONTROL #####
@@ -602,96 +1035,5 @@ button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
 buttons = []
 entry_widgets = []
 
-'''
 
-db_typeList = get_db_name()
-db_type = Combobox(top, text='Select', values=db_typeList, font=('', 13))
-db_type.place(relx=0.129, rely=0.106, relwidth=0.11)
-
-blast_typeList = ['blastn', 'blastp', 'blastx', 'tblastn', 'tblastx', ]
-blast_typeVar = StringVar(value='blastn')
-blast_type = Combobox(top, textvariable=blast_typeVar, values=blast_typeList, font=('', 13))
-blast_type.place(relx=0.386, rely=0.1, relwidth=0.08)
-
-reault_scroll1 = Scrollbar(top, orient='vertical')
-reault_scroll1.place(relx=0.959, rely=0.212, relwidth=0.031, relheight=0.758)
-
-evalueVar = StringVar(value='1e-5')
-evalue = Entry(top, textvariable=evalueVar, font=('', 12))
-evalue.place(relx=0.129, rely=0.166, relwidth=0.11, relheight=0.034)
-
-result_outputFont = Font(font=('', 13))
-result_output = Text(top, yscrollcommand=reault_scroll1.set, font=result_outputFont)
-result_output.place(relx=0.02, rely=0.212, relwidth=0.931, relheight=0.773)
-main_instructions()
-reault_scroll1['command'] = result_output.yview
-
-#star_blastVar = StringVar(value='Start')
-#style.configure('Tstar_blast.TButton', background='#000000', font=('', 13))
-#star_blast = Button(top, text='Start', textvariable=star_blastVar, command=star_blast_cmd, style='Tstar_blast.TButton')
-#star_blast.place(relx=0.791, rely=0.015, relwidth=0.08, relheight=0.138)
-
-
-#style.configure('Tselect_fa_button.TButton', background='#000000', font=('', 13))
-#select_fa_button = Button(top, text='Select\n   file', command=select_fa_button_Cmd,
-#                          style='Tselect_fa_button.TButton')
-#select_fa_button.place(relx=0.692, rely=0.015, relwidth=0.09, relheight=0.138)
-
-# main enter bar
-#fa_inputVar = StringVar(value='Enter a sequence here or select a sequence file:')
-#fa_input = Entry(top, textvariable=fa_inputVar, font=('', 13))
-#fa_input.place(relx=0.02, rely=0.015, relwidth=0.654, relheight=0.078)
-
-#aboutVar = StringVar(value='About')
-#style.configure('Tabout.TButton', font=('', 13))
-#about = Button(top, text='About', textvariable=aboutVar, command=about_cmd, style='Tabout.TButton')
-#about.place(relx=0.88, rely=0.015, relwidth=0.11, relheight=0.065)
-
-#mkdb_windowVar = StringVar(value=' Build\ndatabase')
-#style.configure('Tmkdb_window.TButton', font=('', 13))
-#mkdb_window = Button(top, text='Build database', textvariable=mkdb_windowVar, command=mkdb_window_cmd, style='Tmkdb_window.TButton')
-#mkdb_window.place(relx=0.88, rely=0.091, relwidth=0.11, relheight=0.065)
-
-evalue_labelVar = StringVar(value='E-value：')
-style.configure('Tevalue_label.TLabel', anchor='w', font=('', 12))
-evalue_label = Label(top, text='E-value', textvariable=evalue_labelVar, style='Tevalue_label.TLabel')
-evalue_label.place(relx=0.02, rely=0.166, relwidth=0.09, relheight=0.032)
-
-blast_select_labelVar = StringVar(value='Methods：')
-style.configure('Tblast_select_label.TLabel', anchor='w', font=('', 12))
-blast_select_label = Label(top, text='Methods', textvariable=blast_select_labelVar, style='Tblast_select_label.TLabel')
-blast_select_label.place(relx=0.267, rely=0.106, relwidth=0.09, relheight=0.032)
-
-db_selectVar = StringVar(value='Database:')
-style.configure('Tdb_select.TLabel', anchor='w', font=('', 12))
-db_select = Label(top, text='Database', textvariable=db_selectVar, style='Tdb_select.TLabel')
-db_select.place(relx=0.02, rely=0.106, relwidth=0.09, relheight=0.032)
-
-outfmt_labelVar = StringVar(value='Outfmt:')
-style.configure('Toutfmt_label.TLabel', anchor='w', font=('', 12))
-outfmt_label = Label(top, text='Outfmt', textvariable=outfmt_labelVar, style='Toutfmt_label.TLabel')
-outfmt_label.place(relx=0.267, rely=0.166, relwidth=0.09, relheight=0.032)
-
-outfmt_inputVar = StringVar(value='0')
-outfmt_input = Entry(top, textvariable=outfmt_inputVar, font=('', 12))
-outfmt_input.place(relx=0.386, rely=0.166, relwidth=0.08, relheight=0.034)
-
-threat_labelVar = StringVar(value='Threads:')
-style.configure('Tthreat_label.TLabel', anchor='w', font=('', 12))
-threat_label = Label(top, text='Threads:', textvariable=threat_labelVar, style='Tthreat_label.TLabel')
-threat_label.place(relx=0.494, rely=0.106, relwidth=0.08, relheight=0.032)
-
-threat_inputVar = StringVar(value='4')
-threat_input = Entry(top, textvariable=threat_inputVar, font=('', 12))
-threat_input.place(relx=0.593, rely=0.106, relwidth=0.08, relheight=0.034)
-
-othercmd_labelVar = StringVar(value='Other cmd:')
-style.configure('Tothercmd_label.TLabel', anchor='w', font=('', 12))
-othercmd_label = Label(top, text='other cmd', textvariable=othercmd_labelVar, style='Tothercmd_label.TLabel')
-othercmd_label.place(relx=0.494, rely=0.166, relwidth=0.08, relheight=0.032)
-
-othercmd_inputVar = StringVar(value=' ')
-othercmd_input = Entry(top, textvariable=othercmd_inputVar, font=('', 12))
-othercmd_input.place(relx=0.593, rely=0.166, relwidth=0.19, relheight=0.034)
-'''
 top.mainloop()
