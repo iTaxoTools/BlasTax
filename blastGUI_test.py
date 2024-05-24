@@ -228,6 +228,9 @@ def museoscript_widgets():
         similarity_threshold_entry.grid(row=7, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
         museo_script_output_text.grid(row=7, column=2, sticky="e", pady=(10, 0), padx=(25, 5))
         museo_script_output.grid(row=7, column=3, sticky="w", pady=(10, 0), padx=(0, 5))
+        # Freeze the combobox to "blastn"
+        blast_typeVar.set('blastn')
+        blast_type.config(state="disabled")
 
     else:
         # Remove or hide the widgets for museoscript output file
@@ -236,6 +239,9 @@ def museoscript_widgets():
         similarity_threshold_entry.grid_forget()
         museo_script_output_text.grid_forget()
         museo_script_output.grid_forget()
+
+        # Re-enable the combobox
+        blast_type.config(state="readonly")
 
 
 
@@ -560,6 +566,8 @@ def star(type=None,query=None):
     else:
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
 
+
+
 def loop_blast():
 # run single file
   if os.path.isfile(select_query2.get()):
@@ -726,6 +734,13 @@ def on_checkbox_click(frame, checkbox, all_frames):
         if other_frame != frame:
             for widget in other_frame.winfo_children():
                 widget.configure(state='disable' if state == 1 else 'normal')
+    if checkbox == museoscript_checkbox:
+        if state == 1:
+            blast_typeVar.set('blastn')
+            blast_type.config(state="disabled")
+        else:
+            blast_type.config(state="readonly")
+
 
 def create_checkbox(frame, text, row, column, variable, all_frames):
     checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
@@ -734,6 +749,15 @@ def create_checkbox(frame, text, row, column, variable, all_frames):
     checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
     return checkbox
 
+def restrict_to_blastn(frame, checkbox):
+    pass
+
+def create_museoscript_checkbox(frame, text, row, column, variable):
+    checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
+    checkbox.grid(row=row, column=column, columnspan=6, sticky="w", padx=(6, 0), pady=1)
+    checkbox.var = variable
+    checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
+    return checkbox
 
 #def mkdb_window_cmd():
 #    make_db()
@@ -811,29 +835,6 @@ run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_b
 build_db_var = IntVar()
 run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
 
-### NEW checkbox for museoscript mode
-museoscript_mode_var = IntVar()
-museoscript_checkbox = create_checkbox(second_frame, "Museoscript mode", 0, 1, museoscript_mode_var,  main_frames)
-museoscript_checkbox.configure(command=museoscript_widgets)
-### NEW  WIDGET FOR MUSEOSCRIPT MODE ###
-museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
-museoscript_parameters.grid_forget()
-
-museo_script_output_text = Label(second_frame, text="Museoscript out:", bg="#fffacd")
-museo_script_output_text.grid_forget()
-museo_script_output = Entry(second_frame, width=40)
-#museo_script_output.insert(0, "Entry the name of museoscript output file")
-
-similarity_threshold_label = Label(second_frame, text="Pident:", bg="#fffacd")
-similarity_threshold_label.grid_forget()
-
-similarity_threshold_entry = Entry(second_frame, width=25)
-similarity_threshold_entry.insert(0, "0.9")
-similarity_threshold_entry.grid_forget()
-
-# Initially hide the widget
-museo_script_output.grid_forget()
-museoscript_widgets()
 
 ### Title Frame ###
 banner_frame = LabelFrame(top,bg="#f0f0f0")
@@ -937,6 +938,30 @@ blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typ
 blast_type.grid(row=5, column=5, padx=(0,10), sticky="w")
 
 ###############################
+### NEW checkbox for museoscript mode
+museoscript_mode_var = IntVar()
+museoscript_checkbox = create_checkbox(second_frame, "Museoscript mode", 0, 1, museoscript_mode_var,  main_frames)
+museoscript_checkbox.configure(command=museoscript_widgets)
+
+### NEW  WIDGET FOR MUSEOSCRIPT MODE ### PLACED HERE BECAUSE BLAST TYPE MUST BE DEFINED
+museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
+museoscript_parameters.grid_forget()
+
+museo_script_output_text = Label(second_frame, text="Museoscript out:", bg="#fffacd")
+museo_script_output_text.grid_forget()
+museo_script_output = Entry(second_frame, width=40)
+#museo_script_output.insert(0, "Entry the name of museoscript output file")
+
+similarity_threshold_label = Label(second_frame, text="Pident:", bg="#fffacd")
+similarity_threshold_label.grid_forget()
+
+similarity_threshold_entry = Entry(second_frame, width=25)
+similarity_threshold_entry.insert(0, "0.9")
+similarity_threshold_entry.grid_forget()
+
+# Initially hide the widget
+museo_script_output.grid_forget()
+museoscript_widgets()
 
 ###### THIRD FRAME ######
 
