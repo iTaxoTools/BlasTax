@@ -219,6 +219,26 @@ def switch_nucleotide_widgets(state):
         extra_nucleotide_entry.grid_forget()
         extra_nucleotide_browse_button.grid_forget()
 
+### EXTRA WIDGETS if museoscript mode was chosen
+def museoscript_widgets():
+    if museoscript_mode_var.get():
+        # Make the widgets for museoscript output file
+        museoscript_parameters.grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_label.grid(row=7, column=0, sticky="e",pady=(10, 0), padx=(10, 5))
+        similarity_threshold_entry.grid(row=7, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
+        museo_script_output_text.grid(row=7, column=2, sticky="e", pady=(10, 0), padx=(25, 5))
+        museo_script_output.grid(row=7, column=3, sticky="w", pady=(10, 0), padx=(0, 5))
+
+    else:
+        # Remove or hide the widgets for museoscript output file
+        museoscript_parameters.grid_forget()
+        similarity_threshold_label.grid_forget()
+        similarity_threshold_entry.grid_forget()
+        museo_script_output_text.grid_forget()
+        museo_script_output.grid_forget()
+
+
+
 ### LOOP-BLASTX FILE POSTPROCESSING ###
 # FUNKTIONEN TRANSLATE
 # Triplett Zuordnung AS
@@ -526,9 +546,8 @@ def star(type=None,query=None):
     file_name, file_extension = input_file.rsplit('.', 1)
     temporary_file  = file_name + "_tmp." + file_extension
     remove_gaps(input_file, temporary_file)
-    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) +
-                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get())+
-                         ' ' + str(other.get()),
+    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) + " " +  str(other.get()) +
+                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get()),
                          shell=True, stdout=subprocess.PIPE)
     b.wait()
 
@@ -791,6 +810,30 @@ run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_b
 
 build_db_var = IntVar()
 run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
+
+### NEW checkbox for museoscript mode
+museoscript_mode_var = IntVar()
+museoscript_checkbox = create_checkbox(second_frame, "Museoscript mode", 0, 1, museoscript_mode_var,  main_frames)
+museoscript_checkbox.configure(command=museoscript_widgets)
+### NEW  WIDGET FOR MUSEOSCRIPT MODE ###
+museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
+museoscript_parameters.grid_forget()
+
+museo_script_output_text = Label(second_frame, text="Museoscript out:", bg="#fffacd")
+museo_script_output_text.grid_forget()
+museo_script_output = Entry(second_frame, width=40)
+#museo_script_output.insert(0, "Entry the name of museoscript output file")
+
+similarity_threshold_label = Label(second_frame, text="Pident:", bg="#fffacd")
+similarity_threshold_label.grid_forget()
+
+similarity_threshold_entry = Entry(second_frame, width=25)
+similarity_threshold_entry.insert(0, "0.9")
+similarity_threshold_entry.grid_forget()
+
+# Initially hide the widget
+museo_script_output.grid_forget()
+museoscript_widgets()
 
 ### Title Frame ###
 banner_frame = LabelFrame(top,bg="#f0f0f0")
