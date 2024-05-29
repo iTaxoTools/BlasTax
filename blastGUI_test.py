@@ -527,6 +527,32 @@ def blast_parse(input_file,blast_result,outfile_name):
         outfile.close()
         blastfile.close()
 
+def museoscript_parse(blast_out,museo_out,pident_thr):
+    museo = open(museo_out,"w")
+    blast = open(blast_out,"r")
+    dict_head_pident = {}
+
+    for line in blast:
+        splitti = line.split('\t')
+#        print("Whole line: ",splitti)
+#        print("Header: ", splitti[1])
+#        print("Pident: ", splitti[4])
+#        print("Sequence: ", splitti[5])
+        pident = splitti[4]
+
+        if float(pident) >= pident_thr:
+            sequence_line = f'{splitti[5]}'
+            header = f'>{splitti[0]}_{splitti[1]}_{pident}\n'
+            museo.write(header)
+            museo.write(sequence_line)
+            
+
+#    for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
+#        outfile.write(f'{header}_pident_{dict_head_pident[header]}\n{sequence}')
+
+    museo.close()
+    blast.close()
+
 # blast process
 def star(type=None,query=None):
     fnfa_stat = "The files you selected:" + fnfa
@@ -538,6 +564,12 @@ def star(type=None,query=None):
         fa = 'tmp.txt'
 #    if
 #        blast_q
+
+
+    # Redirect output to the output folder
+    filebase = os.path.dirname(str(select_query.get()))
+    output_file_blast = os.path.join(filebase, select_out.get())
+
     print("blast type; ", blast_type.get())
     print("query: ", str(select_query.get()))
     print("outfmt: ", outfmt.get())
@@ -552,9 +584,17 @@ def star(type=None,query=None):
     file_name, file_extension = input_file.rsplit('.', 1)
     temporary_file  = file_name + "_tmp." + file_extension
     remove_gaps(input_file, temporary_file)
-    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) + " " +  str(other.get()) +
-                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get()),
-                         shell=True, stdout=subprocess.PIPE)
+#    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) + " " +  str(other.get()) +
+#                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get()),
+#                         shell=True, stdout=subprocess.PIPE)
+#    b.wait()
+
+    command = (
+        f"{blast_type.get()} -out {output_file_blast} -query {temporary_file} "
+        f"-evalue {evalue.get()} -db {db} -num_threads {threads.get()} -outfmt '{outfmt.get()} {other.get()}'"
+    )
+
+    b = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     b.wait()
 
     if b.returncode == 0:
@@ -565,6 +605,15 @@ def star(type=None,query=None):
 #                result_output.insert('insert', line)
     else:
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+
+    if museoscript_mode_var.get() == 1: # museoscript checkbox selected
+#        base, ext = os.path.splitext(select_out.get())
+#        museo_filename  = f"{base}_matching_reads{ext}"
+        print("Entered a museo-block")
+        directory_path = os.path.dirname(str(select_out.get()))
+        museo_filename = str(museo_script_output.get())
+        museo_filename = os.path.join(filebase,museo_filename)
+        museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
 
 
 
