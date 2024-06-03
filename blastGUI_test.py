@@ -235,6 +235,32 @@ def switch_nucleotide_widgets(state):
         extra_nucleotide_entry.grid_forget()
         extra_nucleotide_browse_button.grid_forget()
 
+### EXTRA WIDGETS if museoscript mode was chosen
+def museoscript_widgets():
+    if museoscript_mode_var.get():
+        # Make the widgets for museoscript output file
+        museoscript_parameters.grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_label.grid(row=7, column=0, sticky="e",pady=(10, 0), padx=(10, 5))
+        similarity_threshold_entry.grid(row=7, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
+        museo_script_output_text.grid(row=7, column=2, sticky="e", pady=(10, 0), padx=(25, 5))
+        museo_script_output.grid(row=7, column=3, sticky="w", pady=(10, 0), padx=(0, 5))
+        # Freeze the combobox to "blastn"
+        blast_typeVar.set('blastn')
+        blast_type.config(state="disabled")
+
+    else:
+        # Remove or hide the widgets for museoscript output file
+        museoscript_parameters.grid_forget()
+        similarity_threshold_label.grid_forget()
+        similarity_threshold_entry.grid_forget()
+        museo_script_output_text.grid_forget()
+        museo_script_output.grid_forget()
+
+        # Re-enable the combobox
+        blast_type.config(state="readonly")
+
+
+
 ### LOOP-BLASTX FILE POSTPROCESSING ###
 # FUNKTIONEN TRANSLATE
 # Triplett Zuordnung AS
@@ -517,6 +543,32 @@ def blast_parse(input_file,blast_result,outfile_name):
         outfile.close()
         blastfile.close()
 
+def museoscript_parse(blast_out,museo_out,pident_thr):
+    museo = open(museo_out,"w")
+    blast = open(blast_out,"r")
+    dict_head_pident = {}
+
+    for line in blast:
+        splitti = line.split('\t')
+#        print("Whole line: ",splitti)
+#        print("Header: ", splitti[1])
+#        print("Pident: ", splitti[4])
+#        print("Sequence: ", splitti[5])
+        pident = splitti[4]
+
+        if float(pident) >= pident_thr:
+            sequence_line = f'{splitti[5]}'
+            header = f'>{splitti[0]}_{splitti[1]}_{pident}\n'
+            museo.write(header)
+            museo.write(sequence_line)
+
+
+#    for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
+#        outfile.write(f'{header}_pident_{dict_head_pident[header]}\n{sequence}')
+
+    museo.close()
+    blast.close()
+
 # blast process
 def star(type=None,query=None):
     fnfa_stat = "The files you selected:" + fnfa
@@ -528,6 +580,12 @@ def star(type=None,query=None):
         fa = 'tmp.txt'
 #    if
 #        blast_q
+
+
+    # Redirect output to the output folder
+    filebase = os.path.dirname(str(select_query.get()))
+    output_file_blast = os.path.join(filebase, select_out.get())
+
     print("blast type; ", blast_type.get())
     print("query: ", str(select_query.get()))
     print("outfmt: ", outfmt.get())
@@ -542,10 +600,17 @@ def star(type=None,query=None):
     file_name, file_extension = input_file.rsplit('.', 1)
     temporary_file  = file_name + "_tmp." + file_extension
     remove_gaps(input_file, temporary_file)
-    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) +
-                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get())+
-                         ' ' + str(other.get()),
-                         shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
+#    b = subprocess.Popen(str(blast_type.get()) + " -out " + str(select_out.get()) + " -query " + temporary_file + " -outfmt " + str(outfmt.get()) + " " +  str(other.get()) +
+#                         " -evalue " + str(evalue.get()) + " -db " + db + ' -num_threads ' + str(threads.get()),
+#                         shell=True, stdout=subprocess.PIPE)
+#    b.wait()
+
+    command = (
+        f"{blast_type.get()} -out {output_file_blast} -query {temporary_file} "
+        f"-evalue {evalue.get()} -db {db} -num_threads {threads.get()} -outfmt {outfmt.get()} {other.get()}"
+    )
+
+    b = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
     b.wait()
 
     if b.returncode == 0:
@@ -556,6 +621,17 @@ def star(type=None,query=None):
 #                result_output.insert('insert', line)
     else:
         showinfo(title='warning', message='Wrong alignment!\nPlease make sure the parameters are set correctly!')
+
+    if museoscript_mode_var.get() == 1: # museoscript checkbox selected
+#        base, ext = os.path.splitext(select_out.get())
+#        museo_filename  = f"{base}_matching_reads{ext}"
+        print("Entered a museo-block")
+        directory_path = os.path.dirname(str(select_out.get()))
+        museo_filename = str(museo_script_output.get())
+        museo_filename = os.path.join(filebase,museo_filename)
+        museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
+
+
 
 def loop_blast():
 # run single file
@@ -723,6 +799,13 @@ def on_checkbox_click(frame, checkbox, all_frames):
         if other_frame != frame:
             for widget in other_frame.winfo_children():
                 widget.configure(state='disable' if state == 1 else 'normal')
+    if checkbox == museoscript_checkbox:
+        if state == 1:
+            blast_typeVar.set('blastn')
+            blast_type.config(state="disabled")
+        else:
+            blast_type.config(state="readonly")
+
 
 def create_checkbox(frame, text, row, column, variable, all_frames):
     checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
@@ -731,6 +814,15 @@ def create_checkbox(frame, text, row, column, variable, all_frames):
     checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
     return checkbox
 
+def restrict_to_blastn(frame, checkbox):
+    pass
+
+def create_museoscript_checkbox(frame, text, row, column, variable):
+    checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
+    checkbox.grid(row=row, column=column, columnspan=6, sticky="w", padx=(6, 0), pady=1)
+    checkbox.var = variable
+    checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
+    return checkbox
 
 #def mkdb_window_cmd():
 #    make_db()
@@ -807,6 +899,7 @@ run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_b
 
 build_db_var = IntVar()
 run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
+
 
 ### Title Frame ###
 banner_frame = LabelFrame(top,bg="#f0f0f0")
@@ -910,6 +1003,30 @@ blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typ
 blast_type.grid(row=5, column=5, padx=(0,10), sticky="w")
 
 ###############################
+### NEW checkbox for museoscript mode
+museoscript_mode_var = IntVar()
+museoscript_checkbox = create_checkbox(second_frame, "Museoscript mode", 0, 1, museoscript_mode_var,  main_frames)
+museoscript_checkbox.configure(command=museoscript_widgets)
+
+### NEW  WIDGET FOR MUSEOSCRIPT MODE ### PLACED HERE BECAUSE BLAST TYPE MUST BE DEFINED
+museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
+museoscript_parameters.grid_forget()
+
+museo_script_output_text = Label(second_frame, text="Museoscript out:", bg="#fffacd")
+museo_script_output_text.grid_forget()
+museo_script_output = Entry(second_frame, width=40)
+#museo_script_output.insert(0, "Entry the name of museoscript output file")
+
+similarity_threshold_label = Label(second_frame, text="Pident:", bg="#fffacd")
+similarity_threshold_label.grid_forget()
+
+similarity_threshold_entry = Entry(second_frame, width=25)
+similarity_threshold_entry.insert(0, "0.9")
+similarity_threshold_entry.grid_forget()
+
+# Initially hide the widget
+museo_script_output.grid_forget()
+museoscript_widgets()
 
 ###### THIRD FRAME ######
 
