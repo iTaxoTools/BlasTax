@@ -251,10 +251,10 @@ def museoscript_widgets():
     if museoscript_mode_var.get():
         # Make the widgets for museoscript output file
         museoscript_parameters.grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5))
-        similarity_threshold_label.grid(row=7, column=0, sticky="e", pady=(10, 0), padx=(10, 5))
-        similarity_threshold_entry.grid(row=7, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
-        museo_script_output_text.grid(row=7, column=2, columnspan=2, sticky="e", pady=(10, 0), padx=(25, 5))
-        museo_script_output.grid(row=7, column=4, sticky="w", pady=(10, 0), padx=(0, 5))
+        similarity_threshold_label.grid(row=8, column=0, sticky="e", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_entry.grid(row=8, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
+        museo_script_output_text.grid(row=8, column=2, columnspan=2, sticky="e", pady=(10, 0), padx=(25, 5))
+        museo_script_output.grid(row=8, column=4, sticky="w", pady=(10, 0), padx=(0, 5))
 
         # Set values for Outfmt and Other cmd, and make them read-only
         outfmt.config(state="normal")  # Temporarily enable to set value
@@ -271,6 +271,9 @@ def museoscript_widgets():
         blast_typeVar.set('blastn')
         blast_type.config(state="disabled")
 
+        # Show the new checkbox for retrieving original reads
+        extra_museoscript_checkbox.grid(row=7, column=0, columnspan=2, sticky="e", padx=(0, 0), pady=1)
+
     else:
         # Remove or hide the widgets for museoscript output file
         museoscript_parameters.grid_forget()
@@ -285,6 +288,9 @@ def museoscript_widgets():
         # Make Outfmt and Other cmd editable
         outfmt.config(state="normal")
         other.config(state="normal")
+
+        # Hide the new checkbox for retrieving original reads
+        extra_museoscript_checkbox.grid_forget()
 
 
 ### LOOP-BLASTX FILE POSTPROCESSING ###
@@ -587,6 +593,27 @@ def museoscript_parse(blast_out,museo_out,pident_thr):
     museo.close()
     blast.close()
 
+### MUSEOSCRIPT MODIFICATION WITH ORIGINAL READS RETRIEVE
+def museoscript_original_reads(blast_out,museo_out,pident_thr,original_query):
+    museo = open(museo_out,"w")
+    blast = open(blast_out,"r")
+    with open(original_query, 'r') as org_query:
+        query_list = org_query.readlines()
+
+    for line in blast:
+        splitti = line.split('\t')
+        pident = splitti[4]
+        header = splitti[0]
+        if float(pident) >= pident_thr:
+            for i, element in enumerate(query_list):
+                if header in element:
+                    museo.write(f'>{splitti[0]}_{splitti[1]}_{pident}\n')
+                    museo.write(query_list[i+1])
+
+    museo.close()
+    blast.close()
+    org_query.close()
+
 # blast process
 def star(type=None,query=None):
     fnfa_stat = "The files you selected:" + fnfa
@@ -643,11 +670,13 @@ def star(type=None,query=None):
     if museoscript_mode_var.get() == 1: # museoscript checkbox selected
 #        base, ext = os.path.splitext(select_out.get())
 #        museo_filename  = f"{base}_matching_reads{ext}"
-        print("Entered a museo-block")
         directory_path = os.path.dirname(str(select_out.get()))
         museo_filename = str(museo_script_output.get())
         museo_filename = os.path.join(filebase,museo_filename)
-        museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
+        if extra_museoscript_mode_var.get() == 1:
+            museoscript_original_reads(output_file_blast,museo_filename,float(similarity_threshold_entry.get()),temporary_file)
+        else:
+            museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
 
 
 
@@ -1045,6 +1074,20 @@ similarity_threshold_entry = Entry(second_frame, width=25)
 similarity_threshold_entry.insert(0, "0.9")
 similarity_threshold_entry.grid_forget()
 
+# EXTRA CHECKBOX FOR MUSEOSCRIPT EXTRA FUNSTIONALITY
+extra_museoscript_mode_var = IntVar()
+extra_museoscript_checkbox  = Checkbutton(
+    second_frame,
+    text="Retrieve the original reads",
+    variable=extra_museoscript_mode_var,
+    bg="#fffacd"
+)
+extra_museoscript_checkbox.grid_forget()
+
+# EXTRA CHECKBOX FOR MUSEOSCRIPT EXTRA FUNSTIONALITY
+#extra_museoscript_mode_var = IntVar()
+#extra_museoscript_checkbox = create_checkbox(second_frame, "Retrieve the original reads ", 0, 1, museoscript_mode_var,  main_frames)
+#extra_museoscript_checkbox.configure(command=museoscript_widgets)
 # Initially hide the widget
 museo_script_output.grid_forget()
 museoscript_widgets()
