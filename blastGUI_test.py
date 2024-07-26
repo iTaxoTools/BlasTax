@@ -45,6 +45,21 @@ def start_processing():
     else:
         showinfo(title='warning', message='Please select a checkbox')
 
+
+def check_fasta_headers(file_path):
+    """Check if any header in the FASTA file is longer than 51 characters or contains special characters, allowing underscores and '>'."""
+    # Define invalid characters as a regex pattern (excluding underscores and '>')
+    invalid_chars_pattern = re.compile(r'[^\w\s>]')
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.startswith('>'):  # Header line starts with '>'
+                header = line.strip()
+                if len(header) > 51:
+                    return "length"
+                if invalid_chars_pattern.search(header):
+                    return "special"
+
 def make_db_button_cmd():
         if fndb == '':
             print("Input: ", fndb)
@@ -53,13 +68,26 @@ def make_db_button_cmd():
             return showinfo(title='warning', message='The database type is not selected!')
         if database_name.get() == '':
             return showinfo(title='warning', message='Database name is not set!')
+        header_check_result = check_fasta_headers(fndb)
+        if header_check_result == "length":
+            return showinfo(title='warning',
+                            message='One or more sequence headers in the FASTA file exceed 51 characters! Please check and edit headers!')
+        elif header_check_result == "special":
+            return showinfo(title='warning',
+                            message='One or more sequence headers in the FASTA file contain special characters! Please check and edit headers!')
         if database_type.get() == 'Nucleic acid sequence':
             t = 'nucl'
         if database_type.get() == 'Protein sequence':
             t = 'prot'
+
+        # Extract directory path from fndb
+        directory_path = os.path.dirname(fndb)
+        # Define the output filename
+        output_filename_db = os.path.join(directory_path, database_name.get())
+
         n = database_name.get()
         p = subprocess.Popen(
-            "makeblastdb -parse_seqids -in " + fndb + " -dbtype " + t + " -title " + n + " -out " + n,
+            "makeblastdb -parse_seqids -in " + fndb + " -dbtype " + t + " -title " + n + " -out " + output_filename_db,
             shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
         p.wait()
         out = p.stdout.readlines()
@@ -70,7 +98,6 @@ def make_db_button_cmd():
 #                makedb_state.insert("insert", line)
         else:
             showinfo(title="info", message="Database creation failed!")
-#def make_db():
 
 #    def select_fadb_button_cmd():
 #        global fndb
@@ -240,13 +267,28 @@ def museoscript_widgets():
     if museoscript_mode_var.get():
         # Make the widgets for museoscript output file
         museoscript_parameters.grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5))
-        similarity_threshold_label.grid(row=7, column=0, sticky="e",pady=(10, 0), padx=(10, 5))
-        similarity_threshold_entry.grid(row=7, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
-        museo_script_output_text.grid(row=7, column=2, sticky="e", pady=(10, 0), padx=(25, 5))
-        museo_script_output.grid(row=7, column=3, sticky="w", pady=(10, 0), padx=(0, 5))
+        similarity_threshold_label.grid(row=8, column=0, sticky="e", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_entry.grid(row=8, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
+        museo_script_output_text.grid(row=8, column=2, columnspan=2, sticky="e", pady=(10, 0), padx=(25, 5))
+        museo_script_output.grid(row=8, column=4, sticky="w", pady=(10, 0), padx=(0, 5))
+
+        # Set values for Outfmt and Other cmd, and make them read-only
+        outfmt.config(state="normal")  # Temporarily enable to set value
+        outfmt.delete(0, "end")
+        outfmt.insert(0, "6")
+        outfmt.config(state="readonly")  # Make read-only
+
+        other.config(state="normal")  # Temporarily enable to set value
+        other.delete(0, "end")
+        other.insert(0, "qseqid sseqid sacc stitle pident qseq")
+        other.config(state="readonly")  # Make read-only
+
         # Freeze the combobox to "blastn"
         blast_typeVar.set('blastn')
         blast_type.config(state="disabled")
+
+        # Show the new checkbox for retrieving original reads
+        extra_museoscript_checkbox.grid(row=7, column=0, columnspan=2, sticky="e", padx=(0, 0), pady=1)
 
     else:
         # Remove or hide the widgets for museoscript output file
@@ -259,6 +301,12 @@ def museoscript_widgets():
         # Re-enable the combobox
         blast_type.config(state="readonly")
 
+        # Make Outfmt and Other cmd editable
+        outfmt.config(state="normal")
+        other.config(state="normal")
+
+        # Hide the new checkbox for retrieving original reads
+        extra_museoscript_checkbox.grid_forget()
 
 
 ### LOOP-BLASTX FILE POSTPROCESSING ###
@@ -546,14 +594,9 @@ def blast_parse(input_file,blast_result,outfile_name):
 def museoscript_parse(blast_out,museo_out,pident_thr):
     museo = open(museo_out,"w")
     blast = open(blast_out,"r")
-    dict_head_pident = {}
 
     for line in blast:
         splitti = line.split('\t')
-#        print("Whole line: ",splitti)
-#        print("Header: ", splitti[1])
-#        print("Pident: ", splitti[4])
-#        print("Sequence: ", splitti[5])
         pident = splitti[4]
 
         if float(pident) >= pident_thr:
@@ -562,12 +605,29 @@ def museoscript_parse(blast_out,museo_out,pident_thr):
             museo.write(header)
             museo.write(sequence_line)
 
+    museo.close()
+    blast.close()
 
-#    for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
-#        outfile.write(f'{header}_pident_{dict_head_pident[header]}\n{sequence}')
+### MUSEOSCRIPT MODIFICATION WITH ORIGINAL READS RETRIEVE
+def museoscript_original_reads(blast_out,museo_out,pident_thr,original_query):
+    museo = open(museo_out,"w")
+    blast = open(blast_out,"r")
+    with open(original_query, 'r') as org_query:
+        query_list = org_query.readlines()
+
+    for line in blast:
+        splitti = line.split('\t')
+        pident = splitti[4]
+        header = splitti[0]
+        if float(pident) >= pident_thr:
+            for i, element in enumerate(query_list):
+                if header in element:
+                    museo.write(f'>{splitti[0]}_{splitti[1]}_{pident}\n')
+                    museo.write(query_list[i+1])
 
     museo.close()
     blast.close()
+    org_query.close()
 
 # blast process
 def star(type=None,query=None):
@@ -625,11 +685,13 @@ def star(type=None,query=None):
     if museoscript_mode_var.get() == 1: # museoscript checkbox selected
 #        base, ext = os.path.splitext(select_out.get())
 #        museo_filename  = f"{base}_matching_reads{ext}"
-        print("Entered a museo-block")
         directory_path = os.path.dirname(str(select_out.get()))
         museo_filename = str(museo_script_output.get())
         museo_filename = os.path.join(filebase,museo_filename)
-        museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
+        if extra_museoscript_mode_var.get() == 1:
+            museoscript_original_reads(output_file_blast,museo_filename,float(similarity_threshold_entry.get()),temporary_file)
+        else:
+            museoscript_parse(output_file_blast,museo_filename,float(similarity_threshold_entry.get()))
 
 
 
@@ -805,6 +867,9 @@ def on_checkbox_click(frame, checkbox, all_frames):
             blast_type.config(state="disabled")
         else:
             blast_type.config(state="readonly")
+
+        # Freeze the outfmt and other command when museoscript mode is selected
+
 
 
 def create_checkbox(frame, text, row, column, variable, all_frames):
@@ -1012,7 +1077,7 @@ museoscript_checkbox.configure(command=museoscript_widgets)
 museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
 museoscript_parameters.grid_forget()
 
-museo_script_output_text = Label(second_frame, text="Museoscript out:", bg="#fffacd")
+museo_script_output_text = Label(second_frame, text="Museoscript output filename:", bg="#fffacd")
 museo_script_output_text.grid_forget()
 museo_script_output = Entry(second_frame, width=40)
 #museo_script_output.insert(0, "Entry the name of museoscript output file")
@@ -1024,10 +1089,38 @@ similarity_threshold_entry = Entry(second_frame, width=25)
 similarity_threshold_entry.insert(0, "0.9")
 similarity_threshold_entry.grid_forget()
 
+# EXTRA CHECKBOX FOR MUSEOSCRIPT EXTRA FUNSTIONALITY
+extra_museoscript_mode_var = IntVar()
+extra_museoscript_checkbox  = Checkbutton(
+    second_frame,
+    text="Retrieve the original reads",
+    variable=extra_museoscript_mode_var,
+    bg="#fffacd"
+)
+extra_museoscript_checkbox.grid_forget()
+
+# EXTRA CHECKBOX FOR MUSEOSCRIPT EXTRA FUNSTIONALITY
+#extra_museoscript_mode_var = IntVar()
+#extra_museoscript_checkbox = create_checkbox(second_frame, "Retrieve the original reads ", 0, 1, museoscript_mode_var,  main_frames)
+#extra_museoscript_checkbox.configure(command=museoscript_widgets)
 # Initially hide the widget
 museo_script_output.grid_forget()
 museoscript_widgets()
 
+
+# Configure style for Combobox. Change method's background to from gray to white
+style = Style()
+style.configure('TCombobox',
+                fieldbackground='white',  # Field background (entry part)
+                background='white')      # Background of the dropdown part
+
+# Map different styles for readonly and disabled states
+style.map('TCombobox',
+          fieldbackground=[('disabled', 'lightgray')],
+          background=[('disabled', 'lightgray')],
+          foreground=[('disabled', 'gray')],
+          )
+blast_type.configure(style='TCombobox')
 ###### THIRD FRAME ######
 
 # Texts
