@@ -1,6 +1,7 @@
 from typing import Literal
 from pathlib import Path
 from sys import stdout
+from platform import system
 
 import requests
 import argparse
@@ -35,8 +36,9 @@ def find_subdirectory(start_path: Path, name: str) -> Path | None:
 def get_os_extensions(os: OS) -> list[str]:
     if os == "win64":
         return [".exe", ".dll"]
-    else:
-        raise Exception(f"Unknown binary extensions for os: {os}")
+    elif os == "macosx":
+        return [""]
+    raise Exception(f"Unknown binary extensions for os: {os}")
 
 
 def get_version() -> str:
@@ -51,8 +53,25 @@ def get_version() -> str:
         raise Exception("Cannot retrieve latest BLAST+ version") from e
 
 
-def get_tarball(path: Path, version: str, os: OS = "win64") -> Path:
-    tarball = f"ncbi-blast-{version}+-x64-{os}.tar.gz"
+def get_system_os() -> OS:
+    this = system()
+    if this == "Linux":
+        return "linux"
+    elif this == "Windows":
+        return "win64"
+    elif this == "Darwin":
+        return "macosx"
+    raise Exception(f"Unknown os: {this}")
+
+
+def get_architecture(os: OS) -> str:
+    if os == "macosx":
+        return "universal"
+    return "x64"
+
+
+def get_tarball(path: Path, version: str, os: OS = "win64", arch: str = "x64") -> Path:
+    tarball = f"ncbi-blast-{version}+-{arch}-{os}.tar.gz"
     url = BLAST_URL + version + "/" + tarball
 
     target = path / tarball
@@ -107,12 +126,14 @@ def copy_binaries(src: Path, dst: Path, extensions: list[str]):
     print(f"Copied {count} binaries to: {dst}")
 
 
-def get_blast(version: str, os: OS):
+def get_blast(version: str, os: str):
     version = version or get_version()
+    os = os or get_system_os()
+    arch = get_architecture(os)
 
     with tempfile.TemporaryDirectory() as work_dir:
         work_path = Path(work_dir)
-        path = get_tarball(work_path, version, os)
+        path = get_tarball(work_path, version, os, arch)
         bin = extract_tarball(path, work_path)
         extensions = get_os_extensions(os)
 
@@ -125,12 +146,12 @@ def get_blast(version: str, os: OS):
 def main():
     parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
 
-    parser.add_argument("-s", "--os", type=str, default="win64", help="Specify target operating system")
     parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
+    parser.add_argument("-s", "--os", type=str, default="", help="Specify target operating system")
 
     args = parser.parse_args()
 
-    get_blast(args.version, args.os,)
+    get_blast(args.version, args.os)
 
 
 if __name__ == "__main__":

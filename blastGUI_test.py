@@ -4,6 +4,7 @@
 
 import os
 import re
+import platform
 import subprocess
 from pathlib import Path
 from tkinter import *
@@ -23,7 +24,7 @@ def get_blast_env() -> dict:
     here = Path(__file__).parent
     bin = here / "bin"
     env = os.environ.copy()
-    env["PATH"] += f";{bin}"
+    env["PATH"] += f"{os.pathsep}{bin}"
     return env
 BLAST_ENV = get_blast_env()
 
