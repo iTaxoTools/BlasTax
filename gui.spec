@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['blastGUI_test.py'],
+    ['gui.py'],
     pathex=[],
     binaries=[('bin', 'bin')],
     datas=[('iTaxoTools Digital linneaeus MICROLOGO.png', '.')],
@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='blastGUI_test',
+    name='blastGUI',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
