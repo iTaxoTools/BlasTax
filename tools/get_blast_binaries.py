@@ -1,14 +1,13 @@
-from typing import Literal
+import argparse
+import shutil
+import tarfile
+import tempfile
 from pathlib import Path
-from sys import stdout
 from platform import system
+from sys import stdout
+from typing import Literal
 
 import requests
-import argparse
-import tempfile
-import tarfile
-import shutil
-
 
 OS = Literal["win64", "macosx", "linux"]
 
@@ -27,7 +26,7 @@ def human_readable_size(size):
 
 
 def find_subdirectory(start_path: Path, name: str) -> Path | None:
-    for path in start_path.rglob('*'):
+    for path in start_path.rglob("*"):
         if path.is_dir() and path.name == name:
             return path
     return None
@@ -81,13 +80,13 @@ def get_tarball(path: Path, version: str, os: OS = "win64", arch: str = "x64") -
         response = requests.get(url, stream=True)
         response.raise_for_status()
 
-        total_size = int(response.headers.get('content-length', 0))
+        total_size = int(response.headers.get("content-length", 0))
         block_size = 1024
         downloaded_size = 0
 
         print("Total tarball size:", human_readable_size(total_size))
 
-        with open(target, 'wb') as file:
+        with open(target, "wb") as file:
             for data in response.iter_content(chunk_size=block_size):
                 file.write(data)
                 downloaded_size += len(data)
@@ -104,7 +103,7 @@ def get_tarball(path: Path, version: str, os: OS = "win64", arch: str = "x64") -
 
 def extract_tarball(tarball_path: Path, target_path: Path) -> Path:
     try:
-        with tarfile.open(tarball_path, 'r:gz') as tar:
+        with tarfile.open(tarball_path, "r:gz") as tar:
             tar.extractall(path=target_path)
         print(f"Extracted tarball to: {target_path}")
 
@@ -146,8 +145,12 @@ def get_blast(version: str, os: str):
 def main():
     parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
 
-    parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
-    parser.add_argument("-s", "--os", type=str, default="", help="Specify target operating system")
+    parser.add_argument(
+        "-v", "--version", type=str, default="", help="Download a specific version"
+    )
+    parser.add_argument(
+        "-s", "--os", type=str, default="", help="Specify target operating system"
+    )
 
     args = parser.parse_args()
 
@@ -156,4 +159,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
