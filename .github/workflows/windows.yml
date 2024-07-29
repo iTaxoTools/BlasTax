@@ -32,7 +32,7 @@ jobs:
         run: python tools/get_blast_binaries.py
 
       - name: Make executable
-        run: pyinstaller blastGUI_test.spec
+        run: pyinstaller gui.spec
 
       - uses: actions/upload-artifact@v3
         with:
