@@ -37,7 +37,8 @@ def get_os_extensions(os: OS) -> list[str]:
         return [".exe", ".dll"]
     elif os == "macosx":
         return [""]
-    raise Exception(f"Unknown binary extensions for os: {os}")
+    elif os == "linux":
+        return [""]
 
 
 def get_version() -> str:
