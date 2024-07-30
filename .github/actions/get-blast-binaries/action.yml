@@ -13,7 +13,8 @@ runs:
       shell: bash
       run: |
         VERSION=$(curl -s https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/VERSION)
-        echo "CACHE_KEY=$VERSION" >> $GITHUB_ENV
+        OS=$(uname -s)
+        echo "CACHE_KEY=${OS}-${VERSION}" >> $GITHUB_ENV
 
     - name: Cache binaries
       id: cache-binaries
