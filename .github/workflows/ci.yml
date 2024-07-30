@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on: push
 
@@ -34,7 +34,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Get BLAST+ binaries
-        run: python tools/get_blast_binaries.py
+        uses: ./.github/actions/get-blast-binaries
 
       - name: Test with pytest
         run: |
@@ -65,7 +65,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Get BLAST+ binaries
-        run: python tools/get_blast_binaries.py
+        uses: ./.github/actions/get-blast-binaries
 
       - name: Make executable
         run: pyinstaller gui.spec

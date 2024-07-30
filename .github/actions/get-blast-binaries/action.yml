@@ -1,0 +1,31 @@
+name: Fetch BLAST+ binaries
+description: Fetches binaries if the remote version changes and caches them.
+outputs:
+  version:
+    description: 'Fetched version'
+
+runs:
+  using: composite
+  steps:
+
+    - name: Fetch version from remote URL
+      id: get-version
+      shell: bash
+      run: |
+        VERSION=$(curl -s https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/VERSION)
+        echo "CACHE_KEY=$VERSION" >> $GITHUB_ENV
+
+    - name: Cache binaries
+      id: cache-binaries
+      uses: actions/cache@v3
+      with:
+        path: ./bin
+        key: ${{ env.CACHE_KEY }}
+
+    - name: Fetch binaries if cache is not hit
+      shell: bash
+      if: steps.cache-binaries.outputs.cache-hit != 'true'
+      run: python tools/get_blast_binaries.py
+
+    - name: Output version
+      run: echo "version=${{ steps.get-version.outputs.version }}" >> $GITHUB_OUTPUT
