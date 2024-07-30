@@ -29,7 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Fetch binaries
-        run: python tools/test_binaries_in_path.py
+        run: python tools/get_blast_binaries.py
 
       - name: Test with pytest
         run: |
