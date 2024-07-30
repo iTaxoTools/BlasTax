@@ -24,6 +24,7 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
 ) -> bool:
+
     p = subprocess.Popen(
         "makeblastdb -parse_seqids -in "
         + input_path
@@ -38,9 +39,8 @@ def make_database(
         env=BLAST_ENV,
     )
     p.wait()
-    if p.returncode == 0:
-        return True
-    return False
+
+    return bool(p.returncode == 0)
 
 
 def run_blast(
@@ -53,6 +53,7 @@ def run_blast(
     outfmt: str,
     other: str,
 ) -> bool:
+
     command = (
         f"{blast_binary} -query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt {outfmt} {other}"
@@ -60,9 +61,8 @@ def run_blast(
 
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
-    if p.returncode == 0:
-        return True
-    return False
+
+    return bool(p.returncode == 0)
 
 
 def run_blast_align(
@@ -74,6 +74,7 @@ def run_blast_align(
     num_threads: int,
     verbose: bool = True,
 ) -> bool:
+
     command = (
         f"{blast_binary} -out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
         f"-evalue {evalue} -db {database_path} -num_threads {num_threads}"
