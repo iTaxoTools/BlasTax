@@ -1,10 +1,9 @@
-import shutil
 import os
+import shutil
 
 import pytest
 
 import core
-
 
 binaries = [
     "windowmasker",
@@ -32,6 +31,7 @@ binaries = [
     "tblastn",
     "blastdbcheck",
 ]
+
 
 @pytest.mark.parametrize("binary", binaries)
 def test_binaries_in_path(binary: str):
