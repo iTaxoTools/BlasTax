@@ -53,5 +53,6 @@ jobs:
           pytest
         shell: powershell
         env:
-          COMSPEC: 'C:\Windows\System32\cmd.exe'
+          ComSpec: 'C:\Windows\System32\cmd.exe'
+          SystemRoot: 'C:\Windows'
         if: runner.os == 'Windows'
