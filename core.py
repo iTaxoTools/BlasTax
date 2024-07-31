@@ -24,8 +24,11 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
 ) -> bool:
+    here = Path(__file__).parent
+    bin = here / "bin"
+
     args = [
-        "makeblastdb.exe",
+        str(bin / "makeblastdb.exe"),
         "-parse_seqids",
         "-in",
         input_path,
