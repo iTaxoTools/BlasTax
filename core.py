@@ -32,6 +32,7 @@ def make_database(
     output_path: str,
     type: Literal["nucl", "prot"],
     name: str,
+    version: Literal[4, 5] = 4,
 ) -> bool:
     args = [
         get_blast_binary("makeblastdb"),
@@ -44,6 +45,8 @@ def make_database(
         output_path,
         "-dbtype",
         type,
+        "-blastdb_version",
+        str(version),
     ]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
