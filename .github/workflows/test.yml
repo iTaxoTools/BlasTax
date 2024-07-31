@@ -44,3 +44,12 @@ jobs:
         run: |
           pip install pytest
           pytest
+        shell: bash
+        if: runner.os != 'Windows'
+
+      - name: Test with pytest
+        run: |
+          pip install pytest
+          pytest
+        shell: powershell
+        if: runner.os == 'Windows'
