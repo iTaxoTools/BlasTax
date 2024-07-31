@@ -60,6 +60,6 @@ class Model(TaskModel):
 
     def onDone(self, report):
         time_taken = human_readable_seconds(report.result.seconds_taken)
-        self.notification.emit(Notification.Info(f"{self.name} completed successfully!\nTime taken: {time_taken}."))
+        self.notification.emit(Notification.Info(f"Database created successfully!\nTime taken: {time_taken}."))
 
         self.busy = False
