@@ -23,7 +23,7 @@ class DatabaseTest(NamedTuple):
         output_path.mkdir()
         assert make_database(
             str(input_path),
-            str(output_path / self.name),
+            str(output_path),
             self.type,
             self.name,
         )

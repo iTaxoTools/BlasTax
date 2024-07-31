@@ -34,6 +34,7 @@ def make_database(
     name: str,
     version: Literal[4, 5] = 4,
 ) -> bool:
+    output_pattern = Path(output_path) / name
     args = [
         get_blast_binary("makeblastdb"),
         "-parse_seqids",
@@ -42,12 +43,13 @@ def make_database(
         "-title",
         name,
         "-out",
-        output_path,
+        str(output_pattern),
         "-dbtype",
         type,
         "-blastdb_version",
         str(version),
     ]
+    print(args)
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 
