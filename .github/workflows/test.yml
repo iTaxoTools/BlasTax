@@ -52,4 +52,6 @@ jobs:
           pip install pytest
           pytest
         shell: powershell
+        env:
+          COMSPEC: 'C:\Windows\System32\cmd.exe'
         if: runner.os == 'Windows'
