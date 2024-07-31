@@ -49,9 +49,15 @@ pixmaps = LazyResourceCollection(
 
 task_pixmaps_large = LazyResourceCollection(
     about=lambda: VectorPixmap(get_data("graphics/about.svg"), Size.Large.size),
+    create=lambda: VectorPixmap(get_data("graphics/create.svg"), Size.Large.size),
+    blast=lambda: VectorPixmap(get_data("graphics/blast.svg"), Size.Large.size),
+    align=lambda: VectorPixmap(get_data("graphics/align.svg"), Size.Large.size),
 )
 
 
 task_pixmaps_medium = LazyResourceCollection(
     about=lambda: VectorPixmap(get_data("graphics/about.svg"), Size.Medium.size),
+    create=lambda: VectorPixmap(get_data("graphics/create.svg"), Size.Medium.size),
+    blast=lambda: VectorPixmap(get_data("graphics/blast.svg"), Size.Medium.size),
+    align=lambda: VectorPixmap(get_data("graphics/align.svg"), Size.Medium.size),
 )

@@ -3,8 +3,8 @@ from resources import task_pixmaps_large, task_pixmaps_medium
 title = "Make BLAST database"
 description = "Created from FASTA sequences"
 
-pixmap = task_pixmaps_large.about
-pixmap_medium = task_pixmaps_medium.about
+pixmap = task_pixmaps_large.create
+pixmap_medium = task_pixmaps_medium.create
 
 long_description = (
     "Turn sequences into a BLAST database, which can then be used in downstream analysis. "

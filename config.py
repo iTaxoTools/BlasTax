@@ -1,5 +1,5 @@
 from resources import icons, pixmaps
-from tasks import about, create
+from tasks import about, align, blast, create
 
 title = "BLAST-Align"
 icon = icons.blast
@@ -11,6 +11,10 @@ show_open = False
 show_save = False
 
 tasks = [
-    create,
+    [
+        create,
+        blast,
+        align,
+    ],
     about,
 ]
