@@ -2,10 +2,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from pathlib import Path
 
-from itaxotools.common.bindings import Binder
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import GLineEdit
 
 from .widgets import ElidedLineEdit
 
@@ -124,46 +122,3 @@ class PathDirectorySelector(PathSelector):
         if not filename:
             return
         self.selectedPath.emit(Path(filename))
-
-
-class NameSelector(Card):
-    nameChanged = QtCore.Signal(str)
-
-    def __init__(self, text, parent=None):
-        super().__init__(parent)
-        self.binder = Binder()
-        self.draw_main(text)
-
-    def draw_main(self, text):
-        label = QtWidgets.QLabel(text + ":")
-        label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
-
-        field = GLineEdit()
-        field.textEditedSafe.connect(self._handle_name_changed)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(label)
-        layout.addWidget(field, 1)
-        layout.addSpacing(136)
-        layout.setSpacing(16)
-        self.addLayout(layout)
-
-        self.controls.label = label
-        self.controls.field = field
-
-    def _handle_browse(self, *args):
-        raise NotImplementedError()
-
-    def _handle_name_changed(self, name: str):
-        self.nameChanged.emit(str(name))
-
-    def set_busy(self, busy: bool):
-        self.setEnabled(True)
-        self.controls.field.setEnabled(not busy)
-        self.controls.browse.setEnabled(not busy)
-        self.controls.label.setEnabled(not busy)
-
-    def set_name(self, name: str):
-        text = name or "---"
-        self.controls.field.setText(text)

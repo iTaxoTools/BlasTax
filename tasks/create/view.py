@@ -1,11 +1,92 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
+from typing import Literal
+
+from itaxotools.common.bindings import Binder
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
+from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup
 
-from ..common.view import GraphicTitleCard, NameSelector, PathDirectorySelector, PathFileSelector
+from ..common.view import GraphicTitleCard, PathDirectorySelector, PathFileSelector
 from . import long_description, pixmap_medium, title
+
+
+class NameSelector(Card):
+    nameChanged = QtCore.Signal(str)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.binder = Binder()
+        self.draw_main(text)
+
+    def draw_main(self, text):
+        label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(140)
+
+        field = GLineEdit()
+        field.textEditedSafe.connect(self._handle_name_changed)
+        field.setTextMargins(4, 0, 12, 0)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(field, 1)
+        layout.addSpacing(136)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.label = label
+        self.controls.field = field
+
+    def _handle_name_changed(self, name: str):
+        self.nameChanged.emit(str(name))
+
+    def set_name(self, name: str):
+        text = name or "---"
+        self.controls.field.setText(text)
+
+
+class TypeSelector(Card):
+    typeChanged = QtCore.Signal(str)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.binder = Binder()
+        self.draw_main(text)
+
+    def draw_main(self, text):
+        label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(140)
+
+        nucl = QtWidgets.QRadioButton("Nucleotide sequences")
+        prot = QtWidgets.QRadioButton("Protein sequences")
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_value_changed)
+        group.add(nucl, "nucl")
+        group.add(prot, "prot")
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(nucl)
+        layout.addWidget(prot, 1)
+        layout.addSpacing(136)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.label = label
+        self.controls.nucl = nucl
+        self.controls.prot = prot
+        self.controls.type = group
+
+    def _handle_value_changed(self, value):
+        self.typeChanged.emit(str(value))
+
+    def set_type(self, type: Literal["nucl", "prot"]):
+        self.controls.type.setValue(type)
 
 
 class View(ScrollTaskView):
@@ -19,6 +100,7 @@ class View(ScrollTaskView):
         self.cards.input_path = PathFileSelector("Input FASTA file")
         self.cards.output_path = PathDirectorySelector("Output folder")
         self.cards.database_name = NameSelector("Database name")
+        self.cards.database_type = TypeSelector("Database type")
         self.cards.progress = ProgressCard(self)
 
         layout = QtWidgets.QVBoxLayout()
@@ -54,9 +136,13 @@ class View(ScrollTaskView):
         self.binder.bind(self.cards.input_path.selectedPath, object.properties.database_name, lambda p: p.stem)
         self.binder.bind(self.cards.input_path.selectedPath, object.properties.output_path, lambda p: p.parent)
 
-        # defined last to override `set_busy` calls
+        self.binder.bind(object.properties.database_type, self.cards.database_type.set_type)
+        self.binder.bind(self.cards.database_type.typeChanged, object.properties.database_type)
+
         self.binder.bind(object.properties.editable, self.setEditable)
 
     def setEditable(self, editable: bool):
         self.cards.input_path.setEnabled(editable)
         self.cards.output_path.setEnabled(editable)
+        self.cards.database_name.setEnabled(editable)
+        self.cards.database_type.setEnabled(editable)
