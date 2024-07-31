@@ -25,7 +25,7 @@ def make_database(
     name: str,
 ) -> bool:
     args = [
-        "makeblastdb",
+        "makeblastdb.exe",
         "-parse_seqids",
         "-in",
         input_path,
@@ -36,8 +36,6 @@ def make_database(
         "-dbtype",
         type,
     ]
-    print(args)
-    print(BLAST_ENV["PATH"])
     p = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
