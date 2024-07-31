@@ -33,7 +33,15 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Test with pytest
-        shell: bash
         run: |
           pip install pytest
           pytest
+        shell: bash
+        if: runner.os != 'Windows'
+
+      - name: Test with pytest (Windows)
+        run: |
+          pip install pytest
+          pytest
+        shell: cmd
+        if: runner.os == 'Windows'
