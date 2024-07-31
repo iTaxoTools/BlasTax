@@ -33,6 +33,7 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Test with pytest
+        shell: bash
         run: |
           pip install pytest
           pytest
