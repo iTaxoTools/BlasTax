@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,7 +9,7 @@ from utils import complement, translate
 
 
 def get_blast_binary(name: str) -> str:
-    if os.system() == "Windows":
+    if platform.system() == "Windows":
         name += ".exe"
     here = Path(__file__).parent
     bin = here / "bin" / name
