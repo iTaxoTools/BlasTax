@@ -1,4 +1,5 @@
 from resources import icons, pixmaps
+from tasks import about
 
 title = "BLAST-Align"
 icon = icons.blast
@@ -9,4 +10,6 @@ dashboard = "constrained"
 show_open = False
 show_save = False
 
-tasks = []
+tasks = [
+    about,
+]
