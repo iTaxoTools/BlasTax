@@ -188,18 +188,10 @@ def blastx_parse(
 
                     # Prepare unique keys for dict_53_added
                     shorter_pident = f">{database_name}_{splitti[3]}_pident_"
-                    head_pident53_added = (
-                        f">{database_name}_{splitti[3]}_pident_{pident[:-2]}\n"
-                    )
-                    head_seq53_added = (
-                        seq[offset : ((len(splitti[4]) * 3) + offset)] + "\n"
-                    )
+                    head_pident53_added = f">{database_name}_{splitti[3]}_pident_{pident[:-2]}\n"
+                    head_seq53_added = seq[offset : ((len(splitti[4]) * 3) + offset)] + "\n"
                     any_key_starting_with_prefix = next(
-                        (
-                            key
-                            for key in dict_53_added
-                            if key.startswith(shorter_pident)
-                        ),
+                        (key for key in dict_53_added if key.startswith(shorter_pident)),
                         None,
                     )
                     #                    print("HEADER SHORT: ", shorter_pident)
@@ -208,21 +200,15 @@ def blastx_parse(
                     #                    print("HEADER FROM DICT: ", any_key_starting_with_prefix)
 
                     if any_key_starting_with_prefix:
-                        existing_seq_length = len(
-                            dict_53_added[any_key_starting_with_prefix]
-                        )
+                        existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
                         new_seq_length = len(head_seq53_added)
                         #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
                         if new_seq_length > existing_seq_length:
                             dict_53_added.pop(any_key_starting_with_prefix, None)
                             dict_53_added[head_pident53_added] = head_seq53_added
                         elif new_seq_length == existing_seq_length:
-                            old_pident53 = float(
-                                any_key_starting_with_prefix.split("_")[-1].rstrip()
-                            )
-                            new_pident53 = float(
-                                head_pident53_added.split("_")[-1].rstrip()
-                            )
+                            old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
                             #                            print("OLD PIDENT: ", old_pident53)
                             #                            print("NEW PIDENT: ", new_pident53)
                             if new_pident53 > old_pident53:
@@ -246,23 +232,15 @@ def blastx_parse(
                     revcompseq = fragment[::-1]
                     # deduplication
                     shorter_pident = f">{database_name}_{splitti[3]}_pident_"
-                    head_pident35_added = (
-                        f">{database_name}_{splitti[3]}_pident_{pident[:-2]}\n"
-                    )
+                    head_pident35_added = f">{database_name}_{splitti[3]}_pident_{pident[:-2]}\n"
                     head_seq35_added = revcompseq + "\n"
                     any_key_starting_with_prefix = next(
-                        (
-                            key
-                            for key in dict_35_added
-                            if key.startswith(shorter_pident)
-                        ),
+                        (key for key in dict_35_added if key.startswith(shorter_pident)),
                         None,
                     )
 
                     if any_key_starting_with_prefix:
-                        existing_seq_length = len(
-                            dict_35_added[any_key_starting_with_prefix]
-                        )
+                        existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
                         new_seq_length = len(head_seq35_added)
                         #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
                         if new_seq_length > existing_seq_length:
@@ -270,12 +248,8 @@ def blastx_parse(
                             #                            print("The sequence was removed: ", removed_value)
                             dict_35_added[head_pident35_added] = head_seq35_added
                         elif new_seq_length == existing_seq_length:
-                            old_pident35 = float(
-                                any_key_starting_with_prefix.split("_")[-1].rstrip()
-                            )
-                            new_pident35 = float(
-                                head_pident35_added.split("_")[-1].rstrip()
-                            )
+                            old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                            new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
                             #                            print("OLD PIDENT: ", old_pident53)
                             #                            print("NEW PIDENT: ", new_pident53)
                             if new_pident35 > old_pident35:

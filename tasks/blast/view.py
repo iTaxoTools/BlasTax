@@ -15,9 +15,7 @@ class View(ScrollTaskView):
 
     def draw_cards(self):
         self.cards = AttrDict()
-        self.cards.title = GraphicTitleCard(
-            title, long_description, pixmap_medium.resource, self
-        )
+        self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
 
         layout = QtWidgets.QVBoxLayout()

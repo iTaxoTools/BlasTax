@@ -33,9 +33,7 @@ class HtmlLabel(QtWidgets.QLabel):
 
         self.setTextFormat(QtCore.Qt.RichText)
         self.setOpenExternalLinks(True)
-        self.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse
-        )
+        self.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse)
         self.setWordWrap(True)
 
         # fix italics kerning
@@ -142,12 +140,8 @@ class View(ScrollTaskView):
 
     def draw_cards(self):
         self.cards = AttrDict()
-        self.cards.title = AboutTitleCard(
-            title, resources.documents.about.resource, pixmap_medium.resource, self
-        )
-        self.cards.phase = DocumentCard(
-            "About BLAST+", resources.documents.blast.resource, self
-        )
+        self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
+        self.cards.phase = DocumentCard("About BLAST+", resources.documents.blast.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)

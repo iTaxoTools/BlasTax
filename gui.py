@@ -72,13 +72,8 @@ def start_processing():
 def make_db_button_cmd():
     if fndb == "":
         print("Input: ", fndb)
-        return showinfo(
-            title="warning", message="The build database file is not selected!"
-        )
-    if (
-        database_type.get() != "Nucleic acid sequence"
-        and database_type.get() != "Protein sequence"
-    ):
+        return showinfo(title="warning", message="The build database file is not selected!")
+    if database_type.get() != "Nucleic acid sequence" and database_type.get() != "Protein sequence":
         return showinfo(title="warning", message="The database type is not selected!")
     if database_name.get() == "":
         return showinfo(title="warning", message="Database name is not set!")
@@ -120,9 +115,7 @@ def make_db_button_cmd():
 
 ### CREATE A NEW OUTPUT FILE FOR THE REGULAR BLAST ###
 def get_new_filename():
-    new_filename = filedialog.asksaveasfilename(
-        defaultextension=".out", filetypes=[("Text files", "*.txt")]
-    )
+    new_filename = filedialog.asksaveasfilename(defaultextension=".out", filetypes=[("Text files", "*.txt")])
     return new_filename
 
 
@@ -188,9 +181,7 @@ def switch_nucleotide_widgets(state):
     if blast_typeVar2.get() == "blastx":
         # Make the widgets for extra nucleotide file active
         extra_nucleotide_entry.grid(row=3, column=2, sticky="we", pady=(10, 0))
-        extra_nucleotide_browse_button.grid(
-            row=3, column=3, sticky="we", padx=(5, 25), pady=(10, 0)
-        )
+        extra_nucleotide_browse_button.grid(row=3, column=3, sticky="we", padx=(5, 25), pady=(10, 0))
     else:
         # Remove or hide the widgets for extra nucleotide file
         extra_nucleotide_entry.grid_forget()
@@ -201,18 +192,10 @@ def switch_nucleotide_widgets(state):
 def museoscript_widgets():
     if museoscript_mode_var.get():
         # Make the widgets for museoscript output file
-        museoscript_parameters.grid(
-            row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5)
-        )
-        similarity_threshold_label.grid(
-            row=8, column=0, sticky="e", pady=(10, 0), padx=(10, 5)
-        )
-        similarity_threshold_entry.grid(
-            row=8, column=1, sticky="w", pady=(10, 0), padx=(0, 25)
-        )
-        museo_script_output_text.grid(
-            row=8, column=2, columnspan=2, sticky="e", pady=(10, 0), padx=(25, 5)
-        )
+        museoscript_parameters.grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_label.grid(row=8, column=0, sticky="e", pady=(10, 0), padx=(10, 5))
+        similarity_threshold_entry.grid(row=8, column=1, sticky="w", pady=(10, 0), padx=(0, 25))
+        museo_script_output_text.grid(row=8, column=2, columnspan=2, sticky="e", pady=(10, 0), padx=(25, 5))
         museo_script_output.grid(row=8, column=4, sticky="w", pady=(10, 0), padx=(0, 5))
 
         # Set values for Outfmt and Other cmd, and make them read-only
@@ -231,9 +214,7 @@ def museoscript_widgets():
         blast_type.config(state="disabled")
 
         # Show the new checkbox for retrieving original reads
-        extra_museoscript_checkbox.grid(
-            row=7, column=0, columnspan=2, sticky="e", padx=(0, 0), pady=1
-        )
+        extra_museoscript_checkbox.grid(row=7, column=0, columnspan=2, sticky="e", padx=(0, 0), pady=1)
 
     else:
         # Remove or hide the widgets for museoscript output file
@@ -345,13 +326,7 @@ def blast_align(input_file):
     os.remove(temporary_file)
 
     filesplit = filebase.split(".")
-    modified_output = (
-        str(select_out2.get())
-        + "/"
-        + filesplit[0]
-        + "_blastmatchesadded."
-        + filesplit[1]
-    )
+    modified_output = str(select_out2.get()) + "/" + filesplit[0] + "_blastmatchesadded." + filesplit[1]
     print("output file: ", output_file)
     if blast_type2.get() == "blastx":
         db_name = select_db2.get()
@@ -437,9 +412,7 @@ def on_checkbox_click(frame, checkbox, all_frames):
 
 
 def create_checkbox(frame, text, row, column, variable, all_frames):
-    checkbox = Checkbutton(
-        frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable
-    )
+    checkbox = Checkbutton(frame, text=text, bg="#fffacd", onvalue=1, offvalue=0, variable=variable)
     checkbox.grid(row=row, column=column, columnspan=6, sticky="w", padx=(6, 0), pady=1)
     checkbox.var = variable
     checkbox.configure(command=lambda: on_checkbox_click(frame, checkbox, all_frames))
@@ -509,28 +482,20 @@ fifth_frame.columnconfigure(4, weight=1)
 ### CHECKBOXES ###
 main_frames = [second_frame, third_frame, fourth_frame]
 run_blast_var = IntVar()
-run_blast_checkbox = create_checkbox(
-    second_frame, "Run regular BLAST", 0, 0, run_blast_var, main_frames
-)
+run_blast_checkbox = create_checkbox(second_frame, "Run regular BLAST", 0, 0, run_blast_var, main_frames)
 
 run_batch_var = IntVar()
-run_batch_checkbox = create_checkbox(
-    third_frame, "Run BLAST-Align", 0, 0, run_batch_var, main_frames
-)
+run_batch_checkbox = create_checkbox(third_frame, "Run BLAST-Align", 0, 0, run_batch_var, main_frames)
 
 build_db_var = IntVar()
-run_batch_checkbox3 = create_checkbox(
-    fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames
-)
+run_batch_checkbox3 = create_checkbox(fourth_frame, "Build BLAST database", 0, 0, build_db_var, main_frames)
 
 
 ### Title Frame ###
 banner_frame = LabelFrame(top, bg="#f0f0f0")
 banner_img = ImageTk.PhotoImage(Image.open(LOGO))
 
-my_image_label = Label(banner_frame, image=banner_img).grid(
-    row=0, column=0, rowspan=3, sticky="nsew"
-)
+my_image_label = Label(banner_frame, image=banner_img).grid(row=0, column=0, rowspan=3, sticky="nsew")
 banner_frame.grid(column=0, row=0, sticky="nsew")
 
 program_name = Label(banner_frame, text="BLAST-Align", bg="#f0f0f0", font=Font(size=20))
@@ -618,9 +583,7 @@ query_sequence = Entry(
     width=25,
     font=16,
 )
-query_sequence.grid(
-    row=4, column=0, columnspan=2, sticky="we", padx=(10, 10), pady=(10, 0)
-)
+query_sequence.grid(row=4, column=0, columnspan=2, sticky="we", padx=(10, 10), pady=(10, 0))
 
 evalue = Label(second_frame, text="E-value:", bg="#fffacd")
 evalue.grid(row=4, column=2, sticky="e", padx=(10, 0), pady=(10, 0))
@@ -663,28 +626,20 @@ blast_typeList = [
     "tblastx",
 ]
 blast_typeVar = StringVar(value="blastn")
-blast_type = Combobox(
-    second_frame, textvariable=blast_typeVar, values=blast_typeList
-)  # , font=('', 13))
+blast_type = Combobox(second_frame, textvariable=blast_typeVar, values=blast_typeList)  # , font=('', 13))
 blast_type.grid(row=5, column=5, padx=(0, 10), sticky="w")
 
 ###############################
 ### NEW checkbox for museoscript mode
 museoscript_mode_var = IntVar()
-museoscript_checkbox = create_checkbox(
-    second_frame, "Museoscript mode", 0, 1, museoscript_mode_var, main_frames
-)
+museoscript_checkbox = create_checkbox(second_frame, "Museoscript mode", 0, 1, museoscript_mode_var, main_frames)
 museoscript_checkbox.configure(command=museoscript_widgets)
 
 ### NEW  WIDGET FOR MUSEOSCRIPT MODE ### PLACED HERE BECAUSE BLAST TYPE MUST BE DEFINED
-museoscript_parameters = Label(
-    second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd"
-)
+museoscript_parameters = Label(second_frame, text="MUSEOSCRIPT PARAMETERS", bg="#fffacd")
 museoscript_parameters.grid_forget()
 
-museo_script_output_text = Label(
-    second_frame, text="Museoscript output filename:", bg="#fffacd"
-)
+museo_script_output_text = Label(second_frame, text="Museoscript output filename:", bg="#fffacd")
 museo_script_output_text.grid_forget()
 museo_script_output = Entry(second_frame, width=40)
 # museo_script_output.insert(0, "Entry the name of museoscript output file")
@@ -802,9 +757,7 @@ method2 = Label(third_frame, text="Methods:", bg="#fffacd")
 method2.grid(row=4, column=0, sticky="e")
 
 blast_typeVar2 = StringVar(value="blastn")
-blast_type2 = Combobox(
-    third_frame, textvariable=blast_typeVar2, values=blast_typeList
-)  # , font=('', 13))
+blast_type2 = Combobox(third_frame, textvariable=blast_typeVar2, values=blast_typeList)  # , font=('', 13))
 blast_type2.grid(row=4, column=1, sticky="we")
 # Bind the event to toggle the visibility of extra nucleotide widgets
 blast_type2.bind("<<ComboboxSelected>>", switch_nucleotide_widgets)
@@ -865,9 +818,7 @@ db_typeList = [
     "Protein sequence",
 ]
 database_typeVar = StringVar()
-database_type = Combobox(
-    fourth_frame, textvariable=database_typeVar, values=db_typeList
-)
+database_type = Combobox(fourth_frame, textvariable=database_typeVar, values=db_typeList)
 database_type.grid(row=2, column=3, sticky="we")
 
 database_name = Label(fourth_frame, text="Select database name: ", bg="#fffacd")
@@ -885,14 +836,10 @@ database_name.grid(row=2, column=5, padx=(0, 10), sticky="we")
 # button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
 # button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(5, 25))
 
-button_help = Button(
-    fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions
-)
+button_help = Button(fifth_frame, text="Help", bg="#add8e6", width=8, height=2, command=main_instructions)
 button_help.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
 
-button_start = Button(
-    fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing
-)
+button_start = Button(fifth_frame, text="Start", bg="#90ee90", width=8, height=2, command=start_processing)
 button_start.grid(row=0, column=4, columnspan=3, sticky="nsew", padx=(15, 25), pady=10)
 
 ###############################

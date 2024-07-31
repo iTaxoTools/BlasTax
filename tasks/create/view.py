@@ -4,7 +4,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 
-from ..common.view import GraphicTitleCard, PathDirectorySelector, PathFileSelector
+from ..common.view import GraphicTitleCard, NameSelector, PathDirectorySelector, PathFileSelector
 from . import long_description, pixmap_medium, title
 
 
@@ -15,11 +15,10 @@ class View(ScrollTaskView):
 
     def draw_cards(self):
         self.cards = AttrDict()
-        self.cards.title = GraphicTitleCard(
-            title, long_description, pixmap_medium.resource, self
-        )
+        self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.input_path = PathFileSelector("Input FASTA file")
         self.cards.output_path = PathDirectorySelector("Output folder")
+        self.cards.database_name = NameSelector("Database name")
         self.cards.progress = ProgressCard(self)
 
         layout = QtWidgets.QVBoxLayout()
@@ -42,20 +41,18 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.binder.bind(object.properties.input_path, self.cards.input_path.set_path)
-        self.binder.bind(
-            self.cards.input_path.pathChanged, object.properties.input_path
-        )
-        self.binder.bind(
-            self.cards.input_path.selectedPath, object.properties.input_path
-        )
+        self.binder.bind(self.cards.input_path.pathChanged, object.properties.input_path)
+        self.binder.bind(self.cards.input_path.selectedPath, object.properties.input_path)
 
         self.binder.bind(object.properties.output_path, self.cards.output_path.set_path)
-        self.binder.bind(
-            self.cards.output_path.pathChanged, object.properties.output_path
-        )
-        self.binder.bind(
-            self.cards.output_path.selectedPath, object.properties.output_path
-        )
+        self.binder.bind(self.cards.output_path.pathChanged, object.properties.output_path)
+        self.binder.bind(self.cards.output_path.selectedPath, object.properties.output_path)
+
+        self.binder.bind(object.properties.database_name, self.cards.database_name.set_name)
+        self.binder.bind(self.cards.database_name.nameChanged, object.properties.database_name)
+
+        self.binder.bind(self.cards.input_path.selectedPath, object.properties.database_name, lambda p: p.stem)
+        self.binder.bind(self.cards.input_path.selectedPath, object.properties.output_path, lambda p: p.parent)
 
         # defined last to override `set_busy` calls
         self.binder.bind(object.properties.editable, self.setEditable)

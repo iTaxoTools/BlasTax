@@ -13,6 +13,7 @@ class Model(TaskModel):
 
     input_path = Property(Path, Path())
     output_path = Property(Path, Path())
+    database_name = Property(str, "")
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -27,6 +28,7 @@ class Model(TaskModel):
 
         print(self.input_path)
         print(self.output_path)
+        print(self.database_name)
 
         self.exec(
             process.execute,
@@ -34,10 +36,6 @@ class Model(TaskModel):
 
     def onDone(self, report):
         time_taken = human_readable_seconds(report.result.seconds_taken)
-        self.notification.emit(
-            Notification.Info(
-                f"{self.name} completed successfully!\nTime taken: {time_taken}."
-            )
-        )
+        self.notification.emit(Notification.Info(f"{self.name} completed successfully!\nTime taken: {time_taken}."))
 
         self.busy = False

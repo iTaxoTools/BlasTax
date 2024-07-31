@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.bindings import Binder
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import GLineEdit
 
 from .widgets import ElidedLineEdit
 
@@ -66,10 +67,7 @@ class PathSelector(Card):
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
-        self.model = None
-        self.binder = Binder()
         self.draw_main(text)
-        self.draw_config()
 
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -82,6 +80,7 @@ class PathSelector(Card):
 
         browse = QtWidgets.QPushButton("Browse")
         browse.clicked.connect(self._handle_browse)
+        browse.setFixedWidth(120)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(label)
@@ -100,9 +99,6 @@ class PathSelector(Card):
     def _handle_text_changed(self, text: str):
         self.pathChanged.emit(Path(text))
 
-    def draw_config(self):
-        self.controls.config = None
-
     def set_busy(self, busy: bool):
         self.setEnabled(True)
         self.controls.field.setEnabled(not busy)
@@ -116,9 +112,7 @@ class PathSelector(Card):
 
 class PathFileSelector(PathSelector):
     def _handle_browse(self, *args):
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self.window(), f"{app.config.title} - Browse file"
-        )
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self.window(), f"{app.config.title} - Browse file")
         if not filename:
             return
         self.selectedPath.emit(Path(filename))
@@ -126,9 +120,50 @@ class PathFileSelector(PathSelector):
 
 class PathDirectorySelector(PathSelector):
     def _handle_browse(self, *args):
-        filename = QtWidgets.QFileDialog.getExistingDirectory(
-            self.window(), f"{app.config.title} - Browse directory"
-        )
+        filename = QtWidgets.QFileDialog.getExistingDirectory(self.window(), f"{app.config.title} - Browse directory")
         if not filename:
             return
         self.selectedPath.emit(Path(filename))
+
+
+class NameSelector(Card):
+    nameChanged = QtCore.Signal(str)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.binder = Binder()
+        self.draw_main(text)
+
+    def draw_main(self, text):
+        label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(140)
+
+        field = GLineEdit()
+        field.textEditedSafe.connect(self._handle_name_changed)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(field, 1)
+        layout.addSpacing(136)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.label = label
+        self.controls.field = field
+
+    def _handle_browse(self, *args):
+        raise NotImplementedError()
+
+    def _handle_name_changed(self, name: str):
+        self.nameChanged.emit(str(name))
+
+    def set_busy(self, busy: bool):
+        self.setEnabled(True)
+        self.controls.field.setEnabled(not busy)
+        self.controls.browse.setEnabled(not busy)
+        self.controls.label.setEnabled(not busy)
+
+    def set_name(self, name: str):
+        text = name or "---"
+        self.controls.field.setText(text)

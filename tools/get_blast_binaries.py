@@ -146,12 +146,8 @@ def get_blast(version: str, os: str):
 def main():
     parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
 
-    parser.add_argument(
-        "-v", "--version", type=str, default="", help="Download a specific version"
-    )
-    parser.add_argument(
-        "-s", "--os", type=str, default="", help="Specify target operating system"
-    )
+    parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
+    parser.add_argument("-s", "--os", type=str, default="", help="Specify target operating system")
 
     args = parser.parse_args()
 
