@@ -7,6 +7,14 @@ from typing import Literal
 from utils import complement, translate
 
 
+def get_blast_binary(name: str) -> str:
+    if os.system() == "Windows":
+        name += ".exe"
+    here = Path(__file__).parent
+    bin = here / "bin" / name
+    return str(bin)
+
+
 def get_blast_env() -> dict:
     here = Path(__file__).parent
     bin = here / "bin"
@@ -24,11 +32,8 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
 ) -> bool:
-    here = Path(__file__).parent
-    bin = here / "bin"
-
     args = [
-        str(bin / "makeblastdb.exe"),
+        get_blast_binary("makeblastdb"),
         "-parse_seqids",
         "-in",
         input_path,
@@ -39,11 +44,7 @@ def make_database(
         "-dbtype",
         type,
     ]
-    p = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        env=BLAST_ENV,
-    )
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 
     return bool(p.returncode == 0)
