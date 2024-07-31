@@ -21,10 +21,10 @@ jobs:
 
       - name: Environ check
         run: |
-          echo asd $ComSpec %ComSpec% asd
-          echo asd $SystemRoot %SystemRoot% asd
-          echo "SystemRoot=C:\Windows" >> $GITHUB_ENV
-          echo "ComSpec=%SystemRoot%\System32\cmd.exe" >> $GITHUB_ENV
+          echo "COMSPEC: $env:COMSPEC"
+        shell: pwsh
+        env:
+          COMSPEC: 'C:\Windows\System32\cmd.exe'
         if: runner.os == 'Windows'
 
       - name: Set up Python
