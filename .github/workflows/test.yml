@@ -19,14 +19,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Environ check
-        run: |
-          echo "COMSPEC: $env:COMSPEC"
-        shell: pwsh
-        env:
-          COMSPEC: 'C:\Windows\System32\cmd.exe'
-        if: runner.os == 'Windows'
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -44,15 +36,3 @@ jobs:
         run: |
           pip install pytest
           pytest
-        shell: bash
-        if: runner.os != 'Windows'
-
-      - name: Test with pytest
-        run: |
-          pip install pytest
-          pytest
-        shell: powershell
-        env:
-          ComSpec: 'C:\Windows\System32\cmd.exe'
-          SystemRoot: 'C:\Windows'
-        if: runner.os == 'Windows'

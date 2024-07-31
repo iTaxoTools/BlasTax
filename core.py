@@ -24,16 +24,20 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
 ) -> bool:
+    args = [
+        "makeblastdb",
+        "-parse_seqids",
+        "-in",
+        input_path,
+        "-title",
+        name,
+        "-out",
+        output_path,
+        "-dbtype",
+        type,
+    ]
     p = subprocess.Popen(
-        "makeblastdb -parse_seqids -in "
-        + input_path
-        + " -dbtype "
-        + type
-        + " -title "
-        + name
-        + " -out "
-        + output_path,
-        shell=True,
+        args,
         stdout=subprocess.PIPE,
         env=BLAST_ENV,
     )
