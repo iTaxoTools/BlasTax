@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import TaskModel
 from itaxotools.taxi_gui.types import Notification
 from itaxotools.taxi_gui.utility import human_readable_seconds
@@ -7,6 +10,9 @@ from . import process, title
 
 class Model(TaskModel):
     task_name = title
+
+    input_path = Property(Path, Path())
+    output_path = Property(Path, Path())
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -18,6 +24,9 @@ class Model(TaskModel):
 
     def start(self):
         super().start()
+
+        print(self.input_path)
+        print(self.output_path)
 
         self.exec(
             process.execute,

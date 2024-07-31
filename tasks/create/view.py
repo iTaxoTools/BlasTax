@@ -4,7 +4,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 
-from ..common.view import GraphicTitleCard
+from ..common.view import GraphicTitleCard, PathDirectorySelector, PathFileSelector
 from . import long_description, pixmap_medium, title
 
 
@@ -18,6 +18,8 @@ class View(ScrollTaskView):
         self.cards.title = GraphicTitleCard(
             title, long_description, pixmap_medium.resource, self
         )
+        self.cards.input_path = PathFileSelector("Input FASTA file")
+        self.cards.output_path = PathDirectorySelector("Output folder")
         self.cards.progress = ProgressCard(self)
 
         layout = QtWidgets.QVBoxLayout()
@@ -39,9 +41,25 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
+        self.binder.bind(object.properties.input_path, self.cards.input_path.set_path)
+        self.binder.bind(
+            self.cards.input_path.pathChanged, object.properties.input_path
+        )
+        self.binder.bind(
+            self.cards.input_path.selectedPath, object.properties.input_path
+        )
+
+        self.binder.bind(object.properties.output_path, self.cards.output_path.set_path)
+        self.binder.bind(
+            self.cards.output_path.pathChanged, object.properties.output_path
+        )
+        self.binder.bind(
+            self.cards.output_path.selectedPath, object.properties.output_path
+        )
+
         # defined last to override `set_busy` calls
         self.binder.bind(object.properties.editable, self.setEditable)
 
     def setEditable(self, editable: bool):
-        self.cards.title.setEnabled(True)
-        self.cards.progress.setEnabled(True)
+        self.cards.input_path.setEnabled(editable)
+        self.cards.output_path.setEnabled(editable)

@@ -1,6 +1,12 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from pathlib import Path
+
+from itaxotools.common.bindings import Binder
+from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.view.cards import Card
+
+from .widgets import ElidedLineEdit
 
 
 class GraphicTitleCard(Card):
@@ -52,3 +58,77 @@ class GraphicTitleCard(Card):
 
     def setBusy(self, busy: bool):
         self.setEnabled(not busy)
+
+
+class PathSelector(Card):
+    pathChanged = QtCore.Signal(Path)
+    selectedPath = QtCore.Signal(Path)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.model = None
+        self.binder = Binder()
+        self.draw_main(text)
+        self.draw_config()
+
+    def draw_main(self, text):
+        label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(140)
+
+        field = ElidedLineEdit()
+        field.textEditedSafe.connect(self._handle_text_changed)
+        field.setReadOnly(True)
+
+        browse = QtWidgets.QPushButton("Browse")
+        browse.clicked.connect(self._handle_browse)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(field, 1)
+        layout.addWidget(browse)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.label = label
+        self.controls.field = field
+        self.controls.browse = browse
+
+    def _handle_browse(self, *args):
+        raise NotImplementedError()
+
+    def _handle_text_changed(self, text: str):
+        self.pathChanged.emit(Path(text))
+
+    def draw_config(self):
+        self.controls.config = None
+
+    def set_busy(self, busy: bool):
+        self.setEnabled(True)
+        self.controls.field.setEnabled(not busy)
+        self.controls.browse.setEnabled(not busy)
+        self.controls.label.setEnabled(not busy)
+
+    def set_path(self, path: Path):
+        text = str(path) if path != Path() else "---"
+        self.controls.field.setText(text)
+
+
+class PathFileSelector(PathSelector):
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self.window(), f"{app.config.title} - Browse file"
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
+
+
+class PathDirectorySelector(PathSelector):
+    def _handle_browse(self, *args):
+        filename = QtWidgets.QFileDialog.getExistingDirectory(
+            self.window(), f"{app.config.title} - Browse directory"
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
