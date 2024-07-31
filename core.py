@@ -36,6 +36,8 @@ def make_database(
         "-dbtype",
         type,
     ]
+    print(args)
+    print(BLAST_ENV["PATH"])
     p = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
