@@ -29,3 +29,23 @@ class ElidedLineEdit(GLineEdit):
 
     def text(self):
         return self.full_text
+
+
+class GrowingListView(QtWidgets.QListView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.height_slack = 16
+        self.lines_max = 16
+        self.lines_min = 8
+
+    def getHeightHint(self):
+        lines = self.model().rowCount() if self.model() else 0
+        lines = max(lines, self.lines_min)
+        lines = min(lines, self.lines_max)
+        height = self.fontMetrics().height()
+        return int(lines * height)
+
+    def sizeHint(self):
+        width = super().sizeHint().width()
+        height = self.getHeightHint() + 16
+        return QtCore.QSize(width, height)

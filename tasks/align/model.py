@@ -1,3 +1,4 @@
+from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import TaskModel
 from itaxotools.taxi_gui.types import Notification
 from itaxotools.taxi_gui.utility import human_readable_seconds
@@ -7,6 +8,8 @@ from . import process, title
 
 class Model(TaskModel):
     task_name = title
+
+    batch_mode = Property(bool, False)
 
     def __init__(self, name=None):
         super().__init__(name)
