@@ -7,7 +7,7 @@ pixmap = pixmaps.blast
 
 dashboard = "constrained"
 
-show_open = False
+show_open = True
 show_save = False
 
 tasks = [

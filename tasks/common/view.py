@@ -44,7 +44,7 @@ class GraphicTitleCard(Card):
         layout.setSpacing(16)
         layout.addLayout(pixmap_layout)
         layout.addLayout(text_layout, 1)
-        layout.addSpacing(100)
+        layout.addSpacing(16)
 
         self.addLayout(layout)
 
@@ -110,7 +110,10 @@ class PathSelector(Card):
 
 class PathFileSelector(PathSelector):
     def _handle_browse(self, *args):
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self.window(), f"{app.config.title} - Browse file")
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
         if not filename:
             return
         self.selectedPath.emit(Path(filename))
@@ -118,7 +121,20 @@ class PathFileSelector(PathSelector):
 
 class PathDirectorySelector(PathSelector):
     def _handle_browse(self, *args):
-        filename = QtWidgets.QFileDialog.getExistingDirectory(self.window(), f"{app.config.title} - Browse directory")
+        filename = QtWidgets.QFileDialog.getExistingDirectory(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse directory",
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
+
+
+class PathDatabaseSelector(PathSelector):
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(), caption=f"{app.config.title} - Browse file", filter="BLAST databases (*.nin *pin)"
+        )
         if not filename:
             return
         self.selectedPath.emit(Path(filename))

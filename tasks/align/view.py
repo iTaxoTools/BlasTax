@@ -8,7 +8,7 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
-from ..common.view import GraphicTitleCard
+from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
 from ..common.widgets import ElidedLineEdit, GrowingListView
 from . import long_description, pixmap_medium, title
 
@@ -20,8 +20,8 @@ class QuerySelector(Card):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_main(text)
-        self.draw_single("Query FASTA file")
-        self.draw_batch("Query FASTA files")
+        self.draw_single("\u25C0  Query FASTA file")
+        self.draw_batch("\u25C0  Query FASTA files")
 
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -51,6 +51,7 @@ class QuerySelector(Card):
 
     def draw_single(self, text):
         label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(140)
 
         field = ElidedLineEdit()
@@ -72,11 +73,13 @@ class QuerySelector(Card):
         widget.setLayout(layout)
         self.addWidget(widget)
         widget.roll = VerticalRollAnimation(widget)
+        widget.roll._visible_target = True
 
         self.controls.single_query = widget
 
     def draw_batch(self, text):
         label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(140)
 
         view = GrowingListView()
@@ -112,6 +115,59 @@ class QuerySelector(Card):
         self.controls.single_query.roll.setAnimatedVisible(not value)
 
 
+class OptionsSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("BLAST options:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(140)
+
+        description = QtWidgets.QLabel("Parametrize the arguments passed to the BLAST+ executables.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setColumnMinimumWidth(0, 16)
+        # options_layout.setColumnMinimumWidth(1, 80)
+        options_layout.setColumnStretch(3, 1)
+        options_layout.setHorizontalSpacing(32)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Method:")
+        field = QtWidgets.QLineEdit()
+        description = QtWidgets.QLabel("Sequence comparison type between query and database")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        row += 1
+
+        name = QtWidgets.QLabel("E-value:")
+        field = QtWidgets.QLineEdit()
+        description = QtWidgets.QLabel("Expectation value threshold for saving hits")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        row += 1
+
+        name = QtWidgets.QLabel("Threads:")
+        field = QtWidgets.QLineEdit()
+        description = QtWidgets.QLabel("Number of threads (CPUs) to use in the BLAST search")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        row += 1
+
+        self.addLayout(title_layout)
+        self.addLayout(options_layout)
+
+
 class View(ScrollTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -122,6 +178,10 @@ class View(ScrollTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.query = QuerySelector("Input mode", self)
+        self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
+        self.cards.options = OptionsSelector(self)
+        self.cards.extra = PathFileSelector("\u25C0  Nucleotides file", self)
+        self.cards.output_path = PathDirectorySelector("\u25B6  Output folder", self)
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
