@@ -1,4 +1,5 @@
 import multiprocessing
+from pathlib import Path
 
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import TaskModel
@@ -13,6 +14,11 @@ class Model(TaskModel):
     task_name = title
 
     batch_mode = Property(bool, False)
+    input_query_path = Property(Path, Path())
+    input_query_list = Property(object, None)
+    input_database_path = Property(Path, Path())
+    input_nucleotides_path = Property(Path, Path())
+    output_path = Property(Path, Path())
 
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
@@ -32,6 +38,10 @@ class Model(TaskModel):
         super().start()
 
         print(f"{self.batch_mode=}")
+        print(f"{self.input_query_path=}")
+        print(f"{self.input_database_path=}")
+        print(f"{self.input_nucleotides_path=}")
+        print(f"{self.output_path=}")
         print(f"{self.blast_method.executable=}")
         print(f"{self.blast_evalue=}")
         print(f"{self.blast_num_threads=}")

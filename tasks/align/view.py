@@ -1,7 +1,10 @@
 from PySide6 import QtCore, QtWidgets
 
+from pathlib import Path
+
 from itaxotools.common.bindings import Binder
 from itaxotools.common.utility import AttrDict
+from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
@@ -22,6 +25,7 @@ from . import long_description, pixmap_medium, title
 
 class QuerySelector(Card):
     batchModeChanged = QtCore.Signal(bool)
+    selectedSinglePath = QtCore.Signal(Path)
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
@@ -63,10 +67,11 @@ class QuerySelector(Card):
 
         field = ElidedLineEdit()
         # field.textEditedSafe.connect(self._handle_text_changed)
+        field.setPlaceholderText("---")
         field.setReadOnly(True)
 
         browse = QtWidgets.QPushButton("Browse")
-        # browse.clicked.connect(self._handle_browse)
+        browse.clicked.connect(self._handle_browse)
         browse.setFixedWidth(120)
 
         layout = QtWidgets.QHBoxLayout()
@@ -83,6 +88,7 @@ class QuerySelector(Card):
         widget.roll._visible_target = True
 
         self.controls.single_query = widget
+        self.controls.single_field = field
 
     def draw_batch(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -116,10 +122,23 @@ class QuerySelector(Card):
     def _handle_batch_mode_changed(self, value):
         self.batchModeChanged.emit(value)
 
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
+        if not filename:
+            return
+        self.selectedSinglePath.emit(Path(filename))
+
     def set_batch_mode(self, value: bool):
         self.controls.batch_mode.setValue(value)
         self.controls.batch_query.roll.setAnimatedVisible(value)
         self.controls.single_query.roll.setAnimatedVisible(not value)
+
+    def set_path(self, path: Path):
+        text = str(path) if path != Path() else ""
+        self.controls.single_field.setText(text)
 
 
 class OptionsSelector(Card):
@@ -129,7 +148,7 @@ class OptionsSelector(Card):
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(140)
 
-        description = QtWidgets.QLabel("Parametrize the arguments passed to the BLAST+ executables.")
+        description = QtWidgets.QLabel("Parametrize the method and arguments passed to the BLAST+ executables.")
 
         title_layout = QtWidgets.QHBoxLayout()
         title_layout.addWidget(label)
@@ -190,7 +209,7 @@ class View(ScrollTaskView):
         self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
         self.cards.options = OptionsSelector(self)
         self.cards.extra = PathFileSelector("\u25C0  Nucleotides file", self)
-        self.cards.output_path = PathDirectorySelector("\u25B6  Output folder", self)
+        self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -213,6 +232,17 @@ class View(ScrollTaskView):
 
         self.binder.bind(object.properties.batch_mode, self.cards.query.set_batch_mode)
         self.binder.bind(self.cards.query.batchModeChanged, object.properties.batch_mode)
+
+        self.binder.bind(object.properties.input_query_path, self.cards.query.set_path)
+        self.binder.bind(self.cards.query.selectedSinglePath, object.properties.input_query_path)
+
+        self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
+        self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
+
+        self.binder.bind(object.properties.output_path, self.cards.output.set_path)
+        self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
+
+        self.binder.bind(self.cards.query.selectedSinglePath, object.properties.output_path, lambda p: p.parent)
 
         self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
         self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)

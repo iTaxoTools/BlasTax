@@ -28,6 +28,7 @@ class NameSelector(Card):
 
         field = GLineEdit()
         field.textEditedSafe.connect(self._handle_name_changed)
+        field.setPlaceholderText("---")
         field.setTextMargins(4, 0, 12, 0)
 
         layout = QtWidgets.QHBoxLayout()
@@ -44,7 +45,7 @@ class NameSelector(Card):
         self.nameChanged.emit(str(name))
 
     def set_name(self, name: str):
-        text = name or "---"
+        text = name or ""
         self.controls.field.setText(text)
 
 

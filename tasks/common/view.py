@@ -66,6 +66,7 @@ class PathSelector(Card):
     def __init__(self, text, parent=None):
         super().__init__(parent)
         self.draw_main(text)
+        self.set_placeholder_text("---")
 
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -97,6 +98,9 @@ class PathSelector(Card):
     def _handle_text_changed(self, text: str):
         self.pathChanged.emit(Path(text))
 
+    def set_placeholder_text(self, text: str):
+        self.controls.field.setPlaceholderText(text)
+
     def set_busy(self, busy: bool):
         self.setEnabled(True)
         self.controls.field.setEnabled(not busy)
@@ -104,7 +108,7 @@ class PathSelector(Card):
         self.controls.label.setEnabled(not busy)
 
     def set_path(self, path: Path):
-        text = str(path) if path != Path() else "---"
+        text = str(path) if path != Path() else ""
         self.controls.field.setText(text)
 
 
@@ -137,4 +141,8 @@ class PathDatabaseSelector(PathSelector):
         )
         if not filename:
             return
+        if filename.endswith(".nin"):
+            filename = filename.removesuffix(".nin")
+        elif filename.endswith(".pin"):
+            filename = filename.removesuffix(".pin")
         self.selectedPath.emit(Path(filename))
