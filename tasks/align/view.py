@@ -196,6 +196,7 @@ class OptionsSelector(Card):
 
         options_layout = QtWidgets.QGridLayout()
         options_layout.setColumnMinimumWidth(0, 16)
+        options_layout.setColumnMinimumWidth(1, 54)
         options_layout.setColumnStretch(3, 1)
         options_layout.setHorizontalSpacing(32)
         options_layout.setVerticalSpacing(8)
