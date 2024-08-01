@@ -30,14 +30,14 @@ class QuerySelector(Card):
     def __init__(self, text, parent=None):
         super().__init__(parent)
         self.binder = Binder()
-        self.draw_main(text)
+        self.draw_mode(text)
         self.draw_single("\u25C0  Query FASTA file")
         self.draw_batch("\u25C0  Query FASTA files")
 
-    def draw_main(self, text):
+    def draw_mode(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         single = QtWidgets.QRadioButton("Single file")
         batch = QtWidgets.QRadioButton("Batch mode")
@@ -63,11 +63,11 @@ class QuerySelector(Card):
     def draw_single(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         field = ElidedLineEdit()
-        # field.textEditedSafe.connect(self._handle_text_changed)
-        field.setPlaceholderText("---")
+        field.setPlaceholderText("Sequences to match against database contents")
+        field.textDeleted.connect(self._handle_single_path_deleted)
         field.setReadOnly(True)
 
         browse = QtWidgets.QPushButton("Browse")
@@ -93,7 +93,7 @@ class QuerySelector(Card):
     def draw_batch(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         view = GrowingListView()
 
@@ -122,6 +122,9 @@ class QuerySelector(Card):
     def _handle_batch_mode_changed(self, value):
         self.batchModeChanged.emit(value)
 
+    def _handle_single_path_deleted(self):
+        self.selectedSinglePath.emit(Path())
+
     def _handle_browse(self, *args):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
             parent=self.window(),
@@ -146,7 +149,7 @@ class OptionsSelector(Card):
         super().__init__(parent)
         label = QtWidgets.QLabel("BLAST options:")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         description = QtWidgets.QLabel("Parametrize the method and arguments passed to the BLAST+ executables.")
 
@@ -211,6 +214,10 @@ class View(ScrollTaskView):
         self.cards.extra = PathFileSelector("\u25C0  Nucleotides file", self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
+        self.cards.database.set_placeholder_text("Match all queries against this database")
+        self.cards.extra.set_placeholder_text("Extra FASTA file for blastx parsing")
+        self.cards.output.set_placeholder_text("All output files will be saved here")
+
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)
@@ -238,6 +245,9 @@ class View(ScrollTaskView):
 
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
+
+        self.binder.bind(object.properties.input_nucleotides_path, self.cards.extra.set_path)
+        self.binder.bind(self.cards.extra.selectedPath, object.properties.input_nucleotides_path)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)

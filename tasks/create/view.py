@@ -24,7 +24,7 @@ class NameSelector(Card):
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         field = GLineEdit()
         field.textEditedSafe.connect(self._handle_name_changed)
@@ -44,6 +44,9 @@ class NameSelector(Card):
     def _handle_name_changed(self, name: str):
         self.nameChanged.emit(str(name))
 
+    def set_placeholder_text(self, text: str):
+        self.controls.field.setPlaceholderText(text)
+
     def set_name(self, name: str):
         text = name or ""
         self.controls.field.setText(text)
@@ -60,7 +63,7 @@ class TypeSelector(Card):
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         nucl = QtWidgets.QRadioButton("Nucleotide sequences")
         prot = QtWidgets.QRadioButton("Protein sequences")
@@ -104,6 +107,10 @@ class View(ScrollTaskView):
         self.cards.database_type = TypeSelector("Database type")
         self.cards.output_path = PathDirectorySelector("\u25B6  Output folder")
 
+        self.cards.input_path.set_placeholder_text("Sequences to go into the new database")
+        self.cards.database_name.set_placeholder_text("Determines filename and title")
+        self.cards.output_path.set_placeholder_text("Database files will be saved here")
+
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)
@@ -124,11 +131,9 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.binder.bind(object.properties.input_path, self.cards.input_path.set_path)
-        self.binder.bind(self.cards.input_path.pathChanged, object.properties.input_path)
         self.binder.bind(self.cards.input_path.selectedPath, object.properties.input_path)
 
         self.binder.bind(object.properties.output_path, self.cards.output_path.set_path)
-        self.binder.bind(self.cards.output_path.pathChanged, object.properties.output_path)
         self.binder.bind(self.cards.output_path.selectedPath, object.properties.output_path)
 
         self.binder.bind(object.properties.database_name, self.cards.database_name.set_name)

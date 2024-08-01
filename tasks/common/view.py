@@ -60,7 +60,6 @@ class GraphicTitleCard(Card):
 
 
 class PathSelector(Card):
-    pathChanged = QtCore.Signal(Path)
     selectedPath = QtCore.Signal(Path)
 
     def __init__(self, text, parent=None):
@@ -71,10 +70,10 @@ class PathSelector(Card):
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(140)
+        label.setMinimumWidth(150)
 
         field = ElidedLineEdit()
-        field.textEditedSafe.connect(self._handle_text_changed)
+        field.textDeleted.connect(self._handle_text_deleted)
         field.setReadOnly(True)
 
         browse = QtWidgets.QPushButton("Browse")
@@ -95,8 +94,8 @@ class PathSelector(Card):
     def _handle_browse(self, *args):
         raise NotImplementedError()
 
-    def _handle_text_changed(self, text: str):
-        self.pathChanged.emit(Path(text))
+    def _handle_text_deleted(self):
+        self.selectedPath.emit(Path())
 
     def set_placeholder_text(self, text: str):
         self.controls.field.setPlaceholderText(text)

@@ -9,6 +9,8 @@ from .types import BlastMethod
 
 
 class ElidedLineEdit(GLineEdit):
+    textDeleted = QtCore.Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTextMargins(4, 0, 12, 0)
@@ -21,18 +23,36 @@ class ElidedLineEdit(GLineEdit):
         self.full_text = text
         self.updateElidedText()
 
+    @override
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.updateElidedText()
 
-    def updateElidedText(self):
-        metrics = QtGui.QFontMetrics(self.font())
-        length = self.width() - self.textMargins().left() - self.textMargins().right()
-        elided_text = metrics.elidedText(self.full_text, QtCore.Qt.ElideLeft, length)
-        QtWidgets.QLineEdit.setText(self, elided_text)
+    @override
+    def focusInEvent(self, event):
+        QtCore.QTimer.singleShot(0, self.selectAll)
+        return super().focusInEvent(event)
 
+    @override
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        if any(
+            (
+                event.key() == QtCore.Qt.Key_Backspace,
+                event.key() == QtCore.Qt.Key_Delete,
+            )
+        ):
+            self.textDeleted.emit()
+        super().keyPressEvent(event)
+
+    @override
     def text(self):
         return self.full_text
+
+    def updateElidedText(self):
+        metrics = QtGui.QFontMetrics(self.font())
+        length = self.width() - self.textMargins().left() - self.textMargins().right() - 8
+        elided_text = metrics.elidedText(self.full_text, QtCore.Qt.ElideLeft, length)
+        QtWidgets.QLineEdit.setText(self, elided_text)
 
 
 class GrowingListView(QtWidgets.QListView):
