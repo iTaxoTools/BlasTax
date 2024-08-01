@@ -1,7 +1,9 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from itaxotools.common.utility import override
-from itaxotools.taxi_gui.view.widgets import GLineEdit
+from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox
+
+from .types import BlastMethod
 
 
 class ElidedLineEdit(GLineEdit):
@@ -49,3 +51,51 @@ class GrowingListView(QtWidgets.QListView):
         width = super().sizeHint().width()
         height = self.getHeightHint() + 16
         return QtCore.QSize(width, height)
+
+
+class BlastMethodDelegate(QtWidgets.QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        if not index.isValid():
+            return
+
+        self.initStyleOption(option, index)
+        option.text = index.data(BlastMethodCombobox.LabelRole)
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ItemViewItem, option, painter)
+
+    def sizeHint(self, option, index):
+        height = self.parent().sizeHint().height()
+        return QtCore.QSize(0, height)
+
+
+class BlastMethodCombobox(NoWheelComboBox):
+    valueChanged = QtCore.Signal(BlastMethod)
+
+    DataRole = QtCore.Qt.UserRole
+    LabelRole = QtCore.Qt.UserRole + 1
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        model = QtGui.QStandardItemModel()
+        for method in BlastMethod:
+            item = QtGui.QStandardItem()
+            item.setData(method.executable, QtCore.Qt.DisplayRole)
+            item.setData(method.label, self.LabelRole)
+            item.setData(method, self.DataRole)
+            model.appendRow(item)
+        self.setModel(model)
+
+        delegate = BlastMethodDelegate(self)
+        self.setItemDelegate(delegate)
+
+        metrics = self.fontMetrics()
+        length = max([metrics.horizontalAdvance(method.label) for method in BlastMethod])
+        self.view().setMinimumWidth(length + 16)
+
+        self.currentIndexChanged.connect(self._handle_index_changed)
+
+    def _handle_index_changed(self, index):
+        self.valueChanged.emit(self.itemData(index, self.DataRole))
+
+    def setValue(self, value):
+        index = self.findData(value, self.DataRole)
+        self.setCurrentIndex(index)

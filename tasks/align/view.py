@@ -8,8 +8,9 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
+from ..common.types import BlastMethod
 from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
-from ..common.widgets import ElidedLineEdit, GrowingListView
+from ..common.widgets import BlastMethodCombobox, ElidedLineEdit, GrowingListView
 from . import long_description, pixmap_medium, title
 
 
@@ -138,12 +139,13 @@ class OptionsSelector(Card):
         row = 0
 
         name = QtWidgets.QLabel("Method:")
-        field = QtWidgets.QLineEdit()
+        field = BlastMethodCombobox()
         description = QtWidgets.QLabel("Sequence comparison type between query and database")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
         options_layout.addWidget(description, row, 3)
+        self.controls.blast_method = field
         row += 1
 
         name = QtWidgets.QLabel("E-value:")
@@ -204,6 +206,15 @@ class View(ScrollTaskView):
 
         self.binder.bind(object.properties.batch_mode, self.cards.query.set_batch_mode)
         self.binder.bind(self.cards.query.batchModeChanged, object.properties.batch_mode)
+
+        self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
+        self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
+
+        self.binder.bind(
+            object.properties.blast_method,
+            self.cards.extra.roll_animation.setAnimatedVisible,
+            proxy=lambda x: x == BlastMethod.blastx,
+        )
 
         # defined last to override `set_busy` calls
         self.binder.bind(object.properties.editable, self.setEditable)
