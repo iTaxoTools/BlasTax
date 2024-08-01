@@ -45,11 +45,6 @@ class Model(TaskModel):
     def start(self):
         super().start()
 
-        print(self.input_path)
-        print(self.output_path)
-        print(self.database_name)
-        print(self.database_type)
-
         self.exec(
             process.execute,
             input_path=str(self.input_path),

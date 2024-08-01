@@ -49,7 +49,6 @@ def make_database(
         "-blastdb_version",
         str(version),
     ]
-    print(args)
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 

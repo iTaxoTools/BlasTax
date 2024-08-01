@@ -1,5 +1,7 @@
 """GUI entry point"""
 
+import multiprocessing
+
 
 def run():
     """
@@ -24,4 +26,5 @@ def run():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     run()
