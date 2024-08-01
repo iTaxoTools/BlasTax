@@ -5,7 +5,7 @@ from pathlib import Path
 
 from itaxotools.common.bindings import Instance, Property
 from itaxotools.common.utility import override
-from itaxotools.taxi_gui.model.tasks import TaskModel
+from itaxotools.taxi_gui.model.tasks import SubtaskModel, TaskModel
 from itaxotools.taxi_gui.types import Notification
 from itaxotools.taxi_gui.utility import human_readable_seconds
 
@@ -69,33 +69,54 @@ class Model(TaskModel):
 
         self._update_num_threads_default()
 
-        self.input_query_list.add_paths([Path("foo")])
-        self.input_query_list.add_paths([Path("bar")])
-        self.input_query_list.add_paths(
-            [
-                Path("zoo"),
-                Path("goo"),
-                Path("moo"),
-            ]
-        )
+        self.subtask_init = SubtaskModel(self, bind_busy=False)
+
+        for handle in [
+            self.properties.batch_mode,
+            self.properties.input_query_path,
+            self.properties.input_database_path,
+            self.properties.input_nucleotides_path,
+            self.properties.output_path,
+            self.properties.blast_method,
+            self.input_query_list.rowsInserted,
+            self.input_query_list.rowsRemoved,
+            self.input_query_list.modelReset,
+        ]:
+            self.binder.bind(handle, self.checkReady)
+        self.checkReady()
+
+        self.subtask_init.start(process.initialize)
 
     def isReady(self):
+        if self.batch_mode:
+            if not self.input_query_list.paths:
+                return False
+        if not self.batch_mode:
+            if self.input_query_path == Path():
+                return False
+        if self.input_database_path == Path():
+            return False
+        if self.output_path == Path():
+            return False
+        if self.blast_method == BlastMethod.blastx:
+            if self.input_nucleotides_path == Path():
+                return False
         return True
 
     def start(self):
         super().start()
 
-        print(f"{self.batch_mode=}")
-        print(f"{self.input_query_path=}")
-        print(f"{self.input_database_path=}")
-        print(f"{self.input_nucleotides_path=}")
-        print(f"{self.output_path=}")
-        print(f"{self.blast_method.executable=}")
-        print(f"{self.blast_evalue=}")
-        print(f"{self.blast_num_threads=}")
-
         self.exec(
             process.execute,
+            batch_mode=self.batch_mode,
+            input_query_path=self.input_query_path,
+            input_database_path=self.input_database_path,
+            input_nucleotides_path=self.input_nucleotides_path,
+            input_query_list=self.input_query_list.paths,
+            output_path=self.output_path,
+            blast_method=self.blast_method.executable,
+            blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
+            blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
         )
 
     def onDone(self, report):

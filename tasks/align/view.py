@@ -311,5 +311,8 @@ class View(ScrollTaskView):
         self.cards.query.set_batch_model(object.input_query_list)
 
     def setEditable(self, editable: bool):
-        self.cards.title.setEnabled(True)
-        self.cards.progress.setEnabled(True)
+        self.cards.query.setEnabled(editable)
+        self.cards.database.setEnabled(editable)
+        self.cards.options.setEnabled(editable)
+        self.cards.extra.setEnabled(editable)
+        self.cards.output.setEnabled(editable)
