@@ -10,7 +10,13 @@ from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from ..common.types import BlastMethod
 from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
-from ..common.widgets import BlastMethodCombobox, ElidedLineEdit, GrowingListView
+from ..common.widgets import (
+    BlastMethodCombobox,
+    ElidedLineEdit,
+    FloatPropertyLineEdit,
+    GrowingListView,
+    IntPropertyLineEdit,
+)
 from . import long_description, pixmap_medium, title
 
 
@@ -132,7 +138,6 @@ class OptionsSelector(Card):
 
         options_layout = QtWidgets.QGridLayout()
         options_layout.setColumnMinimumWidth(0, 16)
-        # options_layout.setColumnMinimumWidth(1, 80)
         options_layout.setColumnStretch(3, 1)
         options_layout.setHorizontalSpacing(32)
         options_layout.setVerticalSpacing(8)
@@ -149,21 +154,23 @@ class OptionsSelector(Card):
         row += 1
 
         name = QtWidgets.QLabel("E-value:")
-        field = QtWidgets.QLineEdit()
+        field = FloatPropertyLineEdit()
         description = QtWidgets.QLabel("Expectation value threshold for saving hits")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
         options_layout.addWidget(description, row, 3)
+        self.controls.blast_evalue = field
         row += 1
 
         name = QtWidgets.QLabel("Threads:")
-        field = QtWidgets.QLineEdit()
+        field = IntPropertyLineEdit()
         description = QtWidgets.QLabel("Number of threads (CPUs) to use in the BLAST search")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
         options_layout.addWidget(description, row, 3)
+        self.controls.blast_num_threads = field
         row += 1
 
         self.addLayout(title_layout)
@@ -215,6 +222,9 @@ class View(ScrollTaskView):
             self.cards.extra.roll_animation.setAnimatedVisible,
             proxy=lambda x: x == BlastMethod.blastx,
         )
+
+        self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
+        self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
 
         # defined last to override `set_busy` calls
         self.binder.bind(object.properties.editable, self.setEditable)

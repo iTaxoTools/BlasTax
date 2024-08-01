@@ -1,6 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from itaxotools.common.bindings import Binder, PropertyRef
 from itaxotools.common.utility import override
+from itaxotools.taxi_gui.utility import type_convert
 from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox
 
 from .types import BlastMethod
@@ -99,3 +101,35 @@ class BlastMethodCombobox(NoWheelComboBox):
     def setValue(self, value):
         index = self.findData(value, self.DataRole)
         self.setCurrentIndex(index)
+
+
+class PropertyLineEdit(GLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.binder = Binder()
+        self.proxy_in = lambda x: x
+        self.proxy_out = lambda x: x
+
+    def bind_property(self, property: PropertyRef):
+        self.binder.unbind_all()
+        self.binder.bind(property, self.setText, proxy=self.proxy_in)
+        self.binder.bind(self.textEditedSafe, property, proxy=self.proxy_out)
+        self.setPlaceholderText(self.proxy_in(property.default))
+
+
+class IntPropertyLineEdit(PropertyLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.proxy_in = lambda x: type_convert(x, str, "")
+        self.proxy_out = lambda x: type_convert(x, int, 0)
+        validator = QtGui.QIntValidator()
+        self.setValidator(validator)
+
+
+class FloatPropertyLineEdit(PropertyLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.proxy_in = lambda x: type_convert(x, str, "")
+        self.proxy_out = lambda x: type_convert(x, float, 0)
+        validator = QtGui.QDoubleValidator()
+        self.setValidator(validator)

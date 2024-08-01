@@ -1,3 +1,5 @@
+import multiprocessing
+
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import TaskModel
 from itaxotools.taxi_gui.types import Notification
@@ -13,11 +15,15 @@ class Model(TaskModel):
     batch_mode = Property(bool, False)
 
     blast_method = Property(BlastMethod, BlastMethod.blastn)
+    blast_evalue = Property(float, 1e-5)
+    blast_num_threads = Property(int, 1)
 
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = False
         self.can_save = False
+
+        self._update_num_threads_default()
 
     def isReady(self):
         return True
@@ -27,6 +33,8 @@ class Model(TaskModel):
 
         print(f"{self.batch_mode=}")
         print(f"{self.blast_method.executable=}")
+        print(f"{self.blast_evalue=}")
+        print(f"{self.blast_num_threads=}")
 
         self.exec(
             process.execute,
@@ -37,3 +45,9 @@ class Model(TaskModel):
         self.notification.emit(Notification.Info(f"{self.name} completed successfully!\nTime taken: {time_taken}."))
 
         self.busy = False
+
+    def _update_num_threads_default(self):
+        cpus = multiprocessing.cpu_count()
+        property = self.properties.blast_num_threads
+        setattr(property._parent, Property.key_default(property._key), cpus)
+        property.set(cpus)
