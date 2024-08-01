@@ -21,11 +21,15 @@ from ..common.widgets import (
     IntPropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
+from .model import PathListModel
 
 
 class QuerySelector(Card):
     batchModeChanged = QtCore.Signal(bool)
     selectedSinglePath = QtCore.Signal(Path)
+    requestedAddPaths = QtCore.Signal(list)
+    requestedAddFolder = QtCore.Signal(Path)
+    deletedPaths = QtCore.Signal(list)
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
@@ -97,10 +101,14 @@ class QuerySelector(Card):
 
         view = GrowingListView()
 
-        add_file = QtWidgets.QPushButton("Add file")
+        add_file = QtWidgets.QPushButton("Add files")
         add_folder = QtWidgets.QPushButton("Add folder")
         remove = QtWidgets.QPushButton("Remove")
         remove.setFixedWidth(120)
+
+        add_file.clicked.connect(self._handle_add_paths)
+        add_folder.clicked.connect(self._handle_add_folder)
+        remove.clicked.connect(self._handle_remove_paths)
 
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -118,6 +126,7 @@ class QuerySelector(Card):
         widget.roll = VerticalRollAnimation(widget)
 
         self.controls.batch_query = widget
+        self.controls.batch_view = view
 
     def _handle_batch_mode_changed(self, value):
         self.batchModeChanged.emit(value)
@@ -134,10 +143,37 @@ class QuerySelector(Card):
             return
         self.selectedSinglePath.emit(Path(filename))
 
+    def _handle_add_paths(self, *args):
+        filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse files",
+        )
+        paths = [Path(filename) for filename in filenames]
+        self.requestedAddPaths.emit(paths)
+
+    def _handle_add_folder(self, *args):
+        filename = QtWidgets.QFileDialog.getExistingDirectory(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse folder",
+        )
+        if not filename:
+            return
+        self.requestedAddFolder.emit(Path(filename))
+
+    def _handle_remove_paths(self):
+        view = self.controls.batch_view
+        selected = view.selectionModel().selectedIndexes()
+        if selected:
+            indices = [index.row() for index in selected]
+            self.deletedPaths.emit(indices)
+
     def set_batch_mode(self, value: bool):
         self.controls.batch_mode.setValue(value)
         self.controls.batch_query.roll.setAnimatedVisible(value)
         self.controls.single_query.roll.setAnimatedVisible(not value)
+
+    def set_batch_model(self, model: PathListModel):
+        self.controls.batch_view.setModel(model)
 
     def set_path(self, path: Path):
         text = str(path) if path != Path() else ""
@@ -257,6 +293,10 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
         self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
 
+        self.binder.bind(self.cards.query.deletedPaths, object.delete_paths)
+        self.binder.bind(self.cards.query.requestedAddPaths, object.add_paths)
+        self.binder.bind(self.cards.query.requestedAddFolder, object.add_folder)
+
         self.binder.bind(
             object.properties.blast_method,
             self.cards.extra.roll_animation.setAnimatedVisible,
@@ -266,8 +306,9 @@ class View(ScrollTaskView):
         self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
         self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
 
-        # defined last to override `set_busy` calls
         self.binder.bind(object.properties.editable, self.setEditable)
+
+        self.cards.query.set_batch_model(object.input_query_list)
 
     def setEditable(self, editable: bool):
         self.cards.title.setEnabled(True)

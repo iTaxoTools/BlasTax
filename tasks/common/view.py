@@ -126,7 +126,7 @@ class PathDirectorySelector(PathSelector):
     def _handle_browse(self, *args):
         filename = QtWidgets.QFileDialog.getExistingDirectory(
             parent=self.window(),
-            caption=f"{app.config.title} - Browse directory",
+            caption=f"{app.config.title} - Browse folder",
         )
         if not filename:
             return

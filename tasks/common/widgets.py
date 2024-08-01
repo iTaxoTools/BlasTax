@@ -58,6 +58,7 @@ class ElidedLineEdit(GLineEdit):
 class GrowingListView(QtWidgets.QListView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setSelectionMode(QtWidgets.QListView.MultiSelection)
         self.height_slack = 16
         self.lines_max = 16
         self.lines_min = 8
