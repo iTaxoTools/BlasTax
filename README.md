@@ -1,5 +1,5 @@
-# BLAST-ALign
-
+# BLAST-Align
+A program to parse blast hits
 ### Manual bundling
 
 Bundling requires PyInstaller and the BLAST+ binaries.
