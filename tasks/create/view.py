@@ -1,9 +1,11 @@
 from PySide6 import QtCore, QtWidgets
 
+from pathlib import Path
 from typing import Literal
 
 from itaxotools.common.bindings import Binder
 from itaxotools.common.utility import AttrDict
+from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
@@ -131,16 +133,13 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.binder.bind(object.properties.input_path, self.cards.input_path.set_path)
-        self.binder.bind(self.cards.input_path.selectedPath, object.properties.input_path)
+        self.binder.bind(self.cards.input_path.selectedPath, object.open)
 
         self.binder.bind(object.properties.output_path, self.cards.output_path.set_path)
         self.binder.bind(self.cards.output_path.selectedPath, object.properties.output_path)
 
         self.binder.bind(object.properties.database_name, self.cards.database_name.set_name)
         self.binder.bind(self.cards.database_name.nameChanged, object.properties.database_name)
-
-        self.binder.bind(self.cards.input_path.selectedPath, object.properties.database_name, lambda p: p.stem)
-        self.binder.bind(self.cards.input_path.selectedPath, object.properties.output_path, lambda p: p.parent)
 
         self.binder.bind(object.properties.database_type, self.cards.database_type.set_type)
         self.binder.bind(self.cards.database_type.typeChanged, object.properties.database_type)
@@ -152,3 +151,12 @@ class View(ScrollTaskView):
         self.cards.output_path.setEnabled(editable)
         self.cards.database_name.setEnabled(editable)
         self.cards.database_type.setEnabled(editable)
+
+    def open(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Open file",
+        )
+        if not filename:
+            return
+        self.object.open(Path(filename))

@@ -65,7 +65,7 @@ class Model(TaskModel):
 
     def __init__(self, name=None):
         super().__init__(name)
-        self.can_open = False
+        self.can_open = True
         self.can_save = False
 
         self._update_num_threads_default()
@@ -123,3 +123,10 @@ class Model(TaskModel):
         property = self.properties.blast_num_threads
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
+
+    def open(self, path: Path):
+        if path.suffix in [".nin", ".pin"]:
+            self.input_database_path = path
+        else:
+            self.input_query_path = path
+            self.output_path = path.parent

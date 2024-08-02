@@ -317,3 +317,12 @@ class View(ScrollTaskView):
         self.cards.options.setEnabled(editable)
         self.cards.extra.setEnabled(editable)
         self.cards.output.setEnabled(editable)
+
+    def open(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Open file",
+        )
+        if not filename:
+            return
+        self.object.open(Path(filename))

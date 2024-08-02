@@ -64,7 +64,7 @@ class Model(TaskModel):
 
     def __init__(self, name=None):
         super().__init__(name)
-        self.can_open = False
+        self.can_open = True
         self.can_save = False
 
         self._update_num_threads_default()
@@ -148,3 +148,10 @@ class Model(TaskModel):
         paths += list(dir.glob("*.fas"))
         paths += list(dir.glob("*.fasta"))
         self.add_paths(paths)
+
+    def open(self, path: Path):
+        if path.suffix in [".nin", ".pin"]:
+            self.input_database_path = path
+        else:
+            self.input_query_path = path
+            self.output_path = path.parent

@@ -193,8 +193,8 @@ class View(ScrollTaskView):
     def open(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
             parent=self.window(),
-            caption=f"{app.config.title} - Browse file",
+            caption=f"{app.config.title} - Open file",
         )
         if not filename:
             return
-        self.selectedPath.emit(Path(filename))
+        self.object.open(Path(filename))

@@ -62,3 +62,4 @@ class Model(TaskModel):
     def open(self, path: Path):
         self.input_path = path
         self.output_path = path.parent
+        self.database_name = path.stem
