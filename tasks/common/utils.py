@@ -16,7 +16,7 @@ def get_database_index_from_path(path: Path) -> Path | None:
         ".ntf",
         ".nto",
     ]:
-        return path.with_suffix(".nin")
+        return path.with_suffix("")
 
     if path.suffix in [
         ".pdb",
@@ -32,6 +32,6 @@ def get_database_index_from_path(path: Path) -> Path | None:
         ".ptf",
         ".pto",
     ]:
-        return path.with_suffix(".pin")
+        return path.with_suffix("")
 
     return None
