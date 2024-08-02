@@ -1,5 +1,6 @@
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -66,11 +67,12 @@ def run_blast(
     other: str,
 ) -> bool:
     command = (
-        f"{blast_binary} -query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
+        f"{get_blast_binary(blast_binary)} -query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt {outfmt} {other}"
     )
+    args = shlex.split(command)
 
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, env=BLAST_ENV)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 
     return bool(p.returncode == 0)
@@ -83,20 +85,15 @@ def run_blast_align(
     output_path: Path | str,
     evalue: str,
     num_threads: int,
-    verbose: bool = True,
+    verbose: bool = False,
 ) -> bool:
     command = (
-        f"{blast_binary} -out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+        f"{get_blast_binary(blast_binary)} -out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
         f"-evalue {evalue} -db {database_path} -num_threads {num_threads}"
     )
+    args = shlex.split(command)
 
-    p = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=BLAST_ENV,
-    )
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 
     if verbose:
