@@ -8,6 +8,7 @@ from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 
+from ..common.types import BlastMethod
 from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
 from ..common.widgets import (
     BlastMethodCombobox,
@@ -40,8 +41,8 @@ class OptionsSelector(Card):
         row = 0
 
         name = QtWidgets.QLabel("Method:")
-        field = BlastMethodCombobox()
-        description = QtWidgets.QLabel("Sequence comparison type between query and database")
+        field = BlastMethodCombobox([BlastMethod.blastn])
+        description = QtWidgets.QLabel("Comparison type between query and database")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)

@@ -203,8 +203,14 @@ class OptionsSelector(Card):
         row = 0
 
         name = QtWidgets.QLabel("Method:")
-        field = BlastMethodCombobox()
-        description = QtWidgets.QLabel("Sequence comparison type between query and database")
+        field = BlastMethodCombobox(
+            [
+                BlastMethod.blastn,
+                BlastMethod.blastp,
+                BlastMethod.blastx,
+            ]
+        )
+        description = QtWidgets.QLabel("Comparison type between query and database")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)

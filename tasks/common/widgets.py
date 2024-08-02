@@ -96,10 +96,10 @@ class BlastMethodCombobox(NoWheelComboBox):
     DataRole = QtCore.Qt.UserRole
     LabelRole = QtCore.Qt.UserRole + 1
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, methods: list[BlastMethod] = list(BlastMethod), *args, **kwargs):
         super().__init__(*args, **kwargs)
         model = QtGui.QStandardItemModel()
-        for method in BlastMethod:
+        for method in methods:
             item = QtGui.QStandardItem()
             item.setData(method.executable, QtCore.Qt.DisplayRole)
             item.setData(method.label, self.LabelRole)
