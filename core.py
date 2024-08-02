@@ -33,6 +33,7 @@ def make_database(
         + name
         + " -out "
         + output_path,
+        + " -blastdb_version 4",
         shell=True,
         stdout=subprocess.PIPE,
         env=BLAST_ENV,
