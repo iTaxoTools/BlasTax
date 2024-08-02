@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 
 import pytest
 
 from core import run_blast
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
-#TEST_DATA_DIR = Path(__file__).parent / "test_data"
+# TEST_DATA_DIR = Path(__file__).parent / "test_data"
+
 
 class BlastTest(NamedTuple):
     blast_binary: str
@@ -36,6 +37,7 @@ class BlastTest(NamedTuple):
         )
         assert output_path.exists()
 
+
 # New blast tests
 blast_tests = [
     BlastTest(
@@ -50,9 +52,12 @@ blast_tests = [
     ),
 ]
 
+
 @pytest.mark.parametrize("test", blast_tests)
 def test_run_blast(test: BlastTest, tmp_path: Path) -> None:
-    output_dir = TEST_DATA_DIR / "blast_output"
-#    output_dir.mkdir(exist_ok=True)
+    # output_dir = TEST_DATA_DIR / "blast_output"
+    #    output_dir.mkdir(exist_ok=True)
     test.validate(TEST_DATA_DIR)
+
+
 #    test.validate(tmp_path)

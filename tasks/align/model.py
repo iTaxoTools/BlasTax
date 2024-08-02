@@ -10,6 +10,7 @@ from itaxotools.taxi_gui.types import Notification
 from itaxotools.taxi_gui.utility import human_readable_seconds
 
 from ..common.types import BlastMethod
+from ..common.utils import get_database_index_from_path
 from . import process, title
 
 
@@ -150,8 +151,8 @@ class Model(TaskModel):
         self.add_paths(paths)
 
     def open(self, path: Path):
-        if path.suffix in [".nin", ".pin"]:
-            self.input_database_path = path
+        if db := get_database_index_from_path(path):
+            self.input_database_path = db
         else:
             self.input_query_path = path
             self.output_path = path.parent
