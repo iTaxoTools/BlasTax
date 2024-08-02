@@ -1,7 +1,7 @@
 from time import perf_counter
 from typing import Literal
 
-from .types import Results
+from ..common.types import Results
 
 
 def initialize():
@@ -43,4 +43,4 @@ def execute(
         raise Exception("Database creation failed!")
     tf = perf_counter()
 
-    return Results(None, tf - ts)
+    return Results(output_path, tf - ts)

@@ -1,6 +1,7 @@
 from pathlib import Path
+from time import perf_counter
 
-from .types import Results
+from ..common.types import Results
 
 
 def initialize():
@@ -32,4 +33,12 @@ def execute(
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
 
-    return Results(None, 0.0)
+    ts = perf_counter()
+
+    from time import sleep
+
+    sleep(2)
+
+    tf = perf_counter()
+
+    return Results(output_path, tf - ts)
