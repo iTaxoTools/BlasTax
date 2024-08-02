@@ -79,6 +79,7 @@ class OptionsSelector(Card):
         row += 1
 
         options_long_layout = QtWidgets.QGridLayout()
+        options_long_layout.setContentsMargins(0, 0, 0, 0)
         options_long_layout.setColumnMinimumWidth(0, 16)
         options_long_layout.setColumnMinimumWidth(1, 54)
         options_long_layout.setColumnStretch(2, 1)
@@ -93,6 +94,7 @@ class OptionsSelector(Card):
         options_long_layout.addWidget(name, row, 1)
         options_long_layout.addWidget(field, row, 2)
         self.controls.blast_outfmt_options = field
+        self.controls.blast_outfmt_options_label = name
         row += 1
 
         name = QtWidgets.QLabel("Extras:")
@@ -104,9 +106,16 @@ class OptionsSelector(Card):
         self.controls.blast_extra_args = field
         row += 1
 
+        options_long_widget = QtWidgets.QWidget()
+        options_long_widget.setLayout(options_long_layout)
+
         self.addLayout(title_layout)
         self.addLayout(options_layout)
-        self.addLayout(options_long_layout)
+        self.addWidget(options_long_widget)
+
+    def set_outfmt_options_visible(self, value: bool):
+        self.controls.blast_outfmt_options.setVisible(value)
+        self.controls.blast_outfmt_options_label.setVisible(value)
 
 
 class View(ScrollTaskView):
@@ -124,7 +133,7 @@ class View(ScrollTaskView):
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents")
-        self.cards.database.set_placeholder_text("Match all queries against this database")
+        self.cards.database.set_placeholder_text("Match all query sequences against this database")
         self.cards.output.set_placeholder_text("The output file will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
@@ -163,9 +172,7 @@ class View(ScrollTaskView):
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 
-        self.binder.bind(
-            object.properties.blast_outfmt_show_more, self.cards.options.controls.blast_outfmt_options.setEnabled
-        )
+        self.binder.bind(object.properties.blast_outfmt_show_more, self.cards.options.set_outfmt_options_visible)
 
         self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
         self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)

@@ -251,7 +251,7 @@ class View(ScrollTaskView):
         self.cards.extra = PathFileSelector("\u25C0  Nucleotides file", self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
-        self.cards.database.set_placeholder_text("Match all queries against this database")
+        self.cards.database.set_placeholder_text("Match all query sequences against this database")
         self.cards.extra.set_placeholder_text("Extra FASTA file for blastx parsing")
         self.cards.output.set_placeholder_text("All output files will be saved here")
 
