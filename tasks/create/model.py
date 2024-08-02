@@ -18,7 +18,7 @@ class Model(TaskModel):
 
     def __init__(self, name=None):
         super().__init__(name)
-        self.can_open = False
+        self.can_open = True
         self.can_save = False
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
@@ -58,3 +58,7 @@ class Model(TaskModel):
         self.notification.emit(Notification.Info(f"Database created successfully!\nTime taken: {time_taken}."))
 
         self.busy = False
+
+    def open(self, path: Path):
+        self.input_path = path
+        self.output_path = path.parent

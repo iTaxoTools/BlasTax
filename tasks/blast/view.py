@@ -1,6 +1,9 @@
 from PySide6 import QtWidgets
 
+from pathlib import Path
+
 from itaxotools.common.utility import AttrDict
+from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
@@ -186,3 +189,12 @@ class View(ScrollTaskView):
         self.cards.database.setEnabled(editable)
         self.cards.options.setEnabled(editable)
         self.cards.output.setEnabled(editable)
+
+    def open(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
