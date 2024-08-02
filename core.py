@@ -32,7 +32,7 @@ def make_database(
         + " -title "
         + name
         + " -out "
-        + output_path,
+        + output_path
         + " -blastdb_version 4",
         shell=True,
         stdout=subprocess.PIPE,
