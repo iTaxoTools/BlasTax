@@ -25,6 +25,13 @@ def get_blast_env() -> dict:
     return env
 
 
+def command_to_args(command: str) -> list[str]:
+    shlex_kwargs = {}
+    if platform.system() == "Windows":
+        shlex_kwargs = dict(posix=False)
+    return shlex.split(command, **shlex_kwargs)
+
+
 BLAST_ENV = get_blast_env()
 
 
@@ -67,10 +74,10 @@ def run_blast(
     other: str,
 ) -> bool:
     command = (
-        f"-query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
+        f"{get_blast_binary(blast_binary)} -query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt {outfmt} {other}"
     )
-    args = [get_blast_binary(blast_binary)] + shlex.split(command)
+    args = command_to_args(command)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
@@ -88,10 +95,10 @@ def run_blast_align(
     verbose: bool = False,
 ) -> bool:
     command = (
-        f"-out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
+        f"{get_blast_binary(blast_binary)} -out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
         f"-evalue {evalue} -db {database_path} -num_threads {num_threads}"
     )
-    args = [get_blast_binary(blast_binary)] + shlex.split(command)
+    args = command_to_args(command)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
