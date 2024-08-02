@@ -62,6 +62,7 @@ class Model(TaskModel):
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
+    blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid sseq qframe sframe"')
 
     def __init__(self, name=None):
         super().__init__(name)

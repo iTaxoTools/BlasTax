@@ -11,6 +11,7 @@ from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from ..common.types import BlastMethod
 from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
 from ..common.widgets import (
+    BasePropertyLineEdit,
     BlastMethodCombobox,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
@@ -70,8 +71,27 @@ class OptionsSelector(Card):
         self.controls.blast_num_threads = field
         row += 1
 
+        options_long_layout = QtWidgets.QGridLayout()
+        options_long_layout.setContentsMargins(0, 0, 0, 0)
+        options_long_layout.setColumnMinimumWidth(0, 16)
+        options_long_layout.setColumnMinimumWidth(1, 54)
+        options_long_layout.setColumnStretch(2, 1)
+        options_long_layout.setHorizontalSpacing(32)
+        options_long_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Locked:")
+        field = BasePropertyLineEdit()
+        field.setReadOnly(True)
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_long_layout.addWidget(name, row, 1)
+        options_long_layout.addWidget(field, row, 2)
+        self.controls.blast_extra_args = field
+        row += 1
+
         self.addLayout(title_layout)
         self.addLayout(options_layout)
+        self.addLayout(options_long_layout)
 
 
 class View(ScrollTaskView):
@@ -127,6 +147,7 @@ class View(ScrollTaskView):
 
         self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
         self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
+        self.cards.options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
