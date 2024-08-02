@@ -1,3 +1,5 @@
+# BLAST-ALign
+
 ### Manual bundling
 
 Bundling requires PyInstaller and the BLAST+ binaries.
