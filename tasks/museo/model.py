@@ -18,6 +18,9 @@ class Model(TaskModel):
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
+    pident_threshold = Property(float, 90.000)
+    retrieve_original = Property(bool, False)
+
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
@@ -61,6 +64,8 @@ class Model(TaskModel):
             output_path=self.output_path,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            pident_threshold=self.pident_threshold,
+            retrieve_original=self.retrieve_original,
         )
 
     def onDone(self, report):

@@ -18,12 +18,16 @@ def execute(
     output_path: Path,
     blast_evalue: float,
     blast_num_threads: int,
+    pident_threshold: float,
+    retrieve_original: bool,
 ) -> Results:
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
     print(f"{output_path=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
+    print(f"{pident_threshold=}")
+    print(f"{retrieve_original=}")
 
     ts = perf_counter()
 

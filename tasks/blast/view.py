@@ -130,7 +130,7 @@ class View(ScrollTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = PathFileSelector("\u25C0  Input FASTA file", self)
+        self.cards.query = PathFileSelector("\u25C0  Query FASTA file", self)
         self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
         self.cards.options = OptionsSelector(self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)

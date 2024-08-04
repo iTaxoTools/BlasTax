@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from itaxotools.common.bindings import Binder, PropertyRef
-from itaxotools.common.utility import override
+from itaxotools.common.utility import Guard, override
 from itaxotools.taxi_gui.utility import type_convert
 from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox
 
@@ -194,3 +194,27 @@ class FloatPropertyLineEdit(PropertyLineEdit):
         self.proxy_out = lambda x: type_convert(x, float, 0)
         validator = QtGui.QDoubleValidator()
         self.setValidator(validator)
+
+
+class GDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+    valueChangedSafe = QtCore.Signal(float)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setStyleSheet("QDoubleSpinBox { padding-left: 2px; padding-right: 4px; }")
+        self.valueChanged.connect(self._handleEdit)
+        self._guard = Guard()
+
+    def _handleEdit(self, value):
+        with self._guard:
+            self.valueChangedSafe.emit(value)
+
+    @override
+    def setValue(self, value):
+        if self._guard:
+            return
+        super().setValue(value)
+
+    @override
+    def wheelEvent(self, event):
+        event.ignore()

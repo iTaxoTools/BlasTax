@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from pathlib import Path
 
@@ -7,6 +7,7 @@ from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
+from itaxotools.taxi_gui.view.widgets import LongLabel
 
 from ..common.types import BlastMethod
 from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
@@ -14,12 +15,13 @@ from ..common.widgets import (
     BasePropertyLineEdit,
     BlastMethodCombobox,
     FloatPropertyLineEdit,
+    GDoubleSpinBox,
     IntPropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
 
 
-class OptionsSelector(Card):
+class BlastOptionsSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
         label = QtWidgets.QLabel("BLAST options:")
@@ -94,6 +96,73 @@ class OptionsSelector(Card):
         self.addLayout(options_long_layout)
 
 
+class IdentityThresholdCard(Card):
+    valueChanged = QtCore.Signal(float)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        label = QtWidgets.QLabel("Identity threshold")
+        label.setStyleSheet("""font-size: 16px;""")
+
+        field = GDoubleSpinBox()
+        field.setFixedWidth(120)
+        field.setMinimum(0)
+        field.setMaximum(100)
+        field.setSingleStep(1)
+        field.setDecimals(3)
+        field.setSuffix("%")
+        field.setValue(97)
+
+        field.valueChangedSafe.connect(self.valueChanged)
+
+        description = LongLabel(
+            "BLAST matches with a percentage of identical matches (pident) above the given value "
+            "will be considered similar and included in the output FASTA file."
+        )
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(label, 0, 0)
+        layout.addWidget(field, 0, 1)
+        layout.addWidget(description, 1, 0)
+        layout.setColumnStretch(0, 1)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(12)
+        self.addLayout(layout)
+
+        self.controls.field = field
+
+    def setValue(self, value: float):
+        self.controls.field.setValue(value)
+
+
+class OptionalCategory(Card):
+    toggled = QtCore.Signal(bool)
+
+    def __init__(self, text, description, parent=None):
+        super().__init__(parent)
+
+        title = QtWidgets.QCheckBox(" " + text)
+        title.setStyleSheet("""font-size: 16px;""")
+        title.toggled.connect(self.toggled)
+
+        description = LongLabel(description)
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(title, 0, 0)
+        layout.addWidget(description, 1, 0)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnMinimumWidth(1, 120)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(12)
+        self.addLayout(layout)
+
+        self.controls.title = title
+
+    def setChecked(self, checked: bool):
+        self.controls.title.setChecked(checked)
+
+
 class View(ScrollTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -103,9 +172,16 @@ class View(ScrollTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = PathFileSelector("\u25C0  Input FASTA file", self)
+        self.cards.query = PathFileSelector("\u25C0  Query FASTA file", self)
         self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
-        self.cards.options = OptionsSelector(self)
+        self.cards.blast_options = BlastOptionsSelector(self)
+        self.cards.pident_threshold = IdentityThresholdCard(self)
+        self.cards.retrieve_original = OptionalCategory(
+            "Retrieve original reads",
+            "Retrieve and save the full original reads from the query fasta file, "
+            "rather than just the matching part of the reads as detected by BLAST.",
+            self,
+        )
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents")
@@ -142,19 +218,25 @@ class View(ScrollTaskView):
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 
-        self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
-        self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
+        self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
+        self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
 
-        self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
-        self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
-        self.cards.options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
+        self.binder.bind(object.properties.retrieve_original, self.cards.retrieve_original.setChecked)
+        self.binder.bind(self.cards.retrieve_original.toggled, object.properties.retrieve_original)
+
+        self.binder.bind(object.properties.pident_threshold, self.cards.pident_threshold.setValue)
+        self.binder.bind(self.cards.pident_threshold.valueChanged, object.properties.pident_threshold)
+
+        self.cards.blast_options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
+        self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
+        self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
     def setEditable(self, editable: bool):
         self.cards.query.setEnabled(editable)
         self.cards.database.setEnabled(editable)
-        self.cards.options.setEnabled(editable)
+        self.cards.blast_options.setEnabled(editable)
         self.cards.output.setEnabled(editable)
 
     def open(self):
