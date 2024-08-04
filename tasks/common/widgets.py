@@ -55,25 +55,76 @@ class ElidedLineEdit(GLineEdit):
         QtWidgets.QLineEdit.setText(self, elided_text)
 
 
+class FrontEllipsisDelegate(QtWidgets.QStyledItemDelegate):
+    rowHeight = 24
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    @override
+    def paint(self, painter, option, index):
+        painter.save()
+
+        if option.state & QtWidgets.QStyle.State_Selected:
+            painter.fillRect(option.rect, option.palette.highlight())
+            painter.setPen(option.palette.light().color())
+        else:
+            painter.fillRect(option.rect, option.palette.base())
+            painter.setPen(option.palette.text().color())
+
+        text_rect = option.rect
+        text_rect -= QtCore.QMargins(6, 0, 6, 0)
+
+        text = index.data(QtCore.Qt.DisplayRole)
+        metrics = QtGui.QFontMetrics(option.font)
+        elided_text = metrics.elidedText(text, QtCore.Qt.ElideLeft, text_rect.width())
+
+        painter.drawText(text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, elided_text)
+
+        painter.restore()
+
+    @override
+    def sizeHint(self, option, index):
+        return QtCore.QSize(self.rowHeight, self.rowHeight)
+
+
 class GrowingListView(QtWidgets.QListView):
+    requestDelete = QtCore.Signal(list)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setSelectionMode(QtWidgets.QListView.MultiSelection)
-        self.height_slack = 16
-        self.lines_max = 16
-        self.lines_min = 8
+        self.setItemDelegate(FrontEllipsisDelegate(self))
+        self.height_slack = 12
+        self.lines_max = 8
+        self.lines_min = 2
+
+    @override
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        if any(
+            (
+                event.key() == QtCore.Qt.Key_Backspace,
+                event.key() == QtCore.Qt.Key_Delete,
+            )
+        ):
+            selected = self.selectionModel().selectedIndexes()
+            if selected:
+                indices = [index.row() for index in selected]
+                self.requestDelete.emit(indices)
+        super().keyPressEvent(event)
+
+    @override
+    def sizeHint(self):
+        width = super().sizeHint().width()
+        height = self.getHeightHint() + self.height_slack
+        return QtCore.QSize(width, height)
 
     def getHeightHint(self):
         lines = self.model().rowCount() if self.model() else 0
         lines = max(lines, self.lines_min)
         lines = min(lines, self.lines_max)
-        height = self.fontMetrics().height()
+        height = FrontEllipsisDelegate.rowHeight
         return int(lines * height)
-
-    def sizeHint(self):
-        width = super().sizeHint().width()
-        height = self.getHeightHint() + 16
-        return QtCore.QSize(width, height)
 
 
 class BlastComboboxDelegate(QtWidgets.QStyledItemDelegate):

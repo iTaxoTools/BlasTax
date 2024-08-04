@@ -25,19 +25,34 @@ from . import long_description, pixmap_medium, title
 from .model import PathListModel
 
 
+class BatchQueryHelp(QtWidgets.QPlainTextEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setPlaceholderText("Sequences to match against database contents")
+        self.setEnabled(False)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+        )
+
+    def sizeHint(self):
+        return QtCore.QSize(0, 0)
+
+
 class QuerySelector(Card):
     batchModeChanged = QtCore.Signal(bool)
     selectedSinglePath = QtCore.Signal(Path)
     requestedAddPaths = QtCore.Signal(list)
     requestedAddFolder = QtCore.Signal(Path)
-    deletedPaths = QtCore.Signal(list)
+    requestDelete = QtCore.Signal(list)
+    requestClear = QtCore.Signal()
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_mode(text)
-        self.draw_single("\u25C0  Query FASTA file")
-        self.draw_batch("\u25C0  Query FASTA files")
+        self.draw_single("\u25C0", "Query FASTA file")
+        self.draw_batch("\u25C0", "Query FASTA files")
 
     def draw_mode(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -65,8 +80,8 @@ class QuerySelector(Card):
         self.controls.batch = batch
         self.controls.batch_mode = group
 
-    def draw_single(self, text):
-        label = QtWidgets.QLabel(text + ":")
+    def draw_single(self, symbol, text):
+        label = QtWidgets.QLabel(f"{symbol}  {text}:")
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
@@ -95,31 +110,55 @@ class QuerySelector(Card):
         self.controls.single_query = widget
         self.controls.single_field = field
 
-    def draw_batch(self, text):
-        label = QtWidgets.QLabel(text + ":")
-        label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(150)
+    def draw_batch(self, symbol, text):
+        label_symbol = QtWidgets.QLabel(symbol)
+        label_symbol.setStyleSheet("""font-size: 16px;""")
+
+        label_text = QtWidgets.QLabel(text + ":")
+        label_text.setStyleSheet("""font-size: 16px;""")
+
+        label_spacer = QtWidgets.QLabel("")
+        label_spacer.setMinimumWidth(150)
+
+        label_total = QtWidgets.QLabel("Total: 0")
 
         view = GrowingListView()
+        view.requestDelete.connect(self.requestDelete)
+
+        help = BatchQueryHelp()
 
         add_file = QtWidgets.QPushButton("Add files")
         add_folder = QtWidgets.QPushButton("Add folder")
-        remove = QtWidgets.QPushButton("Remove")
-        remove.setFixedWidth(120)
+        clear = QtWidgets.QPushButton("Clear")
+        clear.setFixedWidth(120)
 
         add_file.clicked.connect(self._handle_add_paths)
         add_folder.clicked.connect(self._handle_add_folder)
-        remove.clicked.connect(self._handle_remove_paths)
+        clear.clicked.connect(self._handle_clear_paths)
 
-        layout = QtWidgets.QGridLayout()
+        labels = QtWidgets.QGridLayout()
+        labels.setHorizontalSpacing(0)
+        labels.setVerticalSpacing(16)
+        labels.setRowStretch(3, 1)
+        labels.addWidget(label_symbol, 0, 0)
+        labels.addWidget(label_text, 0, 1)
+        labels.addWidget(label_total, 1, 1)
+        labels.addWidget(label_spacer, 2, 0, 1, 2)
+
+        buttons = QtWidgets.QVBoxLayout()
+        buttons.setSpacing(8)
+        buttons.addWidget(add_file)
+        buttons.addWidget(add_folder)
+        buttons.addWidget(clear)
+        buttons.addStretch(1)
+
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(label, 0, 0)
-        layout.addWidget(view, 0, 1, 4, 1)
-        layout.addWidget(add_file, 0, 2)
-        layout.addWidget(add_folder, 1, 2)
-        layout.addWidget(remove, 2, 2)
-        layout.setHorizontalSpacing(16)
-        layout.setVerticalSpacing(8)
+        layout.setSpacing(16)
+        layout.addLayout(labels)
+        layout.addWidget(view, 1)
+        layout.addWidget(help, 1)
+        layout.addLayout(buttons)
 
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
@@ -128,6 +167,8 @@ class QuerySelector(Card):
 
         self.controls.batch_query = widget
         self.controls.batch_view = view
+        self.controls.batch_help = help
+        self.controls.batch_total = label_total
 
     def _handle_batch_mode_changed(self, value):
         self.batchModeChanged.emit(value)
@@ -161,12 +202,8 @@ class QuerySelector(Card):
             return
         self.requestedAddFolder.emit(Path(filename))
 
-    def _handle_remove_paths(self):
-        view = self.controls.batch_view
-        selected = view.selectionModel().selectedIndexes()
-        if selected:
-            indices = [index.row() for index in selected]
-            self.deletedPaths.emit(indices)
+    def _handle_clear_paths(self):
+        self.requestClear.emit()
 
     def set_batch_mode(self, value: bool):
         self.controls.batch_mode.setValue(value)
@@ -175,6 +212,13 @@ class QuerySelector(Card):
 
     def set_batch_model(self, model: PathListModel):
         self.controls.batch_view.setModel(model)
+
+    def set_batch_total(self, total: int):
+        self.controls.batch_total.setText(f"Total: {total}")
+
+    def set_batch_help_visible(self, visible: bool):
+        self.controls.batch_help.setVisible(visible)
+        self.controls.batch_view.setVisible(not visible)
 
     def set_path(self, path: Path):
         text = str(path) if path != Path() else ""
@@ -320,9 +364,19 @@ class View(ScrollTaskView):
         self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
         self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
 
-        self.binder.bind(self.cards.query.deletedPaths, object.delete_paths)
+        self.binder.bind(self.cards.query.requestClear, object.clear_paths)
+        self.binder.bind(self.cards.query.requestDelete, object.delete_paths)
         self.binder.bind(self.cards.query.requestedAddPaths, object.add_paths)
         self.binder.bind(self.cards.query.requestedAddFolder, object.add_folder)
+
+        self.binder.bind(object.properties.input_query_list_total, self.cards.query.set_batch_total)
+        self.binder.bind(
+            object.properties.input_query_list_rows, self.cards.query.set_batch_help_visible, proxy=lambda x: x == 0
+        )
+
+        self.binder.bind(object.input_query_list.rowsInserted, self.cards.query.controls.batch_view.updateGeometry)
+        self.binder.bind(object.input_query_list.rowsRemoved, self.cards.query.controls.batch_view.updateGeometry)
+        self.binder.bind(object.input_query_list.modelReset, self.cards.query.controls.batch_view.updateGeometry)
 
         self.binder.bind(
             object.properties.blast_method,

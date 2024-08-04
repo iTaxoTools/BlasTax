@@ -1,6 +1,7 @@
 from PySide6 import QtCore
 
 import multiprocessing
+import os
 from pathlib import Path
 
 from itaxotools.common.bindings import Instance, Property
@@ -17,12 +18,14 @@ from . import process, title
 class PathListModel(QtCore.QAbstractListModel):
     def __init__(self, paths=None):
         super().__init__()
-        self.paths = paths or []
+        self.paths: list[Path] = paths or []
 
     @override
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
             path = self.paths[index.row()]
+            if path.is_dir():
+                return str(path.absolute()) + os.path.sep + "*.{fa,fas,fasta}"
             return str(path.absolute())
 
     @override
@@ -35,6 +38,7 @@ class PathListModel(QtCore.QAbstractListModel):
 
     def add_paths(self, paths: list[Path]):
         paths = [path for path in paths if path not in self.paths]
+        paths.sort()
         self.beginInsertRows(QtCore.QModelIndex(), self.rowCount(), self.rowCount() + len(paths))
         for path in paths:
             self.paths.append(path)
@@ -48,6 +52,22 @@ class PathListModel(QtCore.QAbstractListModel):
                 del self.paths[index]
         self.endRemoveRows()
 
+    def clear(self):
+        self.beginResetModel()
+        self.paths = []
+        self.endResetModel()
+
+    def get_all_paths(self):
+        all = []
+        for path in self.paths:
+            if path.is_file():
+                all.append(path)
+            elif path.is_dir():
+                all.extend(path.glob("*.fa"))
+                all.extend(path.glob("*.fas"))
+                all.extend(path.glob("*.fasta"))
+        return all
+
 
 class Model(TaskModel):
     task_name = title
@@ -55,6 +75,8 @@ class Model(TaskModel):
     batch_mode = Property(bool, False)
     input_query_path = Property(Path, Path())
     input_query_list = Property(PathListModel, Instance)
+    input_query_list_rows = Property(int, 0)
+    input_query_list_total = Property(int, 0)
     input_database_path = Property(Path, Path())
     input_nucleotides_path = Property(Path, Path())
     output_path = Property(Path, Path())
@@ -74,6 +96,14 @@ class Model(TaskModel):
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
         for handle in [
+            self.input_query_list.rowsInserted,
+            self.input_query_list.rowsRemoved,
+            self.input_query_list.modelReset,
+        ]:
+            self.binder.bind(handle, self._update_input_query_list_rows)
+            self.binder.bind(handle, self._update_input_query_list_total)
+
+        for handle in [
             self.properties.batch_mode,
             self.properties.input_query_path,
             self.properties.input_database_path,
@@ -91,7 +121,7 @@ class Model(TaskModel):
 
     def isReady(self):
         if self.batch_mode:
-            if not self.input_query_list.paths:
+            if not self.input_query_list.get_all_paths():
                 return False
         if not self.batch_mode:
             if self.input_query_path == Path():
@@ -114,7 +144,7 @@ class Model(TaskModel):
             input_query_path=self.input_query_path,
             input_database_path=self.input_database_path,
             input_nucleotides_path=self.input_nucleotides_path,
-            input_query_list=self.input_query_list.paths,
+            input_query_list=self.input_query_list.get_all_paths(),
             output_path=self.output_path,
             blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
@@ -133,10 +163,19 @@ class Model(TaskModel):
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
 
+    def _update_input_query_list_rows(self):
+        self.input_query_list_rows = len(self.input_query_list.paths)
+
+    def _update_input_query_list_total(self):
+        self.input_query_list_total = len(self.input_query_list.get_all_paths())
+
     def delete_paths(self, indices: list[int]):
         if not indices:
             return
         self.input_query_list.remove_paths(indices)
+
+    def clear_paths(self):
+        self.input_query_list.clear()
 
     def add_paths(self, paths: list[Path]):
         if not paths:
@@ -144,12 +183,7 @@ class Model(TaskModel):
         self.input_query_list.add_paths(paths)
 
     def add_folder(self, dir: Path):
-        assert dir.is_dir()
-        paths = []
-        paths += list(dir.glob("*.fa"))
-        paths += list(dir.glob("*.fas"))
-        paths += list(dir.glob("*.fasta"))
-        self.add_paths(paths)
+        self.input_query_list.add_paths([dir])
 
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
