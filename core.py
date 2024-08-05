@@ -74,8 +74,8 @@ def run_blast(
     other: str,
 ) -> bool:
     command = (
-        f"{get_blast_binary(blast_binary)} -query {str(query_path)} -db {str(database_path)} -out {str(output_path)} "
-        f"-evalue {evalue} -num_threads {num_threads} -outfmt {outfmt} {other}"
+        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+        f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
 
@@ -95,8 +95,8 @@ def run_blast_align(
     verbose: bool = False,
 ) -> bool:
     command = (
-        f"{get_blast_binary(blast_binary)} -out {output_path} -query {query_path} -outfmt '{int(6)} length pident qseqid sseqid sseq qframe sframe' "
-        f"-evalue {evalue} -db {database_path} -num_threads {num_threads}"
+        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+        f"-evalue {evalue} -num_threads {num_threads} -outfmt '6 length pident qseqid sseqid sseq qframe sframe'"
     )
     args = command_to_args(command)
 

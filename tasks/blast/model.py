@@ -1,51 +1,14 @@
-from PySide6 import QtCore
-
 import multiprocessing
+from datetime import datetime
 from pathlib import Path
 
 from itaxotools.common.bindings import Property
-from itaxotools.common.utility import override
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BlastTaskModel
 from ..common.types import BLAST_OUTFMT_SPECIFIERS_TABLE, BlastMethod
 from ..common.utils import get_database_index_from_path
 from . import process, title
-
-
-class PathListModel(QtCore.QAbstractListModel):
-    def __init__(self, paths=None):
-        super().__init__()
-        self.paths = paths or []
-
-    @override
-    def data(self, index, role):
-        if role == QtCore.Qt.DisplayRole:
-            path = self.paths[index.row()]
-            return str(path.absolute())
-
-    @override
-    def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self.paths)
-
-    @override
-    def flags(self, index):
-        return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
-
-    def add_paths(self, paths: list[Path]):
-        paths = [path for path in paths if path not in self.paths]
-        self.beginInsertRows(QtCore.QModelIndex(), self.rowCount(), self.rowCount() + len(paths))
-        for path in paths:
-            self.paths.append(path)
-        self.endInsertRows()
-
-    def remove_paths(self, indices: list[int]):
-        indices = sorted(indices, reverse=True)
-        self.beginRemoveRows(QtCore.QModelIndex(), indices[-1], indices[0])
-        for index in indices:
-            if 0 <= index < len(self.paths):
-                del self.paths[index]
-        self.endRemoveRows()
 
 
 class Model(BlastTaskModel):
@@ -98,9 +61,13 @@ class Model(BlastTaskModel):
 
     def start(self):
         super().start()
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        work_dir = self.temporary_path / timestamp
+        work_dir.mkdir()
 
         self.exec(
             process.execute,
+            work_dir=work_dir,
             input_query_path=self.input_query_path,
             input_database_path=self.input_database_path,
             output_path=self.output_path,

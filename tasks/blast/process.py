@@ -13,6 +13,7 @@ def initialize():
 
 
 def execute(
+    work_dir: Path,
     input_query_path: Path,
     input_database_path: Path,
     output_path: Path,
@@ -23,6 +24,9 @@ def execute(
     blast_outfmt_options: str,
     blast_extra_args: str,
 ) -> Results:
+    from core import run_blast
+    from utils import remove_gaps
+
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
     print(f"{output_path=}")
@@ -35,9 +39,21 @@ def execute(
 
     ts = perf_counter()
 
-    from time import sleep
+    blast_output_path = output_path / input_query_path.with_suffix(".out").name
+    input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
+    remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    sleep(2)
+    if not run_blast(
+        blast_binary=blast_method,
+        query_path=input_query_path_no_gaps,
+        database_path=input_database_path,
+        output_path=blast_output_path,
+        evalue=blast_evalue,
+        num_threads=blast_num_threads,
+        outfmt=f"{blast_outfmt} {blast_outfmt_options}",
+        other=blast_extra_args,
+    ):
+        raise Exception("BLAST process failed! Please make sure the parameters are set correctly!")
 
     tf = perf_counter()
 

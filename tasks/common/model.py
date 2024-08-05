@@ -61,12 +61,12 @@ class PathListModel(QtCore.QAbstractListModel):
         self.endResetModel()
 
     def get_all_paths(self):
-        all = []
+        all = set()
         for path in self.paths:
             if path.is_file():
-                all.append(path)
+                all.add(path)
             elif path.is_dir():
-                all.extend(path.glob("*.fa"))
-                all.extend(path.glob("*.fas"))
-                all.extend(path.glob("*.fasta"))
+                all.update(path.glob("*.fa"))
+                all.update(path.glob("*.fas"))
+                all.update(path.glob("*.fasta"))
         return all

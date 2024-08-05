@@ -1,4 +1,5 @@
 import multiprocessing
+from datetime import datetime
 from pathlib import Path
 
 from itaxotools.common.bindings import Instance, Property
@@ -78,16 +79,19 @@ class Model(BlastTaskModel):
 
     def start(self):
         super().start()
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        work_dir = self.temporary_path / timestamp
+        work_dir.mkdir()
 
         self.exec(
             process.execute,
+            work_dir=work_dir,
             batch_mode=self.batch_mode,
             input_query_path=self.input_query_path,
             input_database_path=self.input_database_path,
             input_nucleotides_path=self.input_nucleotides_path,
             input_query_list=self.input_query_list.get_all_paths(),
             output_path=self.output_path,
-            blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
         )

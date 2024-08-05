@@ -13,6 +13,7 @@ def initialize():
 
 
 def execute(
+    work_dir: Path,
     input_query_path: Path,
     input_database_path: Path,
     output_path: Path,
@@ -21,6 +22,9 @@ def execute(
     pident_threshold: float,
     retrieve_original: bool,
 ) -> Results:
+    from core import museoscript_original_reads, museoscript_parse, run_blast
+    from utils import remove_gaps
+
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
     print(f"{output_path=}")
@@ -31,9 +35,36 @@ def execute(
 
     ts = perf_counter()
 
-    from time import sleep
+    blast_output_path = output_path / input_query_path.with_suffix(".out").name
+    museo_output_path = output_path / input_query_path.with_stem(input_query_path.stem + "_museo").name
+    input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
+    remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    sleep(2)
+    if not run_blast(
+        blast_binary="blastn",
+        query_path=input_query_path_no_gaps,
+        database_path=input_database_path,
+        output_path=blast_output_path,
+        evalue=blast_evalue,
+        num_threads=blast_num_threads,
+        outfmt="6 qseqid sseqid sacc stitle pident qseq",
+        other="",
+    ):
+        raise Exception("BLAST process failed! Please make sure the parameters are set correctly!")
+
+    if retrieve_original:
+        museoscript_original_reads(
+            blast_path=blast_output_path,
+            original_query_path=input_query_path_no_gaps,
+            output_path=museo_output_path,
+            pident_threshold=pident_threshold,
+        )
+    else:
+        museoscript_parse(
+            blast_path=blast_output_path,
+            output_path=museo_output_path,
+            pident_threshold=pident_threshold,
+        )
 
     tf = perf_counter()
 
