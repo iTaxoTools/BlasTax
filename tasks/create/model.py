@@ -1,14 +1,13 @@
 from pathlib import Path
 
 from itaxotools.common.bindings import Property
-from itaxotools.taxi_gui.model.tasks import SubtaskModel, TaskModel
-from itaxotools.taxi_gui.types import Notification
-from itaxotools.taxi_gui.utility import human_readable_seconds
+from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
+from ..common.model import BlastTaskModel
 from . import process, title
 
 
-class Model(TaskModel):
+class Model(BlastTaskModel):
     task_name = title
 
     input_path = Property(Path, Path())
@@ -47,17 +46,11 @@ class Model(TaskModel):
 
         self.exec(
             process.execute,
-            input_path=str(self.input_path),
-            output_path=str(self.output_path),
+            input_path=self.input_path,
+            output_path=self.output_path,
             type=self.database_type,
             name=self.database_name,
         )
-
-    def onDone(self, report):
-        time_taken = human_readable_seconds(report.result.seconds_taken)
-        self.notification.emit(Notification.Info(f"Database created successfully!\nTime taken: {time_taken}."))
-
-        self.busy = False
 
     def open(self, path: Path):
         self.input_path = path

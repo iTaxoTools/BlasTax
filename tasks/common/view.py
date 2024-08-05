@@ -3,9 +3,26 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 
 from itaxotools.taxi_gui import app
+from itaxotools.taxi_gui.utility import human_readable_seconds
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 
+from .types import Results
 from .widgets import ElidedLineEdit
+
+
+class BlastTaskView(ScrollTaskView):
+    def report_results(self, task_name: str, results: Results):
+        msgBox = QtWidgets.QMessageBox(self.window())
+        msgBox.setWindowTitle(app.config.title)
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+        msgBox.setText(f"{task_name} completed successfully!")
+        msgBox.setInformativeText(f"Time taken: {human_readable_seconds(results.seconds_taken)}.")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
+        button = self.window().msgShow(msgBox)
+        if button == QtWidgets.QMessageBox.Open:
+            url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
+            QtGui.QDesktopServices.openUrl(url)
 
 
 class GraphicTitleCard(Card):

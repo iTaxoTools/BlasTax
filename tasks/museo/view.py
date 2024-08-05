@@ -6,11 +6,10 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import LongLabel
 
 from ..common.types import BlastMethod
-from ..common.view import GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
+from ..common.view import BlastTaskView, GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
 from ..common.widgets import (
     BasePropertyLineEdit,
     BlastMethodCombobox,
@@ -163,7 +162,7 @@ class OptionalCategory(Card):
         self.controls.title.setChecked(checked)
 
 
-class View(ScrollTaskView):
+class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.draw_cards()
@@ -202,6 +201,7 @@ class View(ScrollTaskView):
         self.binder.unbind_all()
 
         self.binder.bind(object.notification, self.showNotification)
+        self.binder.bind(object.reportResults, self.report_results)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
         self.binder.bind(object.properties.name, self.cards.title.setTitle)

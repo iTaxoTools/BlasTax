@@ -2,16 +2,15 @@ import multiprocessing
 from pathlib import Path
 
 from itaxotools.common.bindings import Property
-from itaxotools.taxi_gui.model.tasks import SubtaskModel, TaskModel
-from itaxotools.taxi_gui.types import Notification
-from itaxotools.taxi_gui.utility import human_readable_seconds
+from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
+from ..common.model import BlastTaskModel
 from ..common.types import BlastMethod
 from ..common.utils import get_database_index_from_path
 from . import process, title
 
 
-class Model(TaskModel):
+class Model(BlastTaskModel):
     task_name = title
 
     input_query_path = Property(Path, Path())
@@ -67,12 +66,6 @@ class Model(TaskModel):
             pident_threshold=self.pident_threshold,
             retrieve_original=self.retrieve_original,
         )
-
-    def onDone(self, report):
-        time_taken = human_readable_seconds(report.result.seconds_taken)
-        self.notification.emit(Notification.Info(f"{self.name} completed successfully!\nTime taken: {time_taken}."))
-
-        self.busy = False
 
     def _update_num_threads_default(self):
         cpus = multiprocessing.cpu_count()
