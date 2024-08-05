@@ -5,24 +5,24 @@ from typing import Literal, NamedTuple
 
 import pytest
 
-from core import museoscript_parse
+from core import museoscript_original_reads
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 
-class MuseoTest(NamedTuple):
+class MuseoOrigTest(NamedTuple):
     blast_path: str
+    orig_query: str
     output_path:  str
     pident_threshold: float
     expected_output: str
-
     def validate(self, tmp_path: Path) -> None:
        blast_path = TEST_DATA_DIR / self.blast_path
+       orig_query = TEST_DATA_DIR / self.orig_query
        output_path = tmp_path / self.output_path
-       expected_output = tmp_path / self.expected_output
-       print(f"Blast Path: {blast_path}")
-       print(f"Output Path: {output_path}")
-       museoscript_parse(
+       expected_output = TEST_DATA_DIR / self.expected_output
+       museoscript_original_reads(
             str(blast_path),
+            str(orig_query),
             str(output_path),
             self.pident_threshold,
         )
@@ -41,15 +41,16 @@ class MuseoTest(NamedTuple):
 
 
 # New blast tests
-museo_tests = [
-    MuseoTest(
+museo_orig_tests = [
+    MuseoOrigTest(
         "blast_output.out",
-        "museoscript_output.out",
+        "original_query.fasta",
+        "museoscript_output_orig.out",
         0.9,
-        "museoscript_expected.out"
+        "museoscript_output_orig_expected.out"
     ),
 ]
 
-@pytest.mark.parametrize("test", museo_tests)
-def test_museoscript(test: MuseoTest, tmp_path: Path) -> None:
+@pytest.mark.parametrize("test", museo_orig_tests)
+def test_museoscript(test: MuseoOrigTest, tmp_path: Path) -> None:
     test.validate(TEST_DATA_DIR)
