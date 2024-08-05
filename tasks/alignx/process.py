@@ -16,6 +16,7 @@ def execute(
     batch_mode: bool,
     input_query_path: Path,
     input_database_path: Path,
+    input_nucleotides_path: Path,
     input_query_list: list[Path],
     output_path: Path,
     blast_method: str,
@@ -25,6 +26,7 @@ def execute(
     print(f"{batch_mode=}")
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
+    print(f"{input_nucleotides_path=}")
     print(f"{input_query_list=}")
     print(f"{output_path=}")
     print(f"{blast_method=}")

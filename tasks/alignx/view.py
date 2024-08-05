@@ -14,6 +14,7 @@ from ..common.view import (
     GraphicTitleCard,
     PathDatabaseSelector,
     PathDirectorySelector,
+    PathFileSelector,
 )
 from ..common.widgets import (
     BasePropertyLineEdit,
@@ -49,8 +50,7 @@ class OptionsSelector(Card):
         name = QtWidgets.QLabel("Method:")
         field = BlastMethodCombobox(
             [
-                BlastMethod.blastn,
-                BlastMethod.blastp,
+                BlastMethod.blastx,
             ]
         )
         description = QtWidgets.QLabel("Comparison type between query and database")
@@ -115,10 +115,13 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.query = BatchQuerySelector("Input mode", self)
         self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
+        self.cards.extra = PathFileSelector("\u25C0  Nucleotide file", self)
         self.cards.options = OptionsSelector(self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
-        self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.query.set_placeholder_text("Nucleotide sequences to match against database contents")
+        self.cards.database.set_placeholder_text("Match all query sequences against this protein database")
+        self.cards.extra.set_placeholder_text("Nucleotide sequences for each database entry")
         self.cards.output.set_placeholder_text("All output files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
@@ -149,6 +152,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
+
+        self.binder.bind(object.properties.input_nucleotides_path, self.cards.extra.set_path)
+        self.binder.bind(self.cards.extra.selectedPath, object.properties.input_nucleotides_path)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)

@@ -185,10 +185,10 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.editable, self.setEditable)
 
     def setEditable(self, editable: bool):
-        self.cards.query.setEnabled(editable)
-        self.cards.database.setEnabled(editable)
-        self.cards.options.setEnabled(editable)
-        self.cards.output.setEnabled(editable)
+        for card in self.cards:
+            card.setEnabled(editable)
+        self.cards.title.setEnabled(True)
+        self.cards.progress.setEnabled(True)
 
     def open(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(

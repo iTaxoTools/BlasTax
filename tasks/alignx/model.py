@@ -19,9 +19,10 @@ class Model(BlastTaskModel):
     input_query_list_rows = Property(int, 0)
     input_query_list_total = Property(int, 0)
     input_database_path = Property(Path, Path())
+    input_nucleotides_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
-    blast_method = Property(BlastMethod, BlastMethod.blastn)
+    blast_method = Property(BlastMethod, BlastMethod.blastx)
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid sseq qframe sframe"')
@@ -47,6 +48,7 @@ class Model(BlastTaskModel):
             self.properties.batch_mode,
             self.properties.input_query_path,
             self.properties.input_database_path,
+            self.properties.input_nucleotides_path,
             self.properties.output_path,
             self.properties.blast_method,
             self.input_query_list.rowsInserted,
@@ -69,6 +71,9 @@ class Model(BlastTaskModel):
             return False
         if self.output_path == Path():
             return False
+        if self.blast_method == BlastMethod.blastx:
+            if self.input_nucleotides_path == Path():
+                return False
         return True
 
     def start(self):
@@ -79,6 +84,7 @@ class Model(BlastTaskModel):
             batch_mode=self.batch_mode,
             input_query_path=self.input_query_path,
             input_database_path=self.input_database_path,
+            input_nucleotides_path=self.input_nucleotides_path,
             input_query_list=self.input_query_list.get_all_paths(),
             output_path=self.output_path,
             blast_method=self.blast_method.executable,

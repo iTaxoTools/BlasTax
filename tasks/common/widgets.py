@@ -269,3 +269,17 @@ class GDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     @override
     def wheelEvent(self, event):
         event.ignore()
+
+
+class BatchQueryHelp(QtWidgets.QPlainTextEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setPlaceholderText("Sequences to match against database contents")
+        self.setEnabled(False)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+        )
+
+    def sizeHint(self):
+        return QtCore.QSize(0, 0)
