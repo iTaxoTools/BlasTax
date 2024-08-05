@@ -1,6 +1,7 @@
 name: Windows
 
-on: workflow_dispatch
+# on: workflow_dispatch
+on: push
 
 env:
   ARTIFACT_EXECUTABLE: itaxotools-blast-gui-windows
