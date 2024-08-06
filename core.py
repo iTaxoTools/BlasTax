@@ -25,11 +25,18 @@ def get_blast_env() -> dict:
     return env
 
 
+def remove_single_quotes(text: str) -> str:
+    if len(text) > 1 and text[0] == text[-1] == "'":
+        return text[1:-1]
+    return text
+
+
 def command_to_args(command: str) -> list[str]:
-    shlex_kwargs = {}
     if platform.system() == "Windows":
-        shlex_kwargs = dict(posix=False)
-    return shlex.split(command, **shlex_kwargs)
+        args = shlex.split(command, posix=False)
+        args = [remove_single_quotes(arg) for arg in args]
+        return args
+    return shlex.split(command)
 
 
 BLAST_ENV = get_blast_env()
@@ -78,6 +85,7 @@ def run_blast(
         f"-evalue {evalue} -num_threads {num_threads} -outfmt {outfmt} {other}"
     )
     args = command_to_args(command)
+    print(args)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
