@@ -60,6 +60,7 @@ class AboutTitleCard(Card):
         homepage = QtWidgets.QPushButton("Homepage")
         itaxotools = QtWidgets.QPushButton("iTaxoTools")
         blast = QtWidgets.QPushButton("BLAST")
+        homepage.setFixedWidth(120)
 
         label_pixmap = QtWidgets.QLabel()
         label_pixmap.setPixmap(pixmap)
@@ -126,7 +127,7 @@ class DocumentCard(Card):
         label_description = HtmlLabel(description)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(8, 12, 100, 12)
+        layout.setContentsMargins(8, 12, 64, 12)
         layout.addWidget(label_title)
         layout.addWidget(label_description)
         layout.setSpacing(16)
@@ -141,7 +142,8 @@ class View(ScrollTaskView):
     def draw_cards(self):
         self.cards = AttrDict()
         self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
-        self.cards.phase = DocumentCard("About BLAST+", resources.documents.blast.resource, self)
+        self.cards.blast = DocumentCard("About BLAST+", resources.documents.blast.resource, self)
+        self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)

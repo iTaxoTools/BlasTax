@@ -1,7 +1,7 @@
 from resources import task_pixmaps_large, task_pixmaps_medium
 
 title = "Museoscript"
-description = "Turn matches into sequences"
+description = "Save matches as FASTA"
 
 pixmap = task_pixmaps_large.museo
 pixmap_medium = task_pixmaps_medium.museo

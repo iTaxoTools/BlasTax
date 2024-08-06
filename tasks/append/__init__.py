@@ -1,10 +1,10 @@
 from resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "BLAST-Align"
+title = "BLAST-Append"
 description = "Append matching sequences"
 
-pixmap = task_pixmaps_large.align
-pixmap_medium = task_pixmaps_medium.align
+pixmap = task_pixmaps_large.append
+pixmap_medium = task_pixmaps_medium.append
 
 long_description = (
     "Given one or more query files and a BLAST database, search the database for sequence matches. "

@@ -1,10 +1,10 @@
 from resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "BLAST-Align-X"
+title = "BLAST-Append-X"
 description = "Append matching nucleotides"
 
-pixmap = task_pixmaps_large.alignx
-pixmap_medium = task_pixmaps_medium.alignx
+pixmap = task_pixmaps_large.appendx
+pixmap_medium = task_pixmaps_medium.appendx
 
 long_description = (
     "Given one or more nucleotide query files and a protein BLAST database, search the database for sequence matches. "

@@ -1,7 +1,7 @@
 from resources import task_pixmaps_large, task_pixmaps_medium
 
 title = "Regular BLAST"
-description = "Calculate statistical significance"
+description = "Find matching sequences"
 
 pixmap = task_pixmaps_large.blast
 pixmap_medium = task_pixmaps_medium.blast
