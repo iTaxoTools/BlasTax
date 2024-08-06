@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['new.py'],
+    ['gui.py'],
     pathex=[],
     binaries=[('bin', 'bin')],
     datas=[

@@ -85,7 +85,6 @@ def run_blast(
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
-    print(args)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()

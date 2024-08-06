@@ -33,7 +33,7 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Make executable
-        run: pyinstaller new.spec
+        run: pyinstaller gui.spec
 
       - uses: actions/upload-artifact@v3
         with:
