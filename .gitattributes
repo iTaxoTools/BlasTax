@@ -1,0 +1,2 @@
+*.fasta filter=lfs diff=lfs merge=lfs -text
+tests/test_museoscript_original_reads/original_query.fasta filter=lfs diff=lfs merge=lfs -text
