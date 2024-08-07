@@ -23,6 +23,8 @@ def execute(
     blast_evalue: float,
     blast_num_threads: int,
 ) -> Results:
+    import itaxotools
+
     print(f"{batch_mode=}")
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
@@ -38,8 +40,10 @@ def execute(
         input_query_paths = input_query_list
     else:
         input_query_paths = [input_query_path]
+    total = len(input_query_paths)
 
-    for path in input_query_paths:
+    for i, path in enumerate(input_query_paths):
+        itaxotools.progress_handler(f"{i}/{total}", i, 0, total)
         execute_single(
             work_dir=work_dir,
             input_query_path=path,
@@ -49,6 +53,7 @@ def execute(
             blast_evalue=blast_evalue,
             blast_num_threads=blast_num_threads,
         )
+    itaxotools.progress_handler(f"{total}/{total}", total, 0, total)
 
     tf = perf_counter()
 

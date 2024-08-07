@@ -56,7 +56,7 @@ class ElidedLineEdit(GLineEdit):
 
 
 class FrontEllipsisDelegate(QtWidgets.QStyledItemDelegate):
-    rowHeight = 24
+    rowHeight = 20
 
     def __init__(self, parent=None):
         super().__init__(parent)
