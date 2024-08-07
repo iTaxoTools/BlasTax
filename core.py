@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 import shlex
 import shutil
 import subprocess
@@ -40,6 +41,24 @@ def command_to_args(command: str) -> list[str]:
 
 
 BLAST_ENV = get_blast_env()
+
+
+def get_blast_version() -> str:
+    try:
+        args = [get_blast_binary("makeblastdb"), "-version"]
+        result = subprocess.run(args, capture_output=True, text=True, check=True, env=BLAST_ENV)
+        output = result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while fetching version: {e}")
+    except FileNotFoundError:
+        raise Exception("Could not find blast executables.")
+
+    version_match = re.search(r"blast (\d+\.\d+\.\d+)", output)
+
+    if version_match:
+        return version_match.group(1)
+    else:
+        raise Exception("Version number not found in output!")
 
 
 def make_database(

@@ -142,7 +142,9 @@ class View(ScrollTaskView):
     def draw_cards(self):
         self.cards = AttrDict()
         self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
-        self.cards.blast = DocumentCard("About BLAST+", resources.documents.blast.resource, self)
+        self.cards.blast = DocumentCard(
+            f"About BLAST+ (v{resources.documents.version.resource})", resources.documents.blast.resource, self
+        )
         self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
