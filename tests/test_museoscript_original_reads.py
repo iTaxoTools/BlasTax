@@ -44,7 +44,7 @@ class MuseoOrigTest(NamedTuple):
 museo_orig_tests = [
     MuseoOrigTest(
         "blast_output.out",
-        "original_query.fasta",
+        "original_query_shorter.fasta",
         "museoscript_output_orig.out",
         0.9,
         "museoscript_output_orig_expected.out"
