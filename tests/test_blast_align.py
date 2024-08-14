@@ -50,10 +50,8 @@ class BlastTest(NamedTuple):
 blast_tests = [
     BlastTest(
         "blastn",
-#        "malamini.fas",
-#        "mala.fas",
-        "original_query_shorter.fasta",
-        "fix_test",
+        "malamini.fas",
+        "mala.fas",
         "blast_output.txt",
         "0.001",
         1,
