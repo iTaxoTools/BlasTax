@@ -6,3 +6,7 @@ Pipfile
 build/
 dist/
 bin/
+
+
+# accidentally added large file
+tests/test_museoscript_original_reads/original_query.fasta
