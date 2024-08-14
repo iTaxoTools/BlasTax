@@ -67,7 +67,7 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
     version: Literal[4, 5] = 4,
-) -> bool:
+) -> None:
     output_pattern = Path(output_path) / name
     args = [
         get_blast_binary("makeblastdb"),
@@ -85,8 +85,14 @@ def make_database(
     ]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
+    try:
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
+        _, stderr = p.communicate()
+        if p.returncode != 0:
+            raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+    except Exception as e:
+        raise Exception(str(e))
 
-    return bool(p.returncode == 0)
 
 
 def run_blast(
@@ -98,7 +104,7 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
-) -> bool:
+) -> None:
     command = (
         f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
@@ -108,7 +114,16 @@ def run_blast(
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
     p.wait()
 
-    return bool(p.returncode == 0)
+    try:
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
+        _, stderr = p.communicate()
+        if p.returncode != 0:
+            raise Exception(f"BLAST failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+    except Exception as e:
+ #       logging.error(f"Error in make_database: {str(e)}")
+ #       raise e
+        raise Exception(str(e))
+
 
 
 def run_blast_align(
@@ -118,29 +133,17 @@ def run_blast_align(
     output_path: Path | str,
     evalue: str,
     num_threads: int,
-    verbose: bool = False,
-) -> bool:
-    command = (
-        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
-        f"-evalue {evalue} -num_threads {num_threads} -outfmt '6 length pident qseqid sseqid sseq qframe sframe'"
+    ) -> bool:
+    return run_blast(
+        blast_binary=blast_binary,
+        query_path=query_path,
+        database_path=database_path,
+        output_path=output_path,
+        evalue=evalue,
+        num_threads=num_threads,
+        outfmt='6 length pident qseqid sseqid sseq qframe sframe',
+        other=''
     )
-    args = command_to_args(command)
-
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
-    p.wait()
-
-    if verbose:
-        stdout, stderr = p.communicate()
-        stdout = stdout.decode("utf-8")
-        stderr = stderr.decode("utf-8")
-
-        print("\nBLAST Standard Output:")
-        print(stdout)
-        print("\nBLAST Standard Error:")
-        print(stderr)
-        print(f"\nBLAST Return Code: {p.returncode}")
-
-    return bool(p.returncode == 0)
 
 
 def blastx_parse(
@@ -390,3 +393,19 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
+
+def fastq_to_fasta(infile, outfile) -> None:
+    """Quick conversion from FastQ to FASTA"""
+    fastq_file = open(infile, 'r')
+    fasta_file = open(outfile, 'w')
+
+    for line in fastq_file:
+        # loop through lines until the start of a record
+        if line[0] == "@":
+            # copy the seqid
+            print(">", line[1:], sep="", end="", file=fasta_file)
+            # copy the sequence
+            line = fastq_file.readline()
+            print(line, file=fasta_file, end="")
+    fastq_file.close()
+    fasta_file.close()

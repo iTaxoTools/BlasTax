@@ -13,7 +13,7 @@ Bundling is best done within a virtual environment, such as with the use of pipe
 pip install -r requirements.txt
 python tools/get_blast_binaries.py
 python gui.py
-pyinstaller blastGUI_test.spec
+pyinstaller gui.spec
 ```
 
 If all goes well, the bundle will be saved in the `dist` folder.

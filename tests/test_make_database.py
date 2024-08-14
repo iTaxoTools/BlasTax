@@ -21,7 +21,7 @@ class DatabaseTest(NamedTuple):
         fixture_path = TEST_DATA_DIR / self.output_path
         output_path = tmp_path / self.output_path
         output_path.mkdir()
-        assert make_database(
+        make_database(
             str(input_path),
             str(output_path),
             self.type,

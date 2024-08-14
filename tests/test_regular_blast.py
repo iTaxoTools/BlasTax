@@ -28,7 +28,7 @@ class BlastTest(NamedTuple):
         output_path = tmp_path / self.output_path
         blast_expected = tmp_path / self.blast_expected
 
-        assert run_blast(
+        run_blast(
             self.blast_binary,
             str(query_path),
             str(database_path),
