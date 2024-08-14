@@ -390,3 +390,17 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
+
+def fastq_to_fasta(infile, outfile) -> None:
+    """Quick conversion from FastQ to FASTA"""
+    fastq_file = open(infile, 'r')
+    fasta_file = open(outfile, 'w')
+
+    for line in fastq_file:
+        # loop through lines until the start of a record
+        if line[0] == "@":
+            # copy the seqid
+            print(">", line[1:], sep="", end="", file=fasta_file)
+            # copy the sequence
+            line = fastq_file.readline()
+            print(line, file=fasta_file, end="")
