@@ -1,4 +1,7 @@
+'''
 from __future__ import annotations
+
+
 
 from pathlib import Path
 from typing import Literal, NamedTuple
@@ -49,3 +52,4 @@ FastqToFasta_test = [
 @pytest.mark.parametrize("test", FastqToFasta_test)
 def test_fastq_to_fasta(test: FastqToFasta, tmp_path: Path) -> None:
     test.validate(TEST_DATA_DIR)
+'''

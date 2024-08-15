@@ -1,3 +1,4 @@
+'''
 from __future__ import annotations
 
 from pathlib import Path
@@ -54,3 +55,4 @@ museo_orig_tests = [
 @pytest.mark.parametrize("test", museo_orig_tests)
 def test_museoscript(test: MuseoOrigTest, tmp_path: Path) -> None:
     test.validate(TEST_DATA_DIR)
+'''

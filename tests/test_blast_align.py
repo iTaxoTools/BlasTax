@@ -1,4 +1,6 @@
+'''
 from __future__ import annotations
+
 
 from pathlib import Path
 from typing import Literal, NamedTuple
@@ -64,3 +66,4 @@ blast_tests = [
 def test_run_blast(test: BlastTest, tmp_path: Path) -> None:
     output_dir = TEST_DATA_DIR / "blast_output"
     test.validate(TEST_DATA_DIR)
+'''

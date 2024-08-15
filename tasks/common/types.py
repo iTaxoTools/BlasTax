@@ -20,7 +20,7 @@ class BlastMethod(Enum):
     def __init__(self, executable: str, description: str):
         self.executable = executable
         self.description = description
-        self.label = f"{str(executable+":").ljust(10)} {description.lower().replace("-", " - ")}"
+        self.label = f'{str(executable+":").ljust(10)} {description.lower().replace("-", " - ")}'
 
 
 BLAST_OUTFMT_OPTIONS = {
