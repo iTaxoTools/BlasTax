@@ -310,7 +310,7 @@ def blastx_parse(
     resultfile.close()
 
 
-def blastn_parse(
+def blast_parse(
     input_path: Path | str,
     blast_result_path: Path | str,
     output_path: Path | str,
