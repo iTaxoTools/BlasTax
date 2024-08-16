@@ -19,7 +19,7 @@ class MuseoTest(NamedTuple):
     def validate(self, tmp_path: Path) -> None:
         blast_path = TEST_DATA_DIR / self.blast_path
         output_path = tmp_path / self.output_path
-        expected_output = tmp_path / self.expected_output
+        expected_output = TEST_DATA_DIR / self.expected_output
         print(f"Blast Path: {blast_path}")
         print(f"Output Path: {output_path}")
         museoscript_parse(
@@ -49,4 +49,4 @@ museo_tests = [
 
 @pytest.mark.parametrize("test", museo_tests)
 def test_museoscript(test: MuseoTest, tmp_path: Path) -> None:
-    test.validate(TEST_DATA_DIR)
+    test.validate(tmp_path)

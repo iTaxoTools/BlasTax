@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Literal
 
-from utils import complement, translate
+from utils import complement, translate, fastq_to_fasta
 
 
 def get_blast_binary(name: str) -> str:
@@ -105,10 +105,17 @@ def run_blast(
     outfmt: str,
     other: str,
 ) -> None:
+
+    if query_path.endswith(".fastq"):
+        new_query = Path(query_path).with_suffix(".fasta")
+        fastq_to_fasta(query_path, new_query)
+        query_path = new_query
+
     command = (
-        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
-        f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
-    )
+            f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+            f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
+        )
+
     args = command_to_args(command)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
@@ -120,8 +127,6 @@ def run_blast(
         if p.returncode != 0:
             raise Exception(f"BLAST failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
     except Exception as e:
- #       logging.error(f"Error in make_database: {str(e)}")
- #       raise e
         raise Exception(str(e))
 
 
@@ -361,8 +366,11 @@ def museoscript_original_reads(
     output_path: Path | str,
     pident_threshold: float,
 ):
+    if original_query_path.endswith(".fastq"):
+        original_query_path = Path(original_query_path).with_suffix(".fasta")
+        
     with open(original_query_path, "r") as org_query:
-        query_list = org_query.readlines()
+            query_list = org_query.readlines()
 
     with open(blast_path, "r") as blast:
         with open(output_path, "w") as museo:
@@ -393,19 +401,3 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
-
-def fastq_to_fasta(infile, outfile) -> None:
-    """Quick conversion from FastQ to FASTA"""
-    fastq_file = open(infile, 'r')
-    fasta_file = open(outfile, 'w')
-
-    for line in fastq_file:
-        # loop through lines until the start of a record
-        if line[0] == "@":
-            # copy the seqid
-            print(">", line[1:], sep="", end="", file=fasta_file)
-            # copy the sequence
-            line = fastq_file.readline()
-            print(line, file=fasta_file, end="")
-    fastq_file.close()
-    fasta_file.close()

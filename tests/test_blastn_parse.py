@@ -55,4 +55,4 @@ blastn_parse_tests = [
 
 @pytest.mark.parametrize("test", blastn_parse_tests)
 def test_museoscript(test: BlastnParseTest, tmp_path: Path) -> None:
-    test.validate(TEST_DATA_DIR)
+    test.validate(tmp_path)

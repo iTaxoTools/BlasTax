@@ -1,4 +1,4 @@
-# BLAST-Align
+# BlasTax
 
 A program to parse blast hits.
 

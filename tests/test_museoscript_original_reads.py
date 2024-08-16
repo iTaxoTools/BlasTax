@@ -1,4 +1,3 @@
-'''
 from __future__ import annotations
 
 from pathlib import Path
@@ -44,8 +43,8 @@ class MuseoOrigTest(NamedTuple):
 # New blast tests
 museo_orig_tests = [
     MuseoOrigTest(
-        "blast_output.out",
-        "original_query_shorter.fasta",
+        "blast_output_fastq_expected.out",
+        "HI.4019.002.index_7.ANN0831_R1_small.fasta",
         "museoscript_output_orig.out",
         0.9,
         "museoscript_output_orig_expected.out"
@@ -54,5 +53,4 @@ museo_orig_tests = [
 
 @pytest.mark.parametrize("test", museo_orig_tests)
 def test_museoscript(test: MuseoOrigTest, tmp_path: Path) -> None:
-    test.validate(TEST_DATA_DIR)
-'''
+    test.validate(tmp_path)

@@ -1,4 +1,3 @@
-'''
 from __future__ import annotations
 
 
@@ -18,14 +17,13 @@ class BlastTest(NamedTuple):
     output_path: Path | str
     evalue: str
     num_threads: int
-    verbose: bool
     blast_expected: str
 
     def validate(self, tmp_path: Path) -> None:
         query_path = TEST_DATA_DIR / self.query_path
         database_path = TEST_DATA_DIR / self.database_path
         output_path = tmp_path / self.output_path
-        blast_expected = tmp_path / self.blast_expected
+        blast_expected = TEST_DATA_DIR / self.blast_expected
 
         run_blast_align(
             self.blast_binary,
@@ -34,7 +32,6 @@ class BlastTest(NamedTuple):
             str(output_path),
             self.evalue,
             self.num_threads,
-            self.verbose
         )
         assert output_path.exists()
 
@@ -57,13 +54,10 @@ blast_tests = [
         "blast_output.txt",
         "0.001",
         1,
-        True,
         "blast_expected.out"
     ),
 ]
 
 @pytest.mark.parametrize("test", blast_tests)
 def test_run_blast(test: BlastTest, tmp_path: Path) -> None:
-    output_dir = TEST_DATA_DIR / "blast_output"
-    test.validate(TEST_DATA_DIR)
-'''
+    test.validate(tmp_path)
