@@ -315,7 +315,10 @@ def blast_parse(
     blast_result_path: Path | str,
     output_path: Path | str,
     database_name: str,
-):
+    all_matches: bool=False,
+    pident_arg: float=None,
+    length_arg: int=None
+    ):
     # copy the content of the input file to a new output file
     blastfile = open(blast_result_path, "r")
     try:
@@ -325,36 +328,54 @@ def blast_parse(
         print(f"Error: {e}")
     # add upp blast hits to the new output file
     outfile = open(output_path, "a")
-    dict_head_pident = {}
-    dict_head_seq = {}
-    for line in blastfile:
-        splitti = line.split("\t")
-        print(splitti, splitti[3])
-        pident = splitti[1]
-        sequence_line = f"{splitti[4]}\n"
-        short_header = f">{database_name}_{splitti[3]}"
-
-        if short_header in dict_head_seq:
-            old_seqlen = len(dict_head_seq[short_header])
-            old_pident = dict_head_pident[short_header]
-            if len(sequence_line) > old_seqlen:
-                dict_head_pident[short_header] = pident[:-2]
-                dict_head_seq[short_header] = sequence_line
-            elif pident[:-2] > old_pident:
-                dict_head_pident[short_header] = pident[:-2]
-                dict_head_seq[short_header] = sequence_line
-            else:
-                continue
-
-        else:
-            dict_head_pident[short_header] = pident[:-2]
-            dict_head_seq[short_header] = sequence_line
-    #                list_of_headers.append(short_header)
-
-    #            outfile.writelines([header_line, sequence_line])
     outfile.write("\n")
-    for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
-        outfile.write(f"{header}_pident_{dict_head_pident[header]}\n{sequence}")
+    if all_matches == True:
+        for line in blastfile:
+            splitti = line.split("\t")
+            pident = float(splitti[1])
+            sequence = f"{splitti[4]}\n"
+            header = f">{database_name}_{splitti[3]}"
+            if pident_arg is not None and length_arg is not None:
+                if pident >= pident_arg and len(sequence)-1 >= length_arg:
+                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
+            elif pident_arg is not None:
+                if pident > pident_arg:
+                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
+            elif length_arg is not None:
+                if len(sequence)-1 >= length_arg:
+                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
+            else:
+                outfile.write(f"{header}_pident_{pident}\n{sequence}")
+    else:
+        dict_head_pident = {}
+        dict_head_seq = {}
+        for line in blastfile:
+            splitti = line.split("\t")
+            print(splitti, splitti[3])
+            pident = splitti[1]
+            sequence_line = f"{splitti[4]}\n"
+            short_header = f">{database_name}_{splitti[3]}"
+
+            if short_header in dict_head_seq:
+                old_seqlen = len(dict_head_seq[short_header])
+                old_pident = dict_head_pident[short_header]
+                if len(sequence_line) > old_seqlen:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                elif pident[:-2] > old_pident:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence_line
+                else:
+                    continue
+
+            else:
+                dict_head_pident[short_header] = pident[:-2]
+                dict_head_seq[short_header] = sequence_line
+        #                list_of_headers.append(short_header)
+
+        #            outfile.writelines([header_line, sequence_line])
+        for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
+            outfile.write(f"{header}_pident_{dict_head_pident[header]}\n{sequence}")
 
     outfile.close()
     blastfile.close()
