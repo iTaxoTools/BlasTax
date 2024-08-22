@@ -51,6 +51,7 @@ class OptionsSelector(Card):
             [
                 BlastMethod.blastn,
                 BlastMethod.blastp,
+                BlastMethod.tblastx,
             ]
         )
         description = QtWidgets.QLabel("Comparison type between query and database")

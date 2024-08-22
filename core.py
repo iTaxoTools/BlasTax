@@ -68,7 +68,7 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
     version: Literal[4, 5] = 4,
-) -> None:
+):
     output_pattern = Path(output_path) / name
     args = [
         get_blast_binary("makeblastdb"),
@@ -105,8 +105,8 @@ def run_blast(
     outfmt: str,
     other: str,
     work_dir: Path | None = None,
-) -> None:
-    if query_path.endswith(".fastq"):
+):
+    if str(query_path).endswith(".fastq"):
         if not work_dir:
             tmp_dir = TemporaryDirectory()
             work_dir = Path(tmp_dir.name)
@@ -140,7 +140,7 @@ def run_blast_align(
     output_path: Path | str,
     evalue: str,
     num_threads: int,
-) -> bool:
+):
     return run_blast(
         blast_binary=blast_binary,
         query_path=query_path,

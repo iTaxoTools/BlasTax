@@ -40,7 +40,7 @@ def execute(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    if not run_blast(
+    run_blast(
         blast_binary="blastn",
         query_path=input_query_path_no_gaps,
         database_path=input_database_path,
@@ -49,8 +49,7 @@ def execute(
         num_threads=blast_num_threads,
         outfmt="6 qseqid sseqid sacc stitle pident qseq",
         other="",
-    ):
-        raise Exception("BLAST process failed! Please make sure the parameters are set correctly!")
+    )
 
     if retrieve_original:
         museoscript_original_reads(

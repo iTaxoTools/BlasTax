@@ -34,14 +34,14 @@ def execute(
             "One or more sequence headers in the FASTA file contain special characters! Please check and edit headers!"
         )
 
-    if not make_database(
+    make_database(
         input_path=str(input_path),
         output_path=str(output_path),
         type=type,
         name=name,
         version=4,
-    ):
-        raise Exception("Database creation failed!")
+    )
+
     tf = perf_counter()
 
     return Results(output_path, tf - ts)

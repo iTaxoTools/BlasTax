@@ -79,7 +79,7 @@ def execute_single(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    if not run_blast(
+    run_blast(
         blast_binary="blastx",
         query_path=input_query_path_no_gaps,
         database_path=input_database_path,
@@ -88,11 +88,7 @@ def execute_single(
         num_threads=blast_num_threads,
         outfmt="6 length pident qseqid sseqid sseq qframe sframe",
         other="",
-    ):
-        raise Exception(
-            f"BLAST process failed for {input_database_path.name}! "
-            "Please make sure the parameters are set correctly!"
-        )
+    )
 
     blastx_parse(
         input_path=input_query_path,
