@@ -52,6 +52,7 @@ def execute(
         num_threads=blast_num_threads,
         outfmt=f"{blast_outfmt} {blast_outfmt_options}",
         other=blast_extra_args,
+        work_dir=work_dir,
     ):
         raise Exception("BLAST process failed! Please make sure the parameters are set correctly!")
 

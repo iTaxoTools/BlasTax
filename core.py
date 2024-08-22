@@ -5,6 +5,7 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Literal
 
 from utils import complement, fastq_to_fasta, translate
@@ -103,9 +104,13 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
+    work_dir: Path | None = None,
 ) -> None:
     if query_path.endswith(".fastq"):
-        new_query = Path(query_path).with_suffix(".fasta")
+        if not work_dir:
+            tmp_dir = TemporaryDirectory()
+            work_dir = Path(tmp_dir.name)
+        new_query = work_dir / Path(query_path).with_suffix(".fasta").name
         fastq_to_fasta(query_path, new_query)
         query_path = new_query
 
