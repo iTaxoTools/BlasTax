@@ -33,7 +33,7 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Update version file
-        run: python tools/update_version_file.py
+        run: python tools/update-version-file.py
 
       - name: Make bundle
         uses: iTaxoTools/TaxIGui/.github/actions/make-bundle@main
