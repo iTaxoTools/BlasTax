@@ -2,6 +2,7 @@
 
 __pycache__
 Pipfile
+Pipfile.lock
 
 build/
 dist/
@@ -10,3 +11,6 @@ bin/
 
 # accidentally added large file
 tests/test_museoscript_original_reads/original_query.fasta
+
+# do not trigger setuptools_scm
+documents/version.txt

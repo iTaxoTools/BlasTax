@@ -1,17 +1,17 @@
-name: Windows
+name: macOS
 
 on: workflow_dispatch
 # on: push
 
 env:
-  ARTIFACT_EXECUTABLE: itaxotools-blast-gui-windows
+  ARTIFACT_BUNDLE: itaxotools-blast-gui-macos
 
 
 jobs:
 
-  build-executable:
-    name: Build Windows executable
-    runs-on: windows-2019
+  build-bundle:
+    name: Build macOS bundle
+    runs-on: macos-11
 
     steps:
       - name: Checkout
@@ -33,12 +33,12 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Update version file
-        run: python tools/update-version-file.py
+        run: python tools/update_version_file.py
 
-      - name: Make executable
-        run: pyinstaller gui.spec
+      - name: Make bundle
+        uses: iTaxoTools/TaxIGui/.github/actions/make-bundle@main
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_EXECUTABLE }}
-          path: dist/*.exe
+          name: ${{ env.ARTIFACT_BUNDLE }}
+          path: dist/*.zip
