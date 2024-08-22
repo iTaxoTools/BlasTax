@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 
 def check_fasta_headers(file_path):
@@ -155,7 +156,7 @@ def translate(line):
 # ENDE TRANSLATE
 
 
-def fastq_to_fasta(infile, outfile) -> None:
+def fastq_to_fasta(infile: Path | str, outfile: Path | str) -> None:
     """Quick conversion from FastQ to FASTA"""
     fastq_file = open(infile, "r")
     fasta_file = open(outfile, "w")
@@ -170,3 +171,11 @@ def fastq_to_fasta(infile, outfile) -> None:
             print(line, file=fasta_file, end="")
     fastq_file.close()
     fasta_file.close()
+
+
+def is_fasta(path: Path) -> bool:
+    return True
+
+
+def is_fastq(path: Path) -> bool:
+    return True
