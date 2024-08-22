@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 
 import pytest
 
 from core import run_blast_align
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
+
 
 class BlastTest(NamedTuple):
     blast_binary: str
@@ -36,27 +36,21 @@ class BlastTest(NamedTuple):
         assert output_path.exists()
 
         # Verify that the output matches the expected output
-        with open(output_path, 'r') as output_file:
+        with open(output_path, "r") as output_file:
             output_data = output_file.read()
 
-        with open(blast_expected, 'r') as expected_file:
+        with open(blast_expected, "r") as expected_file:
             expected_data = expected_file.read()
 
         assert output_data == expected_data
-        print(f"Output matches expected output.")
+        print("Output matches expected output.")
+
 
 # New blast tests
 blast_tests = [
-    BlastTest(
-        "blastn",
-        "malamini.fas",
-        "mala.fas",
-        "blast_output.txt",
-        "0.001",
-        1,
-        "blast_expected.out"
-    ),
+    BlastTest("blastn", "malamini.fas", "mala.fas", "blast_output.txt", "0.001", 1, "blast_expected.out"),
 ]
+
 
 @pytest.mark.parametrize("test", blast_tests)
 def test_run_blast(test: BlastTest, tmp_path: Path) -> None:

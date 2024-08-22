@@ -4,6 +4,7 @@ repos:
   hooks:
   -   id: check-yaml
   -   id: end-of-file-fixer
+      files: \.py$
   -   id: trailing-whitespace
       files: \.py$
   -   id: check-added-large-files

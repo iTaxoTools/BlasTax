@@ -52,10 +52,50 @@ class BlastTest(NamedTuple):
 
 # New blast tests
 blast_tests = [
-    BlastTest("blastn", "blastn/malamini.fas", "blastn/mala.fas", "blast_output.txt", "0.001", 1, "1", "", "blastn/blast_expected.out"),
-    BlastTest("blastn", "fastq/HI.4019.002.index_7.ANN0831_R1_small.fastq", "fastq/HI.4019.002.index_7.ANN0831_R1_mod", "blast_output_fastq.txt", "0.001", 1, "6 qseqid sseqid sacc stitle pident qseq", "", "fastq/blast_output_fastq_expected.out"),
-    BlastTest("blastp", "blastp/proteins.fasta", "blastp/pdbaa", "blastp_output.txt", "0.001", 1, "6 length pident qseqid sseqid sseq qframe sframe", "", "blastp/blastp_expected.out"),
-    BlastTest("tblastx", "tblastx/malamini.fas", "tblastx/mala.fas", "tblastx_output.txt", "0.001", 1, "6 length pident qseqid sseqid sseq qframe sframe", "", "tblastx/tblastx_expected.out"),
+    BlastTest(
+        "blastn",
+        "blastn/malamini.fas",
+        "blastn/mala.fas",
+        "blast_output.txt",
+        "0.001",
+        1,
+        "1",
+        "",
+        "blastn/blast_expected.out",
+    ),
+    BlastTest(
+        "blastn",
+        "fastq/HI.4019.002.index_7.ANN0831_R1_small.fastq",
+        "fastq/HI.4019.002.index_7.ANN0831_R1_mod",
+        "blast_output_fastq.txt",
+        "0.001",
+        1,
+        "6 qseqid sseqid sacc stitle pident qseq",
+        "",
+        "fastq/blast_output_fastq_expected.out",
+    ),
+    BlastTest(
+        "blastp",
+        "blastp/proteins.fasta",
+        "blastp/pdbaa",
+        "blastp_output.txt",
+        "0.001",
+        1,
+        "6 length pident qseqid sseqid sseq qframe sframe",
+        "",
+        "blastp/blastp_expected.out",
+    ),
+    BlastTest(
+        "tblastx",
+        "tblastx/malamini.fas",
+        "tblastx/mala.fas",
+        "tblastx_output.txt",
+        "0.001",
+        1,
+        "6 length pident qseqid sseqid sseq qframe sframe",
+        "",
+        "tblastx/tblastx_expected.out",
+    ),
 ]
 
 

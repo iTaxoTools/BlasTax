@@ -154,10 +154,11 @@ def translate(line):
 
 # ENDE TRANSLATE
 
+
 def fastq_to_fasta(infile, outfile) -> None:
     """Quick conversion from FastQ to FASTA"""
-    fastq_file = open(infile, 'r')
-    fasta_file = open(outfile, 'w')
+    fastq_file = open(infile, "r")
+    fasta_file = open(outfile, "w")
 
     for line in fastq_file:
         # loop through lines until the start of a record

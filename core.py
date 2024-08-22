@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Literal
 
-from utils import complement, translate, fastq_to_fasta
+from utils import complement, fastq_to_fasta, translate
 
 
 def get_blast_binary(name: str) -> str:
@@ -94,7 +94,6 @@ def make_database(
         raise Exception(str(e))
 
 
-
 def run_blast(
     blast_binary: str,
     query_path: Path | str,
@@ -105,16 +104,15 @@ def run_blast(
     outfmt: str,
     other: str,
 ) -> None:
-
     if query_path.endswith(".fastq"):
         new_query = Path(query_path).with_suffix(".fasta")
         fastq_to_fasta(query_path, new_query)
         query_path = new_query
 
     command = (
-            f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
-            f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
-        )
+        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+        f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
+    )
 
     args = command_to_args(command)
 
@@ -130,7 +128,6 @@ def run_blast(
         raise Exception(str(e))
 
 
-
 def run_blast_align(
     blast_binary: str,
     query_path: Path | str,
@@ -138,7 +135,7 @@ def run_blast_align(
     output_path: Path | str,
     evalue: str,
     num_threads: int,
-    ) -> bool:
+) -> bool:
     return run_blast(
         blast_binary=blast_binary,
         query_path=query_path,
@@ -146,8 +143,8 @@ def run_blast_align(
         output_path=output_path,
         evalue=evalue,
         num_threads=num_threads,
-        outfmt='6 length pident qseqid sseqid sseq qframe sframe',
-        other=''
+        outfmt="6 length pident qseqid sseqid sseq qframe sframe",
+        other="",
     )
 
 
@@ -315,10 +312,10 @@ def blast_parse(
     blast_result_path: Path | str,
     output_path: Path | str,
     database_name: str,
-    all_matches: bool=False,
-    pident_arg: float=None,
-    length_arg: int=None
-    ):
+    all_matches: bool = False,
+    pident_arg: float = None,
+    length_arg: int = None,
+):
     # copy the content of the input file to a new output file
     blastfile = open(blast_result_path, "r")
     try:
@@ -329,20 +326,20 @@ def blast_parse(
     # add upp blast hits to the new output file
     outfile = open(output_path, "a")
     outfile.write("\n")
-    if all_matches == True:
+    if all_matches:
         for line in blastfile:
             splitti = line.split("\t")
             pident = float(splitti[1])
             sequence = f"{splitti[4]}\n"
             header = f">{database_name}_{splitti[3]}"
             if pident_arg is not None and length_arg is not None:
-                if pident >= pident_arg and len(sequence)-1 >= length_arg:
+                if pident >= pident_arg and len(sequence) - 1 >= length_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             elif pident_arg is not None:
                 if pident > pident_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             elif length_arg is not None:
-                if len(sequence)-1 >= length_arg:
+                if len(sequence) - 1 >= length_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             else:
                 outfile.write(f"{header}_pident_{pident}\n{sequence}")
@@ -389,9 +386,9 @@ def museoscript_original_reads(
 ):
     if original_query_path.endswith(".fastq"):
         original_query_path = Path(original_query_path).with_suffix(".fasta")
-        
+
     with open(original_query_path, "r") as org_query:
-            query_list = org_query.readlines()
+        query_list = org_query.readlines()
 
     with open(blast_path, "r") as blast:
         with open(output_path, "w") as museo:
