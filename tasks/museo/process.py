@@ -23,7 +23,7 @@ def execute(
     retrieve_original: bool,
 ) -> Results:
     from core import museoscript_original_reads, museoscript_parse, run_blast
-    from utils import remove_gaps
+    from utils import fastq_to_fasta, is_fastq, remove_gaps
 
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
@@ -34,6 +34,11 @@ def execute(
     print(f"{retrieve_original=}")
 
     ts = perf_counter()
+
+    if is_fastq(input_query_path):
+        target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
+        fastq_to_fasta(input_query_path, target_query_path)
+        input_query_path = target_query_path
 
     blast_output_path = output_path / input_query_path.with_suffix(".out").name
     museo_output_path = output_path / input_query_path.with_stem(input_query_path.stem + "_museo").name

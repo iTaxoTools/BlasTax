@@ -5,10 +5,9 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Literal
 
-from utils import complement, fastq_to_fasta, translate
+from utils import complement, translate
 
 
 def get_blast_binary(name: str) -> str:
@@ -104,16 +103,7 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
-    work_dir: Path | None = None,
 ):
-    if str(query_path).endswith(".fastq"):
-        if not work_dir:
-            tmp_dir = TemporaryDirectory()
-            work_dir = Path(tmp_dir.name)
-        new_query = work_dir / Path(query_path).with_suffix(".fasta").name
-        fastq_to_fasta(query_path, new_query)
-        query_path = new_query
-
     command = (
         f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
@@ -389,9 +379,6 @@ def museoscript_original_reads(
     output_path: Path | str,
     pident_threshold: float,
 ):
-    if original_query_path.endswith(".fastq"):
-        original_query_path = Path(original_query_path).with_suffix(".fasta")
-
     with open(original_query_path, "r") as org_query:
         query_list = org_query.readlines()
 

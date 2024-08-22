@@ -25,7 +25,7 @@ def execute(
     blast_extra_args: str,
 ) -> Results:
     from core import run_blast
-    from utils import remove_gaps
+    from utils import fastq_to_fasta, is_fastq, remove_gaps
 
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
@@ -38,6 +38,11 @@ def execute(
     print(f"{blast_extra_args=}")
 
     ts = perf_counter()
+
+    if is_fastq(input_query_path):
+        target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
+        fastq_to_fasta(input_query_path, target_query_path)
+        input_query_path = target_query_path
 
     blast_output_path = output_path / input_query_path.with_suffix(".out").name
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
@@ -52,7 +57,6 @@ def execute(
         num_threads=blast_num_threads,
         outfmt=f"{blast_outfmt} {blast_outfmt_options}",
         other=blast_extra_args,
-        work_dir=work_dir,
     )
 
     tf = perf_counter()
