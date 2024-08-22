@@ -156,26 +156,58 @@ def translate(line):
 # ENDE TRANSLATE
 
 
-def fastq_to_fasta(infile: Path | str, outfile: Path | str) -> None:
+class FastqParseError(Exception):
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+        super().__init__(f"Could not parse fastq file: {path.name}")
+
+
+def fastq_to_fasta(fastq_path: Path | str, fasta_file: Path | str):
     """Quick conversion from FastQ to FASTA"""
-    fastq_file = open(infile, "r")
-    fasta_file = open(outfile, "w")
+    with open(fastq_path, "r") as fastq_file:
+        with open(fasta_file, "w") as fasta_file:
+            id = None
+            seq = None
+            for line in fastq_file:
+                if not line.strip():
+                    continue
+                if line.startswith("@"):
+                    id = line.removeprefix("@").strip()
+                    continue
+                if id is not None and seq is None:
+                    seq = line.strip()
+                    continue
+                if line.startswith("+"):
+                    if id is None or seq is None:
+                        raise FastqParseError(fastq_path)
+                    fastq_file.readline()
+                    print(f">{id}", end="\n", file=fasta_file)
+                    print(seq, end="\n", file=fasta_file)
+                    id = None
+                    seq = None
+                    continue
 
-    for line in fastq_file:
-        # loop through lines until the start of a record
-        if line[0] == "@":
-            # copy the seqid
-            print(">", line[1:], sep="", end="", file=fasta_file)
-            # copy the sequence
-            line = fastq_file.readline()
-            print(line, file=fasta_file, end="")
-    fastq_file.close()
-    fasta_file.close()
+
+def is_fasta(path: Path | str) -> bool:
+    with open(path, "r") as file:
+        for line in file:
+            if not line.strip():
+                continue
+            if line.startswith(";"):
+                continue
+            if line.startswith(">"):
+                return True
+    return False
 
 
-def is_fasta(path: Path) -> bool:
-    return True
-
-
-def is_fastq(path: Path) -> bool:
-    return True
+def is_fastq(path: Path | str) -> bool:
+    with open(path, "r") as file:
+        id = False
+        for line in file:
+            if not line.strip():
+                continue
+            if line.startswith("@"):
+                id = True
+            if line.startswith("+"):
+                return bool(id)
+    return False
