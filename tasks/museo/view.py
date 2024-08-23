@@ -14,8 +14,8 @@ from ..common.widgets import (
     BasePropertyLineEdit,
     BlastMethodCombobox,
     FloatPropertyLineEdit,
-    GDoubleSpinBox,
     IntPropertyLineEdit,
+    PidentSpinBox,
 )
 from . import long_description, pixmap_medium, title
 
@@ -104,14 +104,7 @@ class IdentityThresholdCard(Card):
         label = QtWidgets.QLabel("Identity threshold")
         label.setStyleSheet("""font-size: 16px;""")
 
-        field = GDoubleSpinBox()
-        field.setFixedWidth(120)
-        field.setMinimum(0)
-        field.setMaximum(100)
-        field.setSingleStep(1)
-        field.setDecimals(3)
-        field.setSuffix("%")
-        field.setValue(97)
+        field = PidentSpinBox()
 
         field.valueChangedSafe.connect(self.valueChanged)
 

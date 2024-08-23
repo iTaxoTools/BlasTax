@@ -343,7 +343,7 @@ def blast_parse(
         dict_head_seq = {}
         for line in blastfile:
             splitti = line.split("\t")
-            print(splitti, splitti[3])
+            # print(splitti, splitti[3])
             pident = splitti[1]
             sequence_line = f"{splitti[4]}\n"
             short_header = f">{database_name}_{splitti[3]}"

@@ -22,6 +22,9 @@ def execute(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
+    append_multiple: bool,
+    append_pident: float,
+    append_length: int,
 ) -> Results:
     import itaxotools
 
@@ -33,6 +36,9 @@ def execute(
     print(f"{blast_method=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
+    print(f"{append_multiple=}")
+    print(f"{append_pident=}")
+    print(f"{append_length=}")
 
     ts = perf_counter()
 
@@ -52,6 +58,9 @@ def execute(
             blast_method=blast_method,
             blast_evalue=blast_evalue,
             blast_num_threads=blast_num_threads,
+            append_multiple=append_multiple,
+            append_pident=append_pident,
+            append_length=append_length,
         )
     itaxotools.progress_handler(f"{total}/{total}", total, 0, total)
 
@@ -68,6 +77,9 @@ def execute_single(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
+    append_multiple: bool,
+    append_pident: float,
+    append_length: int,
 ):
     from core import blast_parse, run_blast
     from utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -98,4 +110,7 @@ def execute_single(
         blast_result_path=blast_output_path,
         output_path=appended_output_path,
         database_name=input_database_path.stem,
+        all_matches=append_multiple,
+        pident_arg=append_pident,
+        length_arg=append_length,
     )
