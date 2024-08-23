@@ -87,6 +87,18 @@ class Model(BlastTaskModel):
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
 
+    def outfmt_restore_defaults(self):
+        self.blast_outfmt_options = self.properties.blast_outfmt_options.default
+
+    def outfmt_add_specifier(self, specifier: str):
+        options: str = self.blast_outfmt_options
+        if specifier in options:
+            return
+        if options and not options.endswith(" "):
+            options += " "
+        options += specifier
+        self.blast_outfmt_options = options
+
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
             self.input_database_path = db

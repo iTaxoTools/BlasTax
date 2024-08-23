@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from pathlib import Path
 
@@ -7,12 +7,14 @@ from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import LongLabel
 
+from ..common.types import BLAST_OUTFMT_SPECIFIERS_TABULAR
 from ..common.view import BlastTaskView, GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
 from ..common.widgets import (
     BasePropertyLineEdit,
     BlastMethodCombobox,
-    BlastOutfmtCombobox,
+    BlastOutfmtFullCombobox,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
     PropertyLineEdit,
@@ -102,18 +104,92 @@ class BlastOptionsSelector(Card):
         self.controls.blast_outfmt_options_label.setVisible(value)
 
 
+class HelpDialog(QtWidgets.QDialog):
+    restore_defaults = QtCore.Signal()
+    add_specifier = QtCore.Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{app.config.title} - Format specifiers")
+        self.resize(480, 640)
+
+        description = LongLabel(
+            "For tabular and comma separated output formats, you may specify "
+            "what columns are written in the output file by using "
+            "space delimited format specifiers. "
+            "All available options are listed below. "
+            "Double-click a specifier to add it to the list. "
+        )
+
+        table = QtWidgets.QTableWidget()
+        table.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels(["Specifier", "Description"])
+        table.horizontalHeaderItem(0).setTextAlignment(QtCore.Qt.AlignLeft)
+        table.horizontalHeaderItem(1).setTextAlignment(QtCore.Qt.AlignLeft)
+        table.horizontalHeader().setStretchLastSection(True)
+        table.verticalHeader().setVisible(False)
+        table.setStyleSheet(
+            """
+            QHeaderView::section {
+                padding: 4px;
+            }
+            QTableWidget::item {
+                padding: 4px;
+            }
+        """
+        )
+
+        table.setRowCount(len(BLAST_OUTFMT_SPECIFIERS_TABULAR))
+        for row, (key, value) in enumerate(BLAST_OUTFMT_SPECIFIERS_TABULAR.items()):
+            item_key = QtWidgets.QTableWidgetItem(key)
+            item_key.setFlags(item_key.flags() & ~QtCore.Qt.ItemIsEditable)
+            table.setItem(row, 0, item_key)
+
+            item_value = QtWidgets.QTableWidgetItem(value)
+            item_value.setFlags(item_value.flags() & ~QtCore.Qt.ItemIsEditable)
+            table.setItem(row, 1, item_value)
+        table.resizeColumnsToContents()
+
+        table.cellDoubleClicked.connect(self._on_cell_double_clicked)
+
+        defaults = QtWidgets.QPushButton("Restore defaults")
+        close = QtWidgets.QPushButton("Close")
+        close.setAutoDefault(True)
+        close.setDefault(True)
+
+        defaults.clicked.connect(self.restore_defaults)
+        close.clicked.connect(self.accept)
+
+        layout = QtWidgets.QGridLayout(self)
+        layout.setRowMinimumHeight(1, 8)
+        layout.setRowMinimumHeight(3, 8)
+        layout.setSpacing(8)
+        layout.addWidget(description, 0, 0, 1, 3)
+        layout.addWidget(table, 2, 0, 1, 3)
+        layout.addWidget(defaults, 4, 0, 1, 1)
+        layout.addWidget(close, 4, 2, 1, 1)
+
+        self.table = table
+
+    def _on_cell_double_clicked(self, row, column):
+        specifier = self.table.item(row, 0).text()
+        self.add_specifier.emit(specifier)
+
+
 class FormatOptionsSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.help_dialog = HelpDialog(self.window())
+
         label = QtWidgets.QLabel("BLAST output format:")
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
-        description = QtWidgets.QLabel("Alignment view options for output file format (outfmt)")
+        description = QtWidgets.QLabel("Alignment view options (outfmt)")
         description.setStyleSheet("QLabel {padding-top: 3px;}")
 
-        outfmt = BlastOutfmtCombobox()
-        outfmt.setFixedWidth(120)
+        outfmt = BlastOutfmtFullCombobox()
         self.controls.outfmt = outfmt
 
         title_layout = QtWidgets.QHBoxLayout()
@@ -132,6 +208,7 @@ class FormatOptionsSelector(Card):
 
         field = PropertyLineEdit()
         button = QtWidgets.QPushButton("Help")
+        button.clicked.connect(self.show_help_dialog)
         options_layout.addWidget(field, row, 0)
         options_layout.addWidget(button, row, 1)
         self.controls.options = field
@@ -149,6 +226,9 @@ class FormatOptionsSelector(Card):
 
     def set_options_visible(self, value: bool):
         self.controls.options_widget.roll.setAnimatedVisible(value)
+
+    def show_help_dialog(self):
+        self.help_dialog.show()
 
 
 class View(BlastTaskView):
@@ -204,6 +284,8 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.blast_outfmt, self.cards.format_options.controls.outfmt.setValue)
         self.binder.bind(self.cards.format_options.controls.outfmt.valueChanged, object.properties.blast_outfmt)
+        self.binder.bind(self.cards.format_options.help_dialog.restore_defaults, object.outfmt_restore_defaults)
+        self.binder.bind(self.cards.format_options.help_dialog.add_specifier, object.outfmt_add_specifier)
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 

@@ -209,6 +209,30 @@ class BlastOutfmtCombobox(NoWheelComboBox):
         self.setCurrentIndex(index)
 
 
+class BlastOutfmtFullCombobox(NoWheelComboBox):
+    valueChanged = QtCore.Signal(int)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        model = QtGui.QStandardItemModel()
+        for key, text in BLAST_OUTFMT_OPTIONS.items():
+            item = QtGui.QStandardItem()
+            prefix = str(key) + ":"
+            item.setData(f"{prefix.ljust(3)} {text}", QtCore.Qt.DisplayRole)
+            item.setData(key, QtCore.Qt.UserRole)
+            model.appendRow(item)
+        self.setModel(model)
+
+        self.currentIndexChanged.connect(self._handle_index_changed)
+
+    def _handle_index_changed(self, index):
+        self.valueChanged.emit(self.itemData(index, QtCore.Qt.UserRole))
+
+    def setValue(self, value):
+        index = self.findData(value, QtCore.Qt.UserRole)
+        self.setCurrentIndex(index)
+
+
 class BasePropertyLineEdit(GLineEdit):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
