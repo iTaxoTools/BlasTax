@@ -151,7 +151,7 @@ class SequenceSelectionOptions(Card):
 
         name = QtWidgets.QLabel("Length:")
         field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Only append matches with equal or longer database sequence length")
+        description = QtWidgets.QLabel("Minimum alignment sequence length")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
@@ -161,7 +161,7 @@ class SequenceSelectionOptions(Card):
 
         name = QtWidgets.QLabel("Identity:")
         field = PidentSpinBox()
-        description = QtWidgets.QLabel("Only append matches with equal or larger identity percentage (pident)")
+        description = QtWidgets.QLabel("Minimum identity percentage (pident)")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)

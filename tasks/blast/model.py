@@ -23,7 +23,9 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_outfmt = Property(int, 0)
     blast_outfmt_show_more = Property(bool, False)
-    blast_outfmt_options = Property(str, "")
+    blast_outfmt_options = Property(
+        str, "qaccver saccver pident length mismatch gapopen qstart qend sstart send evalue bitscore"
+    )
     blast_extra_args = Property(str, "")
 
     def __init__(self, name=None):
@@ -75,7 +77,7 @@ class Model(BlastTaskModel):
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
-            blast_outfmt_options=self.blast_outfmt_options,
+            blast_outfmt_options=self.blast_outfmt_options or self.properties.blast_outfmt_options.default,
             blast_extra_args=self.blast_extra_args,
         )
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 
 from ..common.view import BlastTaskView, GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
@@ -14,11 +15,12 @@ from ..common.widgets import (
     BlastOutfmtCombobox,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
+    PropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
 
 
-class OptionsSelector(Card):
+class BlastOptionsSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
         label = QtWidgets.QLabel("BLAST options:")
@@ -70,16 +72,6 @@ class OptionsSelector(Card):
         self.controls.blast_num_threads = field
         row += 1
 
-        name = QtWidgets.QLabel("Outfmt:")
-        field = BlastOutfmtCombobox()
-        description = QtWidgets.QLabel("Alignment view options for output file")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.blast_outfmt = field
-        row += 1
-
         options_long_layout = QtWidgets.QGridLayout()
         options_long_layout.setContentsMargins(0, 0, 0, 0)
         options_long_layout.setColumnMinimumWidth(0, 16)
@@ -88,16 +80,6 @@ class OptionsSelector(Card):
         options_long_layout.setHorizontalSpacing(32)
         options_long_layout.setVerticalSpacing(8)
         row = 0
-
-        name = QtWidgets.QLabel("Format:")
-        field = BasePropertyLineEdit()
-        field.setPlaceholderText("Set output columns using space delimited specifiers (when outfmt is 6, 7 or 10)")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_long_layout.addWidget(name, row, 1)
-        options_long_layout.addWidget(field, row, 2)
-        self.controls.blast_outfmt_options = field
-        self.controls.blast_outfmt_options_label = name
-        row += 1
 
         name = QtWidgets.QLabel("Extras:")
         field = BasePropertyLineEdit()
@@ -120,6 +102,55 @@ class OptionsSelector(Card):
         self.controls.blast_outfmt_options_label.setVisible(value)
 
 
+class FormatOptionsSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("BLAST output format:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Alignment view options for output file format (outfmt)")
+        description.setStyleSheet("QLabel {padding-top: 3px;}")
+
+        outfmt = BlastOutfmtCombobox()
+        outfmt.setFixedWidth(120)
+        self.controls.outfmt = outfmt
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.addWidget(outfmt)
+        title_layout.setSpacing(16)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.setColumnMinimumWidth(1, 120)
+        options_layout.setColumnStretch(0, 1)
+        options_layout.setHorizontalSpacing(16)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        field = PropertyLineEdit()
+        button = QtWidgets.QPushButton("Help")
+        options_layout.addWidget(field, row, 0)
+        options_layout.addWidget(button, row, 1)
+        self.controls.options = field
+        self.controls.help = button
+        row += 1
+
+        options_widget = QtWidgets.QWidget()
+        options_widget.setLayout(options_layout)
+        options_widget.roll = VerticalRollAnimation(options_widget)
+        options_widget.roll._visible_target = True
+        self.controls.options_widget = options_widget
+
+        self.addLayout(title_layout)
+        self.addWidget(options_widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -131,7 +162,8 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.query = PathFileSelector("\u25C0  Query FASTA file", self)
         self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
-        self.cards.options = OptionsSelector(self)
+        self.cards.blast_options = BlastOptionsSelector(self)
+        self.cards.format_options = FormatOptionsSelector(self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents")
@@ -167,20 +199,20 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
 
-        self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
-        self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
+        self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
+        self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
 
-        self.binder.bind(object.properties.blast_outfmt, self.cards.options.controls.blast_outfmt.setValue)
-        self.binder.bind(self.cards.options.controls.blast_outfmt.valueChanged, object.properties.blast_outfmt)
+        self.binder.bind(object.properties.blast_outfmt, self.cards.format_options.controls.outfmt.setValue)
+        self.binder.bind(self.cards.format_options.controls.outfmt.valueChanged, object.properties.blast_outfmt)
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 
-        self.binder.bind(object.properties.blast_outfmt_show_more, self.cards.options.set_outfmt_options_visible)
+        self.binder.bind(object.properties.blast_outfmt_show_more, self.cards.format_options.set_options_visible)
 
-        self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
-        self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
-        self.cards.options.controls.blast_outfmt_options.bind_property(object.properties.blast_outfmt_options)
-        self.cards.options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
+        self.cards.blast_options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
+        self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
+        self.cards.format_options.controls.options.bind_property(object.properties.blast_outfmt_options)
+        self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
