@@ -36,13 +36,13 @@ documents = LazyResourceCollection(
 
 
 icons = LazyResourceCollection(
-    blast=lambda: QtGui.QIcon(get_data("logos/blast.ico")),
+    blastax=lambda: QtGui.QIcon(get_data("logos/blastax.ico")),
 )
 
 
 pixmaps = LazyResourceCollection(
-    blast=lambda: VectorPixmap(
-        get_data("logos/blast.svg"),
+    blastax=lambda: VectorPixmap(
+        get_data("logos/blastax.svg"),
         size=QtCore.QSize(192, 48),
         colormap=skin.colormap_icon,
     ),

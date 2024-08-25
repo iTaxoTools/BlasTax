@@ -1,9 +1,9 @@
 from resources import icons, pixmaps
 from tasks import about, append, appendx, blast, create, museo
 
-title = "BLAST-Align"
-icon = icons.blast
-pixmap = pixmaps.blast
+title = "BlasTax"
+icon = icons.blastax
+pixmap = pixmaps.blastax
 
 dashboard = "grid"
 
