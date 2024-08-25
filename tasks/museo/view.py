@@ -9,7 +9,14 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import LongLabel
 
 from ..common.types import BlastMethod
-from ..common.view import BlastTaskView, GraphicTitleCard, PathDatabaseSelector, PathDirectorySelector, PathFileSelector
+from ..common.view import (
+    BlastTaskView,
+    GraphicTitleCard,
+    OptionalCategory,
+    PathDatabaseSelector,
+    PathDirectorySelector,
+    PathFileSelector,
+)
 from ..common.widgets import (
     BasePropertyLineEdit,
     BlastMethodCombobox,
@@ -128,33 +135,6 @@ class IdentityThresholdCard(Card):
         self.controls.field.setValue(value)
 
 
-class OptionalCategory(Card):
-    toggled = QtCore.Signal(bool)
-
-    def __init__(self, text, description, parent=None):
-        super().__init__(parent)
-
-        title = QtWidgets.QCheckBox(" " + text)
-        title.setStyleSheet("""font-size: 16px;""")
-        title.toggled.connect(self.toggled)
-
-        description = LongLabel(description)
-
-        layout = QtWidgets.QGridLayout()
-        layout.addWidget(title, 0, 0)
-        layout.addWidget(description, 1, 0)
-        layout.setColumnStretch(0, 1)
-        layout.setColumnMinimumWidth(1, 120)
-        layout.setHorizontalSpacing(32)
-        layout.setVerticalSpacing(12)
-        self.addLayout(layout)
-
-        self.controls.title = title
-
-    def setChecked(self, checked: bool):
-        self.controls.title.setChecked(checked)
-
-
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -175,6 +155,7 @@ class View(BlastTaskView):
             self,
         )
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
+        self.cards.timestamp = OptionalCategory("Append timestamp to output filename", "", self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
@@ -194,7 +175,8 @@ class View(BlastTaskView):
         self.binder.unbind_all()
 
         self.binder.bind(object.notification, self.showNotification)
-        self.binder.bind(object.reportResults, self.report_results)
+        self.binder.bind(object.report_results, self.report_results)
+        self.binder.bind(object.request_confirmation, self.request_confirmation)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
@@ -208,6 +190,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
+
+        self.binder.bind(object.properties.append_timestamp, self.cards.timestamp.setChecked)
+        self.binder.bind(self.cards.timestamp.toggled, object.properties.append_timestamp)
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 

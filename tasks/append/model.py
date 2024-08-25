@@ -31,6 +31,8 @@ class Model(BlastTaskModel):
     append_pident = Property(float, 97.000)
     append_length = Property(int, 0)
 
+    append_timestamp = Property(bool, False)
+
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = True
@@ -96,6 +98,7 @@ class Model(BlastTaskModel):
             append_multiple=self.append_multiple,
             append_pident=self.append_pident,
             append_length=self.append_length,
+            append_timestamp=self.append_timestamp,
         )
 
     def _update_num_threads_default(self):

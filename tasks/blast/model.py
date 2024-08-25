@@ -28,6 +28,8 @@ class Model(BlastTaskModel):
     )
     blast_extra_args = Property(str, "")
 
+    append_timestamp = Property(bool, False)
+
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = True
@@ -79,6 +81,7 @@ class Model(BlastTaskModel):
             blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
             blast_outfmt_options=self.blast_outfmt_options or self.properties.blast_outfmt_options.default,
             blast_extra_args=self.blast_extra_args,
+            append_timestamp=self.append_timestamp,
         )
 
     def _update_num_threads_default(self):

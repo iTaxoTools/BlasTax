@@ -4,17 +4,33 @@ import os
 from pathlib import Path
 
 from itaxotools.common.utility import override
-from itaxotools.taxi_gui.loop import ReportDone
+from itaxotools.taxi_gui.loop import DataQuery
 from itaxotools.taxi_gui.model.tasks import TaskModel
+from itaxotools.taxi_gui.threading import ReportDone, ReportStop
 
 from ..common.types import Results
 
 
 class BlastTaskModel(TaskModel):
-    reportResults = QtCore.Signal(str, Results)
+    report_results = QtCore.Signal(str, Results)
+    request_confirmation = QtCore.Signal(object, object, object)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.binder.bind(self.query, self.onQuery)
 
     def onDone(self, report: ReportDone):
-        self.reportResults.emit(self.task_name, report.result)
+        self.report_results.emit(self.task_name, report.result)
+        self.busy = False
+
+    def onQuery(self, query: DataQuery):
+        self.request_confirmation.emit(
+            query.data,
+            lambda: self.answer(True),
+            lambda: self.answer(False),
+        )
+
+    def onStop(self, report: ReportStop):
         self.busy = False
 
 

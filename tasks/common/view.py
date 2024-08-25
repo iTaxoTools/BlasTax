@@ -8,7 +8,7 @@ from itaxotools.taxi_gui.utility import human_readable_seconds
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
-from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
+from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup
 
 from .model import PathListModel
 from .types import Results
@@ -27,6 +27,25 @@ class BlastTaskView(ScrollTaskView):
         if button == QtWidgets.QMessageBox.Open:
             url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
             QtGui.QDesktopServices.openUrl(url)
+
+    def request_confirmation(self, path: Path | None, callback, abort):
+        msgBox = QtWidgets.QMessageBox(self.window())
+        msgBox.setWindowTitle(f"{app.config.title} - Warning")
+        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtWidgets.QMessageBox.Cancel)
+
+        if path is None:
+            text = "Some files already exist. Overwrite?"
+        else:
+            text = f"File '{path.name}' already exists. Overwrite?"
+        msgBox.setText(text)
+
+        result = self.window().msgShow(msgBox)
+        if result == QtWidgets.QMessageBox.Ok:
+            callback()
+        else:
+            abort()
 
 
 class GraphicTitleCard(Card):
@@ -356,3 +375,32 @@ class BatchQuerySelector(Card):
     def set_placeholder_text(self, text: str):
         self.controls.single_field.setPlaceholderText(text)
         self.controls.batch_help.setPlaceholderText(text)
+
+
+class OptionalCategory(Card):
+    toggled = QtCore.Signal(bool)
+
+    def __init__(self, text, description, parent=None):
+        super().__init__(parent)
+
+        title = QtWidgets.QCheckBox(" " + text)
+        title.setStyleSheet("""font-size: 16px;""")
+        title.toggled.connect(self.toggled)
+
+        label = LongLabel(description)
+        if not description:
+            label.setVisible(False)
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(title, 0, 0)
+        layout.addWidget(label, 1, 0)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnMinimumWidth(1, 120)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(12)
+        self.addLayout(layout)
+
+        self.controls.title = title
+
+    def setChecked(self, checked: bool):
+        self.controls.title.setChecked(checked)

@@ -4,6 +4,7 @@ import re
 import shlex
 import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -411,3 +412,64 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
+
+
+def get_timestamp_suffix(timestamp: datetime) -> str:
+    return timestamp.strftime(r"_%Y%m%dT%H%M%S")
+
+
+def get_blast_filename(
+    input_path: Path,
+    outfmt: int = 0,
+    timestamp: datetime | None = None,
+) -> str:
+    suffix = {
+        0: ".txt",
+        1: ".txt",
+        2: ".txt",
+        3: ".txt",
+        4: ".txt",
+        5: ".xml",
+        6: ".tsv",
+        7: ".tsv",
+        8: ".asn1",
+        9: ".bin",
+        10: ".csv",
+        11: ".asn1",
+        12: ".json",
+        13: ".json",
+        14: ".xml",
+        15: ".json",
+        16: ".xml",
+        17: ".sam",
+        18: ".txt",
+    }.get(outfmt, ".out")
+    path = input_path.with_suffix(suffix)
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_append_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_with_blast_matches")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_museo_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_museo")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
