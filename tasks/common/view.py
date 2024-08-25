@@ -199,8 +199,8 @@ class BatchQuerySelector(Card):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_mode(text)
-        self.draw_single("\u25C0", "Query FASTA file")
-        self.draw_batch("\u25C0", "Query FASTA files")
+        self.draw_single("\u25C0", "Query sequences")
+        self.draw_batch("\u25C0", "Query sequences")
 
     def draw_mode(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -234,7 +234,7 @@ class BatchQuerySelector(Card):
         label.setMinimumWidth(150)
 
         field = ElidedLineEdit()
-        field.setPlaceholderText("Sequences to match against database contents")
+        field.setPlaceholderText("FASTA or FASTQ sequences to match against database contents")
         field.textDeleted.connect(self._handle_single_path_deleted)
         field.setReadOnly(True)
 
