@@ -12,6 +12,7 @@ block_cipher = None
 
 # Could also use pyinstaller's Entrypoint()
 a = Analysis([SCRIPT],
+             pathex=[],
              binaries=[('../../bin', 'bin')],
              datas=[
                  ('../../documents', 'documents'),
@@ -27,22 +28,15 @@ a = Analysis([SCRIPT],
              runtime_hooks=[],
              excludes=[
                 'matplotlib',
-                'Bio',
                 'PIL',
-                'numpy',
                 'pandas',
             ],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
              noarchive=False)
-pyz = PYZ(a.pure, a.zipped_data,
-             cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
-          a.zipfiles,
           a.datas,
           [],
           name=FILENAME,
@@ -53,4 +47,9 @@ exe = EXE(pyz,
           upx_exclude=[],
           runtime_tmpdir=None,
           console=False,
+          disable_windowed_traceback=False,
+          argv_emulation=False,
+          target_arch=None,
+          codesign_identity=None,
+          entitlements_file=None,
           icon=ICON)

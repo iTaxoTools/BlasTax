@@ -4,8 +4,8 @@
 [ ! "$CODESIGN_IDENTITY" ] && CODESIGN_IDENTITY="UNKNOWN"
 
 # program specifics
-APP_NAME="Blast-Append"
-APP_IDENTIFIER="org.itaxotools.blast-append"
+APP_NAME="BlasTax"
+APP_IDENTIFIER="org.itaxotools.blastax"
 APP_SCRIPT="../gui.py"
 APP_ENTITLEMENTS="data/entitlements.plist"
 APP_ICON_ICNS="data/blastax.icns"
