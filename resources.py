@@ -53,9 +53,10 @@ task_pixmaps_large = LazyResourceCollection(
     about=lambda: VectorPixmap(get_data("graphics/about.svg"), Size.Large.size),
     create=lambda: VectorPixmap(get_data("graphics/create.svg"), Size.Large.size),
     blast=lambda: VectorPixmap(get_data("graphics/blast.svg"), Size.Large.size),
-    append=lambda: VectorPixmap(get_data("graphics/align.svg"), Size.Large.size),
-    appendx=lambda: VectorPixmap(get_data("graphics/alignx.svg"), Size.Large.size),
+    append=lambda: VectorPixmap(get_data("graphics/append.svg"), Size.Large.size),
+    appendx=lambda: VectorPixmap(get_data("graphics/appendx.svg"), Size.Large.size),
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Large.size),
+    decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Large.size),
 )
 
 
@@ -63,7 +64,8 @@ task_pixmaps_medium = LazyResourceCollection(
     about=lambda: VectorPixmap(get_data("graphics/about.svg"), Size.Medium.size),
     create=lambda: VectorPixmap(get_data("graphics/create.svg"), Size.Medium.size),
     blast=lambda: VectorPixmap(get_data("graphics/blast.svg"), Size.Medium.size),
-    append=lambda: VectorPixmap(get_data("graphics/align.svg"), Size.Medium.size),
-    appendx=lambda: VectorPixmap(get_data("graphics/alignx.svg"), Size.Medium.size),
+    append=lambda: VectorPixmap(get_data("graphics/append.svg"), Size.Medium.size),
+    appendx=lambda: VectorPixmap(get_data("graphics/appendx.svg"), Size.Medium.size),
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Medium.size),
+    decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Medium.size),
 )

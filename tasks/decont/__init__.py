@@ -3,8 +3,8 @@ from resources import task_pixmaps_large, task_pixmaps_medium
 title = "Decontaminate"
 description = "Remove outlier sequences"
 
-pixmap = task_pixmaps_large.museo
-pixmap_medium = task_pixmaps_medium.museo
+pixmap = task_pixmaps_large.decont
+pixmap_medium = task_pixmaps_medium.decont
 
 long_description = (
     "Given a query file and two BLAST databases (ingroup & outgroup references), "
