@@ -414,6 +414,36 @@ def museoscript_parse(
                     museo.write(sequence_line)
 
 
+def run_blast_decont(
+    blast_binary: str,
+    query_path: Path | str,
+    database_path: Path | str,
+    output_path: Path | str,
+    evalue: str,
+    num_threads: int,
+):
+    return run_blast(
+        blast_binary=blast_binary,
+        query_path=query_path,
+        database_path=database_path,
+        output_path=output_path,
+        evalue=evalue,
+        num_threads=num_threads,
+        outfmt="6 qseqid sseqid length pident bitscore",
+        other="",
+    )
+
+
+def decontaminate(
+    query_path: Path | str,
+    blasted_ingroup_path: Path | str,
+    blasted_outgroup_path: Path | str,
+    ingroup_sequences_path: Path | str,
+    outgroup_sequences_path: Path | str,
+):
+    pass
+
+
 def get_timestamp_suffix(timestamp: datetime) -> str:
     return timestamp.strftime(r"_%Y%m%dT%H%M%S")
 
@@ -469,6 +499,28 @@ def get_museo_filename(
 ) -> str:
     path = input_path.with_suffix(".fasta")
     path = path.with_stem(path.stem + "_museo")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_decont_blast_filename(
+    input_path: Path,
+    description: Literal["ingroup", "outgroup"],
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_stem(input_path.stem + f"_{description}")
+    return get_blast_filename(path, outfmt=6, timestamp=timestamp)
+
+
+def get_decont_sequences_filename(
+    input_path: Path,
+    description: Literal["ingroup", "outgroup"],
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + f"_{description}")
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)

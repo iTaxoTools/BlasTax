@@ -14,17 +14,15 @@ from . import process, title
 class Model(BlastTaskModel):
     task_name = title
 
-    input_query_path = Property(Path, Path())
-    input_database_path = Property(Path, Path())
+    query_path = Property(Path, Path())
+    ingroup_database_path = Property(Path, Path())
+    outgroup_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
-
-    pident_threshold = Property(float, 90.000)
-    retrieve_original = Property(bool, False)
 
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
-    blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid sacc stitle pident qseq"')
+    blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid length pident bitscore"')
 
     append_timestamp = Property(bool, False)
 
@@ -38,8 +36,9 @@ class Model(BlastTaskModel):
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
         for handle in [
-            self.properties.input_query_path,
-            self.properties.input_database_path,
+            self.properties.query_path,
+            self.properties.ingroup_database_path,
+            self.properties.outgroup_database_path,
             self.properties.output_path,
         ]:
             self.binder.bind(handle, self.checkReady)
@@ -48,9 +47,11 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def isReady(self):
-        if self.input_query_path == Path():
+        if self.query_path == Path():
             return False
-        if self.input_database_path == Path():
+        if self.ingroup_database_path == Path():
+            return False
+        if self.outgroup_database_path == Path():
             return False
         if self.output_path == Path():
             return False
@@ -65,13 +66,13 @@ class Model(BlastTaskModel):
         self.exec(
             process.execute,
             work_dir=work_dir,
-            input_query_path=self.input_query_path,
-            input_database_path=self.input_database_path,
+            query_path=self.query_path,
+            ingroup_database_path=self.ingroup_database_path,
+            outgroup_database_path=self.outgroup_database_path,
             output_path=self.output_path,
+            blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
-            pident_threshold=self.pident_threshold,
-            retrieve_original=self.retrieve_original,
             append_timestamp=self.append_timestamp,
         )
 
