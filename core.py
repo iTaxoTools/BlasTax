@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
+from itaxotools.taxi2.handlers import FileHandler
+from itaxotools.taxi2.sequences import SequenceHandler
 from utils import complement, translate
 
 
@@ -434,14 +436,43 @@ def run_blast_decont(
     )
 
 
+def _get_decont_hits_dict(
+    path: Path | str,
+    column: int,
+) -> dict[str, float]:
+    hits: dict[str, float] = {}
+    with FileHandler.Tabfile(path) as file:
+        for item in file:
+            id = item[0]
+            value = float(item[column])
+            if id not in hits or hits[id] < value:
+                hits[id] = value
+    return hits
+
+
 def decontaminate(
     query_path: Path | str,
     blasted_ingroup_path: Path | str,
     blasted_outgroup_path: Path | str,
     ingroup_sequences_path: Path | str,
     outgroup_sequences_path: Path | str,
+    column: int,
 ):
-    pass
+    ingroup_hits = _get_decont_hits_dict(blasted_ingroup_path, column)
+    outgroup_hits = _get_decont_hits_dict(blasted_outgroup_path, column)
+
+    with (
+        SequenceHandler.Fasta(query_path) as query_file,
+        SequenceHandler.Fasta(ingroup_sequences_path, "w") as ingroup_file,
+        SequenceHandler.Fasta(outgroup_sequences_path, "w") as outgroup_file,
+    ):
+        for item in query_file:
+            ingroup_hit = ingroup_hits.get(item.id, -1)
+            outgroup_hit = outgroup_hits.get(item.id, -1)
+            if ingroup_hit >= outgroup_hit:
+                ingroup_file.write(item)
+            else:
+                outgroup_file.write(item)
 
 
 def get_timestamp_suffix(timestamp: datetime) -> str:

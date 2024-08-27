@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import pytest
 
-from core import make_database, run_blast_decont
+from core import decontaminate, make_database, run_blast_decont
 
 from .pytest_utils import assert_file_equals
 
@@ -19,6 +19,9 @@ class DecontTest(NamedTuple):
     outgroup_filename: str
     blasted_ingroup_filename: str
     blasted_outgroup_filename: str
+    decontaminated_filename: str
+    contaminants_filename: str
+    blast_column: int
     evalue: str = "0.001"
     num_threads: int = 1
 
@@ -30,6 +33,8 @@ class DecontTest(NamedTuple):
         db_outgroup_path = tmp_path / "outgroup"
         blasted_ingroup_path = tmp_path / "ingroup.tsv"
         blasted_outgroup_path = tmp_path / "outgroup.tsv"
+        decontaminated_path = tmp_path / "decontaminated.fas"
+        contaminants_path = tmp_path / "contaminants.fas"
 
         make_database(
             input_path=ingroup_path,
@@ -70,9 +75,17 @@ class DecontTest(NamedTuple):
         assert_file_equals(blasted_ingroup_path, TEST_DATA_DIR / self.blasted_ingroup_filename)
         assert_file_equals(blasted_outgroup_path, TEST_DATA_DIR / self.blasted_outgroup_filename)
 
-        print(tmp_path)
+        decontaminate(
+            query_path=query_path,
+            blasted_ingroup_path=blasted_ingroup_path,
+            blasted_outgroup_path=blasted_outgroup_path,
+            ingroup_sequences_path=decontaminated_path,
+            outgroup_sequences_path=contaminants_path,
+            column=self.blast_column,
+        )
 
-        assert False
+        assert_file_equals(decontaminated_path, TEST_DATA_DIR / self.decontaminated_filename)
+        assert_file_equals(contaminants_path, TEST_DATA_DIR / self.contaminants_filename)
 
 
 decont_tests = [
@@ -83,6 +96,9 @@ decont_tests = [
         "simple/outgroup.fas",
         "simple/ingroup.tsv",
         "simple/outgroup.tsv",
+        "simple/decontaminated.fas",
+        "simple/contaminants.fas",
+        blast_column=3,
     ),
 ]
 
