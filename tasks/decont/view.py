@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup
 
 from ..common.types import BlastMethod
 from ..common.view import (
@@ -23,6 +24,7 @@ from ..common.widgets import (
     IntPropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
+from .types import DecontVariable
 
 
 class BlastOptionsSelector(Card):
@@ -100,6 +102,49 @@ class BlastOptionsSelector(Card):
         self.addLayout(options_long_layout)
 
 
+class DecontVariableSelector(Card):
+    valueChanged = QtCore.Signal(DecontVariable)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Decontamination variable:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = LongLabel(
+            "The BLAST reported value that will be used for comparisons "
+            "between ingroup and outgroup. On a tie, the sequence is preserved."
+        )
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 2, 0, 0)
+        buttons.setSpacing(16)
+
+        group = RadioButtonGroup()
+        for variable in DecontVariable:
+            button = QtWidgets.QRadioButton(variable.variable)
+            buttons.addWidget(button, 1)
+            group.add(button, variable)
+            group.valueChanged.connect(self._handle_variable_changed)
+        self.controls.variable = group
+
+        layout = QtWidgets.QGridLayout()
+        layout.setColumnStretch(1, 10)
+        layout.setColumnStretch(2, 14)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(16)
+        layout.addWidget(label, 0, 0)
+        layout.addLayout(buttons, 0, 2)
+        layout.addWidget(description, 1, 0, 1, 3)
+        self.addLayout(layout)
+
+    def _handle_variable_changed(self, value: DecontVariable):
+        self.valueChanged.emit(value)
+
+    def setValue(self, value):
+        self.controls.variable.setValue(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -110,15 +155,16 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.query = PathFileSelector("\u25C0  Query sequences", self)
-        self.cards.outgroup = PathDatabaseSelector("\u25C0  BLAST outgroup", self)
         self.cards.ingroup = PathDatabaseSelector("\u25C0  BLAST ingroup", self)
+        self.cards.outgroup = PathDatabaseSelector("\u25C0  BLAST outgroup", self)
         self.cards.blast_options = BlastOptionsSelector(self)
+        self.cards.decont_variable = DecontVariableSelector(self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
         self.cards.timestamp = OptionalCategory("Append timestamp to output filenames", "", self)
 
         self.cards.query.set_placeholder_text("FASTA or FASTQ sequences to match against database contents")
-        self.cards.ingroup.set_placeholder_text("Queries matching this database will be kept")
-        self.cards.outgroup.set_placeholder_text("Queries matching this database will be discarded")
+        self.cards.ingroup.set_placeholder_text("Queries that best match this database will be preserved")
+        self.cards.outgroup.set_placeholder_text("Queries that best match this database will be discarded")
         self.cards.output.set_placeholder_text("All output files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
@@ -150,6 +196,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.outgroup_database_path, self.cards.outgroup.set_path)
         self.binder.bind(self.cards.outgroup.selectedPath, object.properties.outgroup_database_path)
+
+        self.binder.bind(object.properties.decont_variable, self.cards.decont_variable.setValue)
+        self.binder.bind(self.cards.decont_variable.valueChanged, object.properties.decont_variable)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)

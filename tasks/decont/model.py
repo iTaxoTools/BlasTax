@@ -9,6 +9,7 @@ from ..common.model import BlastTaskModel
 from ..common.types import BlastMethod
 from ..common.utils import get_database_index_from_path
 from . import process, title
+from .types import DecontVariable
 
 
 class Model(BlastTaskModel):
@@ -22,7 +23,9 @@ class Model(BlastTaskModel):
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
-    blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid length pident bitscore"')
+    blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid pident bitscore length"')
+
+    decont_variable = Property(DecontVariable, DecontVariable.pident)
 
     append_timestamp = Property(bool, False)
 
@@ -73,6 +76,7 @@ class Model(BlastTaskModel):
             blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            decont_column=self.decont_variable.column,
             append_timestamp=self.append_timestamp,
         )
 

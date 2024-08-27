@@ -431,7 +431,7 @@ def run_blast_decont(
         output_path=output_path,
         evalue=evalue,
         num_threads=num_threads,
-        outfmt="6 qseqid sseqid length pident bitscore",
+        outfmt="6 qseqid sseqid pident bitscore length",
         other="",
     )
 
@@ -547,7 +547,7 @@ def get_decont_blast_filename(
 
 def get_decont_sequences_filename(
     input_path: Path,
-    description: Literal["ingroup", "outgroup"],
+    description: Literal["decontaminated", "contaminants"],
     timestamp: datetime | None = None,
 ) -> str:
     path = input_path.with_suffix(".fasta")

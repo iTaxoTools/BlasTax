@@ -21,6 +21,7 @@ def execute(
     output_path: Path,
     blast_method: str,
     blast_evalue: float,
+    decont_column: int,
     blast_num_threads: int,
     append_timestamp: bool,
 ) -> Results:
@@ -34,14 +35,19 @@ def execute(
     print(f"{output_path=}")
     print(f"{blast_method=}")
     print(f"{blast_evalue=}")
+    print(f"{decont_column=}")
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
 
     timestamp = datetime.now() if append_timestamp else None
     blasted_ingroup_path = output_path / get_decont_blast_filename(query_path, "ingroup", timestamp=timestamp)
-    ingroup_sequences_path = output_path / get_decont_sequences_filename(query_path, "ingroup", timestamp=timestamp)
+    ingroup_sequences_path = output_path / get_decont_sequences_filename(
+        query_path, "decontaminated", timestamp=timestamp
+    )
     blasted_outgroup_path = output_path / get_decont_blast_filename(query_path, "outgroup", timestamp=timestamp)
-    outgroup_sequences_path = output_path / get_decont_sequences_filename(query_path, "outgroup", timestamp=timestamp)
+    outgroup_sequences_path = output_path / get_decont_sequences_filename(
+        query_path, "contaminants", timestamp=timestamp
+    )
 
     if any(
         (
@@ -79,8 +85,8 @@ def execute(
     run_blast_decont(
         blast_binary=blast_method,
         query_path=query_path,
-        database_path=ingroup_database_path,
-        output_path=blasted_ingroup_path,
+        database_path=outgroup_database_path,
+        output_path=blasted_outgroup_path,
         evalue=blast_evalue,
         num_threads=blast_num_threads,
     )
@@ -91,6 +97,7 @@ def execute(
         blasted_outgroup_path=blasted_outgroup_path,
         ingroup_sequences_path=ingroup_sequences_path,
         outgroup_sequences_path=outgroup_sequences_path,
+        column=decont_column,
     )
 
     tf = perf_counter()
