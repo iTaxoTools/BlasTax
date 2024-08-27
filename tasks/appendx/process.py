@@ -38,8 +38,6 @@ def execute(
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
 
-    ts = perf_counter()
-
     if batch_mode:
         input_query_paths = input_query_list
     else:
@@ -47,8 +45,6 @@ def execute(
     total = len(input_query_paths)
 
     timestamp = datetime.now() if append_timestamp else None
-
-    tc = perf_counter()
 
     if any(
         (
@@ -60,7 +56,7 @@ def execute(
         if not get_feedback(None):
             abort()
 
-    tx = perf_counter()
+    ts = perf_counter()
 
     for i, path in enumerate(input_query_paths):
         progress_handler(f"{i}/{total}", i, 0, total)
@@ -78,7 +74,7 @@ def execute(
 
     tf = perf_counter()
 
-    return Results(output_path, tf - tx + tc - ts)
+    return Results(output_path, tf - ts)
 
 
 def execute_single(

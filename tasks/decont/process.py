@@ -37,20 +37,11 @@ def execute(
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
 
-    ts = perf_counter()
-
-    if is_fastq(query_path):
-        target_query_path = work_dir / query_path.with_suffix(".fasta").name
-        fastq_to_fasta(query_path, target_query_path)
-        query_path = target_query_path
-
     timestamp = datetime.now() if append_timestamp else None
     blasted_ingroup_path = output_path / get_decont_blast_filename(query_path, "ingroup", timestamp=timestamp)
     ingroup_sequences_path = output_path / get_decont_sequences_filename(query_path, "ingroup", timestamp=timestamp)
     blasted_outgroup_path = output_path / get_decont_blast_filename(query_path, "outgroup", timestamp=timestamp)
     outgroup_sequences_path = output_path / get_decont_sequences_filename(query_path, "outgroup", timestamp=timestamp)
-
-    tc = perf_counter()
 
     if any(
         (
@@ -66,7 +57,12 @@ def execute(
         if not get_feedback(None):
             abort()
 
-    tx = perf_counter()
+    ts = perf_counter()
+
+    if is_fastq(query_path):
+        target_query_path = work_dir / query_path.with_suffix(".fasta").name
+        fastq_to_fasta(query_path, target_query_path)
+        query_path = target_query_path
 
     input_query_path_no_gaps = work_dir / query_path.with_stem(query_path.stem + "_no_gaps").name
     remove_gaps(query_path, input_query_path_no_gaps)
@@ -99,4 +95,4 @@ def execute(
 
     tf = perf_counter()
 
-    return Results(output_path, tf - tx + tc - ts)
+    return Results(output_path, tf - ts)
