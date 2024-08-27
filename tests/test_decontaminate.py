@@ -98,7 +98,7 @@ decont_tests = [
         "simple/outgroup.tsv",
         "simple/decontaminated.fas",
         "simple/contaminants.fas",
-        blast_column=3,
+        blast_column=2,
     ),
 ]
 

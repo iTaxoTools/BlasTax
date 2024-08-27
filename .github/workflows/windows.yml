@@ -1,7 +1,7 @@
 name: Windows
 
-# on: workflow_dispatch
-on: push
+on: workflow_dispatch
+# on: push
 
 env:
   ARTIFACT_EXECUTABLE: itaxotools-blast-gui-windows
@@ -36,7 +36,8 @@ jobs:
         run: python tools/update-version-file.py
 
       - name: Make executable
-        run: pyinstaller gui.spec
+        uses: iTaxoTools/TaxIGui/.github/actions/make-executable@main
+
 
       - uses: actions/upload-artifact@v3
         with:
