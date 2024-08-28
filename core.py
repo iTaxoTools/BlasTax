@@ -64,6 +64,20 @@ def get_blast_version() -> str:
         raise Exception("Version number not found in output!")
 
 
+def execute_blast_command(args: list[str]):
+    p = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+        env=BLAST_ENV,
+    )
+    p.wait()
+    _, stderr = p.communicate()
+    if p.returncode != 0:
+        raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+
+
 def make_database(
     input_path: str,
     output_path: str,
@@ -86,15 +100,7 @@ def make_database(
         "-blastdb_version",
         str(version),
     ]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
-    p.wait()
-    try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
-        _, stderr = p.communicate()
-        if p.returncode != 0:
-            raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
-    except Exception as e:
-        raise Exception(str(e))
+    execute_blast_command(args)
 
 
 def run_blast(
@@ -111,19 +117,8 @@ def run_blast(
         f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
-
     args = command_to_args(command)
-
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
-    p.wait()
-
-    try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
-        _, stderr = p.communicate()
-        if p.returncode != 0:
-            raise Exception(f"BLAST failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
-    except Exception as e:
-        raise Exception(str(e))
+    execute_blast_command(args)
 
 
 def run_blast_align(
@@ -142,6 +137,26 @@ def run_blast_align(
         evalue=evalue,
         num_threads=num_threads,
         outfmt="6 length pident qseqid sseqid sseq qframe sframe",
+        other="",
+    )
+
+
+def run_blast_decont(
+    blast_binary: str,
+    query_path: Path | str,
+    database_path: Path | str,
+    output_path: Path | str,
+    evalue: str,
+    num_threads: int,
+):
+    return run_blast(
+        blast_binary=blast_binary,
+        query_path=query_path,
+        database_path=database_path,
+        output_path=output_path,
+        evalue=evalue,
+        num_threads=num_threads,
+        outfmt="6 qseqid sseqid pident bitscore length",
         other="",
     )
 
@@ -414,26 +429,6 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
-
-
-def run_blast_decont(
-    blast_binary: str,
-    query_path: Path | str,
-    database_path: Path | str,
-    output_path: Path | str,
-    evalue: str,
-    num_threads: int,
-):
-    return run_blast(
-        blast_binary=blast_binary,
-        query_path=query_path,
-        database_path=database_path,
-        output_path=output_path,
-        evalue=evalue,
-        num_threads=num_threads,
-        outfmt="6 qseqid sseqid pident bitscore length",
-        other="",
-    )
 
 
 def _get_decont_hits_dict(

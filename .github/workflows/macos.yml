@@ -1,7 +1,7 @@
 name: macOS
 
-# on: workflow_dispatch
-on: push
+on: workflow_dispatch
+# on: push
 
 env:
   ARTIFACT_BUNDLE: itaxotools-blast-gui-macos
