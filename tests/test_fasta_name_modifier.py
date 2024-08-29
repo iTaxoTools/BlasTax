@@ -23,7 +23,7 @@ class FastaNameModifierTest(NamedTuple):
 
     def validate(self, tmp_path: Path) -> None:
         input_name = TEST_DATA_DIR / self.input_name
-        output_name = TEST_DATA_DIR / self.output_name
+        output_name = tmp_path / self.output_name
         sanitize = self.sanitize
         trimposition = self.trimposition
         maxchar = self.maxchar
@@ -33,14 +33,7 @@ class FastaNameModifierTest(NamedTuple):
         expected_output = TEST_DATA_DIR / self.expected_output
 
         fasta_name_modifier(
-            str(input_name),
-            str(output_name),
-            sanitize,
-            str(trimposition),
-            int(maxchar),
-            renameauto,
-            direc,
-            addstring
+            str(input_name), str(output_name), sanitize, str(trimposition), int(maxchar), renameauto, direc, addstring
         )
 
         assert output_name.exists()
@@ -65,8 +58,8 @@ fasta_name_modifier_tests = [
         "end",
         50,
         True,
-#        None,
-#        None,
+        #        None,
+        #        None,
         "simlpe_output_expected.fas",
     ),
     FastaNameModifierTest(  # test simple case
@@ -76,11 +69,10 @@ fasta_name_modifier_tests = [
         "end",
         50,
         True,
-#        None,
-#        None,
+        #        None,
+        #        None,
         "complex_output_expected.fas",
     ),
-
 ]
 
 
