@@ -477,10 +477,21 @@ def get_timestamp_suffix(timestamp: datetime) -> str:
     return timestamp.strftime(r"_%Y%m%dT%H%M%S")
 
 
+def get_info_suffix(**kwargs) -> str:
+    info = ""
+    for key, value in kwargs.items():
+        if value is None:
+            info += f"_{str(key)}"
+        else:
+            info += f"_{str(key)}_{str(value)}"
+    return info
+
+
 def get_blast_filename(
     input_path: Path,
     outfmt: int = 0,
     timestamp: datetime | None = None,
+    **kwargs,
 ) -> str:
     suffix = {
         0: ".txt",
@@ -504,6 +515,10 @@ def get_blast_filename(
         18: ".txt",
     }.get(outfmt, ".out")
     path = input_path.with_suffix(suffix)
+
+    info = get_info_suffix(**kwargs)
+    path = path.with_stem(path.stem + info)
+
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
@@ -513,9 +528,14 @@ def get_blast_filename(
 def get_append_filename(
     input_path: Path,
     timestamp: datetime | None = None,
+    **kwargs,
 ) -> str:
     path = input_path.with_suffix(".fasta")
     path = path.with_stem(path.stem + "_with_blast_matches")
+
+    info = get_info_suffix(**kwargs)
+    path = path.with_stem(path.stem + info)
+
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
@@ -525,9 +545,14 @@ def get_append_filename(
 def get_museo_filename(
     input_path: Path,
     timestamp: datetime | None = None,
+    **kwargs,
 ) -> str:
     path = input_path.with_suffix(".fasta")
     path = path.with_stem(path.stem + "_museo")
+
+    info = get_info_suffix(**kwargs)
+    path = path.with_stem(path.stem + info)
+
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
@@ -538,26 +563,28 @@ def get_decont_blast_filename(
     input_path: Path,
     description: Literal["ingroup", "outgroup"],
     timestamp: datetime | None = None,
+    **kwargs,
 ) -> str:
     path = input_path.with_stem(input_path.stem + f"_{description}")
-    return get_blast_filename(path, outfmt=6, timestamp=timestamp)
+    return get_blast_filename(path, outfmt=6, timestamp=timestamp, **kwargs)
 
 
 def get_decont_sequences_filename(
     input_path: Path,
     description: Literal["decontaminated", "contaminants"],
     timestamp: datetime | None = None,
+    **kwargs,
 ) -> str:
     path = input_path.with_suffix(".fasta")
     path = path.with_stem(path.stem + f"_{description}")
+
+    info = get_info_suffix(**kwargs)
+    path = path.with_stem(path.stem + info)
+
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
     return path.name
-
-    # all_matches: bool = (False,)
-    # pident_arg: float = (None,)
-    # length_arg: int = (None,)
 
 
 # Fasta sequence name modifier

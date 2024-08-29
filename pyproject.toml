@@ -5,7 +5,6 @@ addopts = [
 ]
 
 [tool.ruff]
-ignore-init-module-imports = true
 extend-select = ["I"]
 line-length = 120
 
@@ -22,3 +21,6 @@ section-order = [
 
 [tool.ruff.lint.isort.sections]
 pyqt = ["PySide6"]
+
+[tool.ruff.format]
+exclude = ["tests/*"]
