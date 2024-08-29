@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
@@ -22,8 +23,10 @@ def execute(
     output_path: Path,
     blast_evalue: float,
     blast_num_threads: int,
+    append_timestamp: bool,
 ) -> Results:
-    import itaxotools
+    from core import get_append_filename, get_blast_filename
+    from itaxotools import abort, get_feedback, progress_handler
 
     print(f"{batch_mode=}")
     print(f"{input_query_path=}")
@@ -33,8 +36,7 @@ def execute(
     print(f"{output_path=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
-
-    ts = perf_counter()
+    print(f"{append_timestamp=}")
 
     if batch_mode:
         input_query_paths = input_query_list
@@ -42,8 +44,22 @@ def execute(
         input_query_paths = [input_query_path]
     total = len(input_query_paths)
 
+    timestamp = datetime.now() if append_timestamp else None
+
+    if any(
+        (
+            (output_path / get_blast_filename(path, outfmt=6, timestamp=timestamp)).exists()
+            or (output_path / get_append_filename(path, timestamp=timestamp)).exists()
+            for path in input_query_paths
+        )
+    ):
+        if not get_feedback(None):
+            abort()
+
+    ts = perf_counter()
+
     for i, path in enumerate(input_query_paths):
-        itaxotools.progress_handler(f"{i}/{total}", i, 0, total)
+        progress_handler(f"{i}/{total}", i, 0, total)
         execute_single(
             work_dir=work_dir,
             input_query_path=path,
@@ -52,8 +68,9 @@ def execute(
             output_path=output_path,
             blast_evalue=blast_evalue,
             blast_num_threads=blast_num_threads,
+            timestamp=timestamp,
         )
-    itaxotools.progress_handler(f"{total}/{total}", total, 0, total)
+    progress_handler(f"{total}/{total}", total, 0, total)
 
     tf = perf_counter()
 
@@ -68,18 +85,22 @@ def execute_single(
     output_path: Path,
     blast_evalue: float,
     blast_num_threads: int,
+    timestamp: datetime | None,
 ):
-    from core import blastx_parse, run_blast
-    from utils import remove_gaps
+    from core import blastx_parse, get_append_filename, get_blast_filename, run_blast
+    from utils import fastq_to_fasta, is_fastq, remove_gaps
 
-    print(input_database_path.name)
+    if is_fastq(input_query_path):
+        target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
+        fastq_to_fasta(input_query_path, target_query_path)
+        input_query_path = target_query_path
 
-    blast_output_path = output_path / input_query_path.with_suffix(".out").name
-    appended_output_path = output_path / input_query_path.with_stem(input_query_path.stem + "_with_blast_matches").name
+    blast_output_path = output_path / get_blast_filename(input_query_path, outfmt=6, timestamp=timestamp)
+    appended_output_path = output_path / get_append_filename(input_query_path, timestamp=timestamp)
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    if not run_blast(
+    run_blast(
         blast_binary="blastx",
         query_path=input_query_path_no_gaps,
         database_path=input_database_path,
@@ -88,11 +109,7 @@ def execute_single(
         num_threads=blast_num_threads,
         outfmt="6 length pident qseqid sseqid sseq qframe sframe",
         other="",
-    ):
-        raise Exception(
-            f"BLAST process failed for {input_database_path.name}! "
-            "Please make sure the parameters are set correctly!"
-        )
+    )
 
     blastx_parse(
         input_path=input_query_path,

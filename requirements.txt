@@ -43,7 +43,8 @@ PyYAML==6.0.1
 requests==2.32.3
 ruff==0.5.5
 seaborn==0.13.2
-setuptools==72.1.0
+setuptools==73.0.1
+setuptools-scm==8.1.0
 shiboken6==6.7.2
 six==1.16.0
 tzdata==2024.1

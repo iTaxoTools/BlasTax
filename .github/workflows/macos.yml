@@ -1,0 +1,44 @@
+name: macOS
+
+on: workflow_dispatch
+# on: push
+
+env:
+  ARTIFACT_BUNDLE: itaxotools-blast-gui-macos
+
+
+jobs:
+
+  build-bundle:
+    name: Build macOS bundle
+    runs-on: macos-12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Get BLAST+ binaries
+        uses: ./.github/actions/get-blast-binaries
+
+      - name: Update version file
+        run: python tools/update-version-file.py
+
+      - name: Make bundle
+        uses: iTaxoTools/TaxIGui/.github/actions/make-bundle@main
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_BUNDLE }}
+          path: dist/*.zip

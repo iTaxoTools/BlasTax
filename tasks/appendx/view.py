@@ -12,6 +12,7 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
+    OptionalCategory,
     PathDatabaseSelector,
     PathDirectorySelector,
     PathFileSelector,
@@ -118,8 +119,9 @@ class View(BlastTaskView):
         self.cards.extra = PathFileSelector("\u25C0  Nucleotide file", self)
         self.cards.options = OptionsSelector(self)
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
+        self.cards.timestamp = OptionalCategory("Append timestamp to output filenames", "", self)
 
-        self.cards.query.set_placeholder_text("Nucleotide sequences to match against database contents")
+        self.cards.query.set_placeholder_text("Nucleotide FASTA or FASTQ sequences to match against database")
         self.cards.database.set_placeholder_text("Match all query sequences against this protein database")
         self.cards.extra.set_placeholder_text("Nucleotide sequences for each database entry")
         self.cards.output.set_placeholder_text("All output files will be saved here")
@@ -138,7 +140,8 @@ class View(BlastTaskView):
         self.binder.unbind_all()
 
         self.binder.bind(object.notification, self.showNotification)
-        self.binder.bind(object.reportResults, self.report_results)
+        self.binder.bind(object.report_results, self.report_results)
+        self.binder.bind(object.request_confirmation, self.request_confirmation)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
@@ -158,6 +161,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
+
+        self.binder.bind(object.properties.append_timestamp, self.cards.timestamp.setChecked)
+        self.binder.bind(self.cards.timestamp.toggled, object.properties.append_timestamp)
 
         self.binder.bind(self.cards.query.selectedSinglePath, object.properties.output_path, lambda p: p.parent)
 

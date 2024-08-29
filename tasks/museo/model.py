@@ -26,6 +26,8 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid sacc stitle pident qseq"')
 
+    append_timestamp = Property(bool, False)
+
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = True
@@ -70,6 +72,7 @@ class Model(BlastTaskModel):
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             pident_threshold=self.pident_threshold,
             retrieve_original=self.retrieve_original,
+            append_timestamp=self.append_timestamp,
         )
 
     def _update_num_threads_default(self):
@@ -77,24 +80,6 @@ class Model(BlastTaskModel):
         property = self.properties.blast_num_threads
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
-
-    def delete_paths(self, indices: list[int]):
-        if not indices:
-            return
-        self.input_query_list.remove_paths(indices)
-
-    def add_paths(self, paths: list[Path]):
-        if not paths:
-            return
-        self.input_query_list.add_paths(paths)
-
-    def add_folder(self, dir: Path):
-        assert dir.is_dir()
-        paths = []
-        paths += list(dir.glob("*.fa"))
-        paths += list(dir.glob("*.fas"))
-        paths += list(dir.glob("*.fasta"))
-        self.add_paths(paths)
 
     def open(self, path: Path):
         if db := get_database_index_from_path(path):

@@ -25,4 +25,4 @@ PS. The binary getter can also be used when running the script directly to execu
 
 Compilation of the Windows bundle is done automatically on the GitHub cloud on every push.
 
-To see the latest build, go to the [Windows action](https://github.com/iTaxoTools/BLAST-Align/actions/workflows/ci.yml), click on the most recent workflow run, then click on the artifact named `itaxotools-blast-gui-windows` to download a zip file containing the unsigned executable.
+To see the latest build, go to the [Windows action](https://github.com/iTaxoTools/BlasTax/actions/workflows/ci.yml), click on the most recent workflow run, then click on the artifact named `itaxotools-blast-gui-windows` to download a zip file containing the unsigned executable.

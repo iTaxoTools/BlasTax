@@ -9,5 +9,5 @@ pixmap_medium = task_pixmaps_medium.blast
 long_description = (
     "Find regions of similarity between sequences in the query file "
     "and sequences in a BLAST database. "
-    "Query files must be in FASTA format. "
+    "Query files must be in FASTA or FASTQ format. "
 )

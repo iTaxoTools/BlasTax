@@ -28,6 +28,8 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid sseq qframe sframe"')
 
+    append_timestamp = Property(bool, False)
+
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = True
@@ -94,6 +96,7 @@ class Model(BlastTaskModel):
             output_path=self.output_path,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            append_timestamp=self.append_timestamp,
         )
 
     def _update_num_threads_default(self):

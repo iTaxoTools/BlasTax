@@ -4,10 +4,13 @@ import re
 import shlex
 import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from utils import complement, translate, fastq_to_fasta
+from itaxotools.taxi2.handlers import FileHandler
+from itaxotools.taxi2.sequences import SequenceHandler
+from utils import complement, translate
 
 
 def get_blast_binary(name: str) -> str:
@@ -61,13 +64,27 @@ def get_blast_version() -> str:
         raise Exception("Version number not found in output!")
 
 
+def execute_blast_command(args: list[str]):
+    p = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+        env=BLAST_ENV,
+    )
+    p.wait()
+    _, stderr = p.communicate()
+    if p.returncode != 0:
+        raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+
+
 def make_database(
     input_path: str,
     output_path: str,
     type: Literal["nucl", "prot"],
     name: str,
     version: Literal[4, 5] = 4,
-) -> None:
+):
     output_pattern = Path(output_path) / name
     args = [
         get_blast_binary("makeblastdb"),
@@ -83,16 +100,7 @@ def make_database(
         "-blastdb_version",
         str(version),
     ]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
-    p.wait()
-    try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
-        _, stderr = p.communicate()
-        if p.returncode != 0:
-            raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
-    except Exception as e:
-        raise Exception(str(e))
-
+    execute_blast_command(args)
 
 
 def run_blast(
@@ -104,31 +112,13 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
-) -> None:
-
-    if query_path.endswith(".fastq"):
-        new_query = Path(query_path).with_suffix(".fasta")
-        fastq_to_fasta(query_path, new_query)
-        query_path = new_query
-
+):
     command = (
-            f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
-            f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
-        )
-
+        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+        f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
+    )
     args = command_to_args(command)
-
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, env=BLAST_ENV)
-    p.wait()
-
-    try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=BLAST_ENV)
-        _, stderr = p.communicate()
-        if p.returncode != 0:
-            raise Exception(f"BLAST failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
-    except Exception as e:
-        raise Exception(str(e))
-
+    execute_blast_command(args)
 
 
 def run_blast_align(
@@ -138,7 +128,7 @@ def run_blast_align(
     output_path: Path | str,
     evalue: str,
     num_threads: int,
-    ) -> bool:
+):
     return run_blast(
         blast_binary=blast_binary,
         query_path=query_path,
@@ -146,8 +136,28 @@ def run_blast_align(
         output_path=output_path,
         evalue=evalue,
         num_threads=num_threads,
-        outfmt='6 length pident qseqid sseqid sseq qframe sframe',
-        other=''
+        outfmt="6 length pident qseqid sseqid sseq qframe sframe",
+        other="",
+    )
+
+
+def run_blast_decont(
+    blast_binary: str,
+    query_path: Path | str,
+    database_path: Path | str,
+    output_path: Path | str,
+    evalue: str,
+    num_threads: int,
+):
+    return run_blast(
+        blast_binary=blast_binary,
+        query_path=query_path,
+        database_path=database_path,
+        output_path=output_path,
+        evalue=evalue,
+        num_threads=num_threads,
+        outfmt="6 qseqid sseqid pident bitscore length",
+        other="",
     )
 
 
@@ -315,10 +325,10 @@ def blast_parse(
     blast_result_path: Path | str,
     output_path: Path | str,
     database_name: str,
-    all_matches: bool=False,
-    pident_arg: float=None,
-    length_arg: int=None
-    ):
+    all_matches: bool = False,
+    pident_arg: float = None,
+    length_arg: int = None,
+):
     # copy the content of the input file to a new output file
     blastfile = open(blast_result_path, "r")
     try:
@@ -329,20 +339,20 @@ def blast_parse(
     # add upp blast hits to the new output file
     outfile = open(output_path, "a")
     outfile.write("\n")
-    if all_matches == True:
+    if all_matches:
         for line in blastfile:
             splitti = line.split("\t")
             pident = float(splitti[1])
             sequence = f"{splitti[4]}\n"
             header = f">{database_name}_{splitti[3]}"
             if pident_arg is not None and length_arg is not None:
-                if pident >= pident_arg and len(sequence)-1 >= length_arg:
+                if pident >= pident_arg and len(sequence) - 1 >= length_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             elif pident_arg is not None:
                 if pident > pident_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             elif length_arg is not None:
-                if len(sequence)-1 >= length_arg:
+                if len(sequence) - 1 >= length_arg:
                     outfile.write(f"{header}_pident_{pident}\n{sequence}")
             else:
                 outfile.write(f"{header}_pident_{pident}\n{sequence}")
@@ -351,7 +361,7 @@ def blast_parse(
         dict_head_seq = {}
         for line in blastfile:
             splitti = line.split("\t")
-            print(splitti, splitti[3])
+            # print(splitti, splitti[3])
             pident = splitti[1]
             sequence_line = f"{splitti[4]}\n"
             short_header = f">{database_name}_{splitti[3]}"
@@ -387,11 +397,8 @@ def museoscript_original_reads(
     output_path: Path | str,
     pident_threshold: float,
 ):
-    if original_query_path.endswith(".fastq"):
-        original_query_path = Path(original_query_path).with_suffix(".fasta")
-        
     with open(original_query_path, "r") as org_query:
-            query_list = org_query.readlines()
+        query_list = org_query.readlines()
 
     with open(blast_path, "r") as blast:
         with open(output_path, "w") as museo:
@@ -422,3 +429,125 @@ def museoscript_parse(
                     header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
                     museo.write(header)
                     museo.write(sequence_line)
+
+
+def _get_decont_hits_dict(
+    path: Path | str,
+    column: int,
+) -> dict[str, float]:
+    hits: dict[str, float] = {}
+    with FileHandler.Tabfile(path) as file:
+        for item in file:
+            id = item[0]
+            value = float(item[column])
+            if id not in hits or hits[id] < value:
+                hits[id] = value
+    return hits
+
+
+def decontaminate(
+    query_path: Path | str,
+    blasted_ingroup_path: Path | str,
+    blasted_outgroup_path: Path | str,
+    ingroup_sequences_path: Path | str,
+    outgroup_sequences_path: Path | str,
+    column: int,
+):
+    ingroup_hits = _get_decont_hits_dict(blasted_ingroup_path, column)
+    outgroup_hits = _get_decont_hits_dict(blasted_outgroup_path, column)
+
+    with (
+        SequenceHandler.Fasta(query_path) as query_file,
+        SequenceHandler.Fasta(ingroup_sequences_path, "w") as ingroup_file,
+        SequenceHandler.Fasta(outgroup_sequences_path, "w") as outgroup_file,
+    ):
+        for item in query_file:
+            ingroup_hit = ingroup_hits.get(item.id, -1)
+            outgroup_hit = outgroup_hits.get(item.id, -1)
+            if ingroup_hit >= outgroup_hit:
+                ingroup_file.write(item)
+            else:
+                outgroup_file.write(item)
+
+
+def get_timestamp_suffix(timestamp: datetime) -> str:
+    return timestamp.strftime(r"_%Y%m%dT%H%M%S")
+
+
+def get_blast_filename(
+    input_path: Path,
+    outfmt: int = 0,
+    timestamp: datetime | None = None,
+) -> str:
+    suffix = {
+        0: ".txt",
+        1: ".txt",
+        2: ".txt",
+        3: ".txt",
+        4: ".txt",
+        5: ".xml",
+        6: ".tsv",
+        7: ".tsv",
+        8: ".asn1",
+        9: ".bin",
+        10: ".csv",
+        11: ".asn1",
+        12: ".json",
+        13: ".json",
+        14: ".xml",
+        15: ".json",
+        16: ".xml",
+        17: ".sam",
+        18: ".txt",
+    }.get(outfmt, ".out")
+    path = input_path.with_suffix(suffix)
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_append_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_with_blast_matches")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_museo_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_museo")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
+def get_decont_blast_filename(
+    input_path: Path,
+    description: Literal["ingroup", "outgroup"],
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_stem(input_path.stem + f"_{description}")
+    return get_blast_filename(path, outfmt=6, timestamp=timestamp)
+
+
+def get_decont_sequences_filename(
+    input_path: Path,
+    description: Literal["decontaminated", "contaminants"],
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + f"_{description}")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name

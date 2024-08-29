@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
@@ -23,9 +24,11 @@ def execute(
     blast_outfmt: int,
     blast_outfmt_options: str,
     blast_extra_args: str,
+    append_timestamp: bool,
 ) -> Results:
-    from core import run_blast
-    from utils import remove_gaps
+    from core import get_blast_filename, run_blast
+    from itaxotools import abort, get_feedback
+    from utils import fastq_to_fasta, is_fastq, remove_gaps
 
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
@@ -36,14 +39,26 @@ def execute(
     print(f"{blast_outfmt=}")
     print(f"{blast_outfmt_options=}")
     print(f"{blast_extra_args=}")
+    print(f"{append_timestamp=}")
+
+    timestamp = datetime.now() if append_timestamp else None
+    blast_output_path = output_path / get_blast_filename(input_query_path, outfmt=blast_outfmt, timestamp=timestamp)
+
+    if blast_output_path.exists():
+        if not get_feedback(blast_output_path):
+            abort()
 
     ts = perf_counter()
 
-    blast_output_path = output_path / input_query_path.with_suffix(".out").name
+    if is_fastq(input_query_path):
+        target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
+        fastq_to_fasta(input_query_path, target_query_path)
+        input_query_path = target_query_path
+
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    if not run_blast(
+    run_blast(
         blast_binary=blast_method,
         query_path=input_query_path_no_gaps,
         database_path=input_database_path,
@@ -52,8 +67,7 @@ def execute(
         num_threads=blast_num_threads,
         outfmt=f"{blast_outfmt} {blast_outfmt_options}",
         other=blast_extra_args,
-    ):
-        raise Exception("BLAST process failed! Please make sure the parameters are set correctly!")
+    )
 
     tf = perf_counter()
 

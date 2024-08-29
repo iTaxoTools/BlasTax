@@ -126,7 +126,7 @@ class View(BlastTaskView):
         self.binder.unbind_all()
 
         self.binder.bind(object.notification, self.showNotification)
-        self.binder.bind(object.reportResults, self.report_results)
+        self.binder.bind(object.report_results, self.report_results)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
         self.binder.bind(object.properties.name, self.cards.title.setTitle)

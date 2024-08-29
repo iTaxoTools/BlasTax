@@ -23,8 +23,12 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_outfmt = Property(int, 0)
     blast_outfmt_show_more = Property(bool, False)
-    blast_outfmt_options = Property(str, "")
+    blast_outfmt_options = Property(
+        str, "qaccver saccver pident length mismatch gapopen qstart qend sstart send evalue bitscore"
+    )
     blast_extra_args = Property(str, "")
+
+    append_timestamp = Property(bool, False)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -75,8 +79,9 @@ class Model(BlastTaskModel):
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
-            blast_outfmt_options=self.blast_outfmt_options,
+            blast_outfmt_options=self.blast_outfmt_options or self.properties.blast_outfmt_options.default,
             blast_extra_args=self.blast_extra_args,
+            append_timestamp=self.append_timestamp,
         )
 
     def _update_num_threads_default(self):
@@ -84,6 +89,18 @@ class Model(BlastTaskModel):
         property = self.properties.blast_num_threads
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
+
+    def outfmt_restore_defaults(self):
+        self.blast_outfmt_options = self.properties.blast_outfmt_options.default
+
+    def outfmt_add_specifier(self, specifier: str):
+        options: str = self.blast_outfmt_options
+        if specifier in options:
+            return
+        if options and not options.endswith(" "):
+            options += " "
+        options += specifier
+        self.blast_outfmt_options = options
 
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
