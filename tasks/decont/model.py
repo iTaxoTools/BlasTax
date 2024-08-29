@@ -2,10 +2,10 @@ import multiprocessing
 from datetime import datetime
 from pathlib import Path
 
-from itaxotools.common.bindings import Property
+from itaxotools.common.bindings import Instance, Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
-from ..common.model import BlastTaskModel
+from ..common.model import BatchQueryModel, BlastTaskModel
 from ..common.types import BlastMethod
 from ..common.utils import get_database_index_from_path
 from . import process, title
@@ -15,7 +15,7 @@ from .types import DecontVariable
 class Model(BlastTaskModel):
     task_name = title
 
-    query_path = Property(Path, Path())
+    input_queries = Property(BatchQueryModel, Instance)
     ingroup_database_path = Property(Path, Path())
     outgroup_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
@@ -36,10 +36,12 @@ class Model(BlastTaskModel):
 
         self._update_num_threads_default()
 
+        self.binder.bind(self.input_queries.properties.parent_path, self.properties.output_path)
+
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
         for handle in [
-            self.properties.query_path,
+            self.input_queries.properties.ready,
             self.properties.ingroup_database_path,
             self.properties.outgroup_database_path,
             self.properties.output_path,
@@ -50,7 +52,7 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def isReady(self):
-        if self.query_path == Path():
+        if not self.input_queries.ready:
             return False
         if self.ingroup_database_path == Path():
             return False
@@ -69,7 +71,7 @@ class Model(BlastTaskModel):
         self.exec(
             process.execute,
             work_dir=work_dir,
-            query_path=self.query_path,
+            input_query_paths=self.input_queries.get_all_paths(),
             ingroup_database_path=self.ingroup_database_path,
             outgroup_database_path=self.outgroup_database_path,
             output_path=self.output_path,
@@ -90,5 +92,4 @@ class Model(BlastTaskModel):
         if db := get_database_index_from_path(path):
             self.input_database_path = db
         else:
-            self.input_query_path = path
-            self.output_path = path.parent
+            self.input_queries.open(path)

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 
 class DecontVariable(Enum):
@@ -12,3 +14,14 @@ class DecontVariable(Enum):
         self.variable = variable
         self.description = description
         self.column = column
+
+
+@dataclass
+class TargetPaths:
+    blasted_ingroup_path: Path
+    ingroup_sequences_path: Path
+    blasted_outgroup_path: Path
+    outgroup_sequences_path: Path
+
+    def __iter__(self):
+        return iter(vars(self).values())

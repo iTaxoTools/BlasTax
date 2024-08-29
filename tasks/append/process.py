@@ -15,7 +15,7 @@ def initialize():
 
 def execute(
     work_dir: Path,
-    input_queries: list[Path],
+    input_query_paths: list[Path],
     input_database_path: Path,
     output_path: Path,
     blast_method: str,
@@ -29,7 +29,7 @@ def execute(
     from core import get_append_filename, get_blast_filename
     from itaxotools import abort, get_feedback, progress_handler
 
-    print(f"{input_queries=}")
+    print(f"{input_query_paths=}")
     print(f"{input_database_path=}")
     print(f"{output_path=}")
     print(f"{blast_method=}")
@@ -40,7 +40,7 @@ def execute(
     print(f"{append_length=}")
     print(f"{append_timestamp=}")
 
-    total = len(input_queries)
+    total = len(input_query_paths)
 
     timestamp = datetime.now() if append_timestamp else None
 
@@ -48,7 +48,7 @@ def execute(
         (
             (output_path / get_blast_filename(path, outfmt=6, timestamp=timestamp)).exists()
             or (output_path / get_append_filename(path, timestamp=timestamp)).exists()
-            for path in input_queries
+            for path in input_query_paths
         )
     ):
         if not get_feedback(None):
@@ -56,7 +56,7 @@ def execute(
 
     ts = perf_counter()
 
-    for i, path in enumerate(input_queries):
+    for i, path in enumerate(input_query_paths):
         progress_handler(f"{i}/{total}", i, 0, total)
         execute_single(
             work_dir=work_dir,

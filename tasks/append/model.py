@@ -69,7 +69,7 @@ class Model(BlastTaskModel):
         self.exec(
             process.execute,
             work_dir=work_dir,
-            input_queries=self.input_queries.get_all_paths(),
+            input_query_paths=self.input_queries.get_all_paths(),
             input_database_path=self.input_database_path,
             output_path=self.output_path,
             blast_method=self.blast_method.executable,
