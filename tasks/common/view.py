@@ -38,7 +38,10 @@ class BlastTaskView(ScrollTaskView):
         if path is None:
             text = "Some files already exist. Overwrite?"
         else:
-            text = f"File '{path.name}' already exists. Overwrite?"
+            name = path.name
+            if len(name) > 42:
+                name = name[:31] + "..." + name[-11:]
+            text = f"File '{name}' already exists. Overwrite?"
         msgBox.setText(text)
 
         result = self.window().msgShow(msgBox)

@@ -15,6 +15,12 @@ class DecontVariable(Enum):
         self.description = description
         self.column = column
 
+    @classmethod
+    def from_column(cls, column: int) -> DecontVariable:
+        for item in cls:
+            if item.column == column:
+                return item
+
 
 @dataclass
 class TargetPaths:

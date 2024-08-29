@@ -25,10 +25,17 @@ def execute(
     blast_outfmt_options: str,
     blast_extra_args: str,
     append_timestamp: bool,
+    append_options: bool,
 ) -> Results:
     from core import get_blast_filename, run_blast
     from itaxotools import abort, get_feedback
     from utils import fastq_to_fasta, is_fastq, remove_gaps
+
+    from ..common.types import BLAST_OUTFMT_SPECIFIERS_TABLE
+
+    if blast_outfmt not in BLAST_OUTFMT_SPECIFIERS_TABLE.keys():
+        blast_outfmt_options = ""
+    blast_outfmt_options = blast_outfmt_options.strip()
 
     print(f"{input_query_path=}")
     print(f"{input_database_path=}")
@@ -40,9 +47,22 @@ def execute(
     print(f"{blast_outfmt_options=}")
     print(f"{blast_extra_args=}")
     print(f"{append_timestamp=}")
+    print(f"{append_options=}")
 
     timestamp = datetime.now() if append_timestamp else None
-    blast_output_path = output_path / get_blast_filename(input_query_path, outfmt=blast_outfmt, timestamp=timestamp)
+    options: dict[str, str] = {}
+    if append_options:
+        options[blast_method] = None
+        options["evalue"] = blast_evalue
+        if blast_outfmt_options:
+            parts = blast_outfmt_options.split(" ")
+            options["columns"] = "_".join(parts)
+        if blast_extra_args:
+            options["extra"] = None
+
+    blast_output_path = output_path / get_blast_filename(
+        input_query_path, outfmt=blast_outfmt, timestamp=timestamp, **options
+    )
 
     if blast_output_path.exists():
         if not get_feedback(blast_output_path):

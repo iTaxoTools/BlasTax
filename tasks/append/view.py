@@ -243,11 +243,11 @@ class View(BlastTaskView):
         self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
         self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
-        self.binder.bind(object.properties.append_multiple, self.cards.append_options.controls.multiple.setValue)
-        self.binder.bind(self.cards.append_options.controls.multiple.valueChanged, object.properties.append_multiple)
-        self.binder.bind(object.properties.append_pident, self.cards.append_options.controls.pident.setValue)
-        self.binder.bind(self.cards.append_options.controls.pident.valueChangedSafe, object.properties.append_pident)
-        self.cards.append_options.controls.length.bind_property(object.properties.append_length)
+        self.binder.bind(object.properties.match_multiple, self.cards.append_options.controls.multiple.setValue)
+        self.binder.bind(self.cards.append_options.controls.multiple.valueChanged, object.properties.match_multiple)
+        self.binder.bind(object.properties.match_pident, self.cards.append_options.controls.pident.setValue)
+        self.binder.bind(self.cards.append_options.controls.pident.valueChangedSafe, object.properties.match_pident)
+        self.cards.append_options.controls.length.bind_property(object.properties.match_length)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

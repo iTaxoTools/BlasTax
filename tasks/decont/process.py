@@ -25,8 +25,11 @@ def execute(
     blast_evalue: float,
     blast_num_threads: int,
     append_timestamp: bool,
+    append_options: bool,
 ) -> Results:
     from itaxotools import abort, get_feedback, progress_handler
+
+    from .types import DecontVariable
 
     print(f"{input_query_paths=}")
     print(f"{ingroup_database_path=}")
@@ -37,12 +40,26 @@ def execute(
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
+    print(f"{append_options=}")
 
     total = len(input_query_paths)
 
     timestamp = datetime.now() if append_timestamp else None
 
-    target_paths_list = [get_target_paths(path, output_path, timestamp) for path in input_query_paths]
+    blast_options: dict[str, str] = {}
+    decont_options: dict[str, str] = {}
+    if append_options:
+        blast_options = {
+            blast_method: None,
+            "evalue": blast_evalue,
+        }
+        decont_options = {
+            "variable": DecontVariable.from_column(decont_column).variable,
+        }
+
+    target_paths_list = [
+        get_target_paths(path, output_path, timestamp, blast_options, decont_options) for path in input_query_paths
+    ]
 
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
@@ -130,16 +147,36 @@ def get_target_paths(
     query_path: Path,
     output_path: Path,
     timestamp: datetime | None,
+    blast_options: dict[str, str],
+    decont_options: dict[str, str],
 ) -> TargetPaths:
     from core import get_decont_blast_filename, get_decont_sequences_filename
 
-    blasted_ingroup_path = output_path / get_decont_blast_filename(query_path, "ingroup", timestamp=timestamp)
-    ingroup_sequences_path = output_path / get_decont_sequences_filename(
-        query_path, "decontaminated", timestamp=timestamp
+    blasted_ingroup_path = output_path / get_decont_blast_filename(
+        query_path,
+        "ingroup",
+        timestamp=timestamp,
+        **blast_options,
     )
-    blasted_outgroup_path = output_path / get_decont_blast_filename(query_path, "outgroup", timestamp=timestamp)
+    ingroup_sequences_path = output_path / get_decont_sequences_filename(
+        query_path,
+        "decontaminated",
+        timestamp=timestamp,
+        **blast_options,
+        **decont_options,
+    )
+    blasted_outgroup_path = output_path / get_decont_blast_filename(
+        query_path,
+        "outgroup",
+        timestamp=timestamp,
+        **blast_options,
+    )
     outgroup_sequences_path = output_path / get_decont_sequences_filename(
-        query_path, "contaminants", timestamp=timestamp
+        query_path,
+        "contaminants",
+        timestamp=timestamp,
+        **blast_options,
+        **decont_options,
     )
     return TargetPaths(
         blasted_ingroup_path=blasted_ingroup_path,

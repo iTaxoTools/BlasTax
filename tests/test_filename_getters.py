@@ -105,6 +105,7 @@ filename_tests = [
     BlastFilenameTest(Path("some.fa"), "some_20240830T000000.txt", 0, datetime(2024, 8, 30, 0, 0, 0), {}),
 
     BlastFilenameTest(Path("some.fa"), "some_evalue_0.1.txt", 0, None, dict(evalue=0.1)),
+    BlastFilenameTest(Path("some.fa"), "some_blastn.txt", 0, None, {"blastn": None}),
     BlastFilenameTest(Path("some.fa"), "some_method_blastn_evalue_0.1_columns_seqid_sseqid_pident.txt", 0, None, dict(method="blastn", evalue=0.1, columns="seqid_sseqid_pident")),
     BlastFilenameTest(Path("some.fa"), "some_evalue_0.1_17070329T061742.txt", 0, datetime(1707, 3, 29, 6, 17, 42), dict(evalue=0.1)),
 

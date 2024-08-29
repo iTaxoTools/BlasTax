@@ -3,6 +3,7 @@ from pathlib import Path
 from time import perf_counter
 
 from ..common.types import Results
+from .types import TargetPaths
 
 
 def initialize():
@@ -21,13 +22,16 @@ def execute(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
-    append_multiple: bool,
-    append_pident: float,
-    append_length: int,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
     append_timestamp: bool,
+    append_options: bool,
 ) -> Results:
-    from core import get_append_filename, get_blast_filename
     from itaxotools import abort, get_feedback, progress_handler
+
+    blast_outfmt = 6
+    blast_outfmt_options = "length pident qseqid sseqid sseq qframe sframe"
 
     print(f"{input_query_paths=}")
     print(f"{input_database_path=}")
@@ -35,41 +39,55 @@ def execute(
     print(f"{blast_method=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
-    print(f"{append_multiple=}")
-    print(f"{append_pident=}")
-    print(f"{append_length=}")
+    print(f"{match_multiple=}")
+    print(f"{match_pident=}")
+    print(f"{match_length=}")
     print(f"{append_timestamp=}")
+    print(f"{append_options=}")
 
     total = len(input_query_paths)
 
     timestamp = datetime.now() if append_timestamp else None
+    blast_options: dict[str, str] = {}
+    match_options: dict[str, str] = {}
+    if append_options:
+        blast_options["blastx"] = None
+        blast_options["evalue"] = blast_evalue
+        parts = blast_outfmt_options.split(" ")
+        blast_options["columns"] = "_".join(parts)
+        if match_multiple:
+            match_options["multiple"] = None
+            match_options["pident"] = match_pident
+            match_options["length"] = match_length
+        else:
+            match_options["single"] = None
 
-    if any(
-        (
-            (output_path / get_blast_filename(path, outfmt=6, timestamp=timestamp)).exists()
-            or (output_path / get_append_filename(path, timestamp=timestamp)).exists()
-            for path in input_query_paths
-        )
-    ):
+    target_paths_list = [
+        get_target_paths(path, output_path, timestamp, blast_options, match_options) for path in input_query_paths
+    ]
+
+    if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
 
     ts = perf_counter()
 
-    for i, path in enumerate(input_query_paths):
+    for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
         progress_handler(f"{i}/{total}", i, 0, total)
         execute_single(
             work_dir=work_dir,
             input_query_path=path,
             input_database_path=input_database_path,
-            output_path=output_path,
+            blast_output_path=target.blast_output_path,
+            appended_output_path=target.appended_output_path,
             blast_method=blast_method,
+            blast_outfmt=blast_outfmt,
+            blast_outfmt_options=blast_outfmt_options,
             blast_evalue=blast_evalue,
             blast_num_threads=blast_num_threads,
-            append_multiple=append_multiple,
-            append_pident=append_pident,
-            append_length=append_length,
-            timestamp=timestamp,
+            match_multiple=match_multiple,
+            match_pident=match_pident,
+            match_length=match_length,
         )
     progress_handler(f"{total}/{total}", total, 0, total)
 
@@ -82,16 +100,18 @@ def execute_single(
     work_dir: Path,
     input_query_path: Path,
     input_database_path: Path,
-    output_path: Path,
+    blast_output_path: Path,
+    appended_output_path: Path,
     blast_method: str,
+    blast_outfmt: int,
+    blast_outfmt_options: str,
     blast_evalue: float,
     blast_num_threads: int,
-    append_multiple: bool,
-    append_pident: float,
-    append_length: int,
-    timestamp: datetime | None,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
 ):
-    from core import blast_parse, get_append_filename, get_blast_filename, run_blast
+    from core import blast_parse, run_blast
     from utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
@@ -99,8 +119,6 @@ def execute_single(
         fastq_to_fasta(input_query_path, target_query_path)
         input_query_path = target_query_path
 
-    blast_output_path = output_path / get_blast_filename(input_query_path, outfmt=6, timestamp=timestamp)
-    appended_output_path = output_path / get_append_filename(input_query_path, timestamp=timestamp)
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
@@ -111,7 +129,7 @@ def execute_single(
         output_path=blast_output_path,
         evalue=blast_evalue,
         num_threads=blast_num_threads,
-        outfmt="6 length pident qseqid sseqid sseq qframe sframe",
+        outfmt=f"{blast_outfmt} {blast_outfmt_options}",
         other="",
     )
 
@@ -120,7 +138,26 @@ def execute_single(
         blast_result_path=blast_output_path,
         output_path=appended_output_path,
         database_name=input_database_path.stem,
-        all_matches=append_multiple,
-        pident_arg=append_pident,
-        length_arg=append_length,
+        all_matches=match_multiple,
+        pident_arg=match_pident,
+        length_arg=match_length,
+    )
+
+
+def get_target_paths(
+    query_path: Path,
+    output_path: Path,
+    timestamp: datetime | None,
+    blast_options: dict[str, str],
+    match_options: dict[str, str],
+) -> TargetPaths:
+    from core import get_append_filename, get_blast_filename
+
+    blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
+    appended_output_path = output_path / get_append_filename(
+        query_path, timestamp=timestamp, **match_options, **blast_options
+    )
+    return TargetPaths(
+        blast_output_path=blast_output_path,
+        appended_output_path=appended_output_path,
     )

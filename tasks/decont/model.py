@@ -28,6 +28,7 @@ class Model(BlastTaskModel):
     decont_variable = Property(DecontVariable, DecontVariable.pident)
 
     append_timestamp = Property(bool, False)
+    append_options = Property(bool, True)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -80,6 +81,7 @@ class Model(BlastTaskModel):
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             decont_column=self.decont_variable.column,
             append_timestamp=self.append_timestamp,
+            append_options=self.append_options,
         )
 
     def _update_num_threads_default(self):
