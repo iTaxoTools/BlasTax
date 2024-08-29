@@ -559,9 +559,11 @@ def get_decont_sequences_filename(
 # Fasta sequence name modifier
 def fasta_name_modifier(input_name: Path | str,
                         output_name: Path | str,
+                        trim: bool,
+                        add: bool,
                         sanitize: bool,
                         trimposition: str,
-                        maxchar: int,
+                        trimmaxchar: int,
                         renameauto: bool,
                         direc: str=None,
                         addstring: str=None) -> None:
@@ -569,19 +571,18 @@ def fasta_name_modifier(input_name: Path | str,
     letters_and_numbers = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
                            's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '1', '2',
-                           '3', '4', '5', '6', '7', '8', '9', '0', '_']
+                           '3', '4', '5', '6', '7', '8', '9', '0', '_', '>']
 
-    outfile = open(output_name, "w")
+    outfile = open(output_name, "w", encoding="utf-8")
     gene = []
     sequenzen = []
-    new_command_lines = []
     counter = 1
 
-    with open(input_name, "r", encoding="iso-8859-1") as file:
+    with open(input_name, "r", encoding="utf-8") as file:
         for z in file:
             if ">" in z:
                 strippi = z.strip('\n')
-                new_line = string_trimmer(strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring)
+                new_line = string_trimmer(strippi, counter, trim, add, sanitize, trimposition, trimmaxchar, renameauto, letters_and_numbers, direc, addstring)
                 gene.append(new_line)
                 counter = counter + 1
 
@@ -593,7 +594,7 @@ def fasta_name_modifier(input_name: Path | str,
                     next = file.readline()
 
                 strippi = next.strip('\n')
-                new_line = string_trimmer(strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring)
+                new_line = string_trimmer(strippi, counter, trim, add, sanitize, trimposition, trimmaxchar, renameauto, letters_and_numbers, direc, addstring)
                 gene.append(new_line)
                 counter = counter + 1
                 sequenzen.append(seq)
