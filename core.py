@@ -10,7 +10,7 @@ from typing import Literal
 
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.sequences import SequenceHandler
-from utils import complement, translate
+from utils import complement, translate, string_trimmer
 
 
 def get_blast_binary(name: str) -> str:
@@ -551,3 +551,59 @@ def get_decont_sequences_filename(
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
     return path.name
+
+
+    all_matches: bool = False,
+    pident_arg: float = None,
+    length_arg: int = None,
+# Fasta sequence name modifier
+def fasta_name_modifier(input_name: Path | str,
+                        output_name: Path | str,
+                        sanitize: bool,
+                        trimposition: str,
+                        maxchar: int,
+                        renameauto: bool,
+                        direc: str=None,
+                        addstring: str=None) -> None:
+
+    letters_and_numbers = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+                           's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '1', '2',
+                           '3', '4', '5', '6', '7', '8', '9', '0', '_']
+
+    outfile = open(output_name, "w")
+    gene = []
+    sequenzen = []
+    new_command_lines = []
+    counter = 1
+
+    with open(input_name, "r", encoding="iso-8859-1") as file:
+        for z in file:
+            if ">" in z:
+                strippi = z.strip('\n')
+                new_line = string_trimmer(strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring)
+                gene.append(new_line)
+                counter = counter + 1
+
+            else:
+                next = z
+                seq = ''
+                while (not '>' in next) and (len(next) > 0):
+                    seq += str(next[0:-1])
+                    next = file.readline()
+
+                strippi = next.strip('\n')
+                new_line = string_trimmer(strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring)
+                gene.append(new_line)
+                counter = counter + 1
+                sequenzen.append(seq)
+
+    print(len(gene))
+    print(gene[0:5])
+    print(len(sequenzen))
+
+    for i in range(0, len(sequenzen)):
+        outfile.write(gene[i] + '\n')
+        outfile.write(sequenzen[i] + '\n')
+
+    outfile.close()

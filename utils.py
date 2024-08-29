@@ -211,3 +211,146 @@ def is_fastq(path: Path | str) -> bool:
             if line.startswith("+"):
                 return bool(id)
     return False
+
+# Utils for fasta name modifier
+def string_trimmer(komm_zeile: str,
+                   counter: int,
+                   sanitize: bool,
+                   trimpos: str,
+                   maxchar: int,
+                   auto: bool,
+                   letters_and_numbers: list[str],
+                   direc: str = None,
+                   addstring: str = None) -> str:
+
+    new_komm = komm_zeile
+    laenge = len(new_komm)
+    nk = ""
+
+    # Sanitization: Replace characters not in letters_and_numbers with '_'
+    if sanitize:
+        for zeichen in new_komm:
+            if zeichen in letters_and_numbers:
+                nk += zeichen
+            else:
+                nk += '_'
+        new_komm = nk
+
+    # Trimming
+    if trimpos:
+        if counter > 9:
+            maxchar = int(maxchar) - 1
+        if counter > 99:
+            maxchar = int(maxchar) - 1
+        if counter > 999:
+            maxchar = int(maxchar) - 1
+        if counter > 9999:
+            maxchar = int(maxchar) - 1
+        if counter > 99999:
+            maxchar = int(maxchar) - 1
+        if counter > 999999:
+            maxchar = int(maxchar) - 1
+
+        if trimpos == 'beginning':
+            startpos = laenge - int(maxchar)
+            if auto:
+                nk = '>' + new_komm[startpos:] + str(counter)
+            else:
+                nk = '>' + new_komm[startpos:]
+        elif trimpos == 'end':
+            endpos = int(maxchar)
+            if auto:
+                nk = '>' + new_komm[1:endpos] + str(counter)
+            else:
+                nk = '>' + new_komm[1:endpos]
+        new_komm = nk
+
+    # Adding string at the beginning or end
+    if direc:
+        if direc == 'beginning':
+            strippi = new_komm.strip('>')
+            nk = '>' + addstring + strippi
+        elif direc == 'end':
+            nk = new_komm + addstring
+
+    return (nk)
+
+# The dictionary used to translate extended ASCII into ASCII representation by lib.utils.sanitize
+ext_ascii_trans = {
+    ord('ƒ'): 'f',
+    ord('Š'): 'S',
+    ord('Œ'): 'OE',
+    ord('Ž'): 'Z',
+    ord('š'): 's',
+    ord('œ'): 'oe',
+    ord('ž'): 'z',
+    ord('Ÿ'): 'Y',
+    ord('¡'): 'i',
+    ord('¢'): 'c',
+    ord('ª'): 'a',
+    ord('²'): '2',
+    ord('³'): '3',
+    ord('µ'): 'u',
+    ord('¹'): '1',
+    ord('º'): 'o',
+    ord('À'): 'A',
+    ord('Á'): 'A',
+    ord('Â'): 'A',
+    ord('Ã'): 'A',
+    ord('Ä'): 'Ae',
+    ord('Å'): 'A',
+    ord('Æ'): 'Ae',
+    ord('Ç'): 'C',
+    ord('È'): 'E',
+    ord('É'): 'E',
+    ord('Ê'): 'E',
+    ord('Ë'): 'E',
+    ord('Ì'): 'I',
+    ord('Í'): 'I',
+    ord('Î'): 'I',
+    ord('Ï'): 'I',
+    ord('Ð'): 'D',
+    ord('Ñ'): 'N',
+    ord('Ò'): 'O',
+    ord('Ó'): 'O',
+    ord('Ô'): 'O',
+    ord('Õ'): 'O',
+    ord('Ö'): 'Oe',
+    ord('×'): 'x',
+    ord('Ø'): 'O',
+    ord('Ù'): 'U',
+    ord('Ú'): 'U',
+    ord('Û'): 'U',
+    ord('Ü'): 'Ue',
+    ord('Ý'): 'Y',
+    ord('ß'): 'ss',
+    ord('à'): 'a',
+    ord('á'): 'a',
+    ord('â'): 'a',
+    ord('ã'): 'a',
+    ord('ä'): 'ae',
+    ord('å'): 'a',
+    ord('æ'): 'a',
+    ord('ç'): 'c',
+    ord('è'): 'e',
+    ord('é'): 'e',
+    ord('ê'): 'e',
+    ord('ë'): 'e',
+    ord('ì'): 'i',
+    ord('í'): 'i',
+    ord('î'): 'i',
+    ord('ï'): 'i',
+    ord('ð'): 'd',
+    ord('ñ'): 'n',
+    ord('ò'): 'o',
+    ord('ó'): 'o',
+    ord('ô'): 'o',
+    ord('õ'): 'o',
+    ord('ö'): 'oe',
+    ord('ù'): 'ue',
+    ord('ú'): 'ue',
+    ord('û'): 'ue',
+    ord('ü'): 'ue',
+    ord('ý'): 'y',
+    ord('ÿ'): 'y'
+}
