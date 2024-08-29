@@ -10,7 +10,7 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup
 
-from .model import PathListModel
+from .model import BatchQueryModel
 from .types import Results
 from .widgets import BatchQueryHelp, ElidedLineEdit, GrowingListView
 
@@ -358,9 +358,6 @@ class BatchQuerySelector(Card):
         self.controls.batch_query.roll.setAnimatedVisible(value)
         self.controls.single_query.roll.setAnimatedVisible(not value)
 
-    def set_batch_model(self, model: PathListModel):
-        self.controls.batch_view.setModel(model)
-
     def set_batch_total(self, total: int):
         self.controls.batch_total.setText(f"Total: {total}")
 
@@ -375,6 +372,27 @@ class BatchQuerySelector(Card):
     def set_placeholder_text(self, text: str):
         self.controls.single_field.setPlaceholderText(text)
         self.controls.batch_help.setPlaceholderText(text)
+
+    def bind_batch_model(self, binder: Binder, object: BatchQueryModel):
+        self.controls.batch_view.setModel(object.query_list)
+
+        binder.bind(object.properties.batch_mode, self.set_batch_mode)
+        binder.bind(self.batchModeChanged, object.properties.batch_mode)
+
+        binder.bind(object.properties.query_path, self.set_path)
+        binder.bind(self.selectedSinglePath, object.set_path)
+
+        binder.bind(self.requestClear, object.clear_paths)
+        binder.bind(self.requestDelete, object.delete_paths)
+        binder.bind(self.requestedAddPaths, object.add_paths)
+        binder.bind(self.requestedAddFolder, object.add_folder)
+
+        binder.bind(object.properties.query_list_total, self.set_batch_total)
+        binder.bind(object.properties.query_list_rows, self.set_batch_help_visible, proxy=lambda x: x == 0)
+
+        binder.bind(object.query_list.rowsInserted, self.controls.batch_view.updateGeometry)
+        binder.bind(object.query_list.rowsRemoved, self.controls.batch_view.updateGeometry)
+        binder.bind(object.query_list.modelReset, self.controls.batch_view.updateGeometry)
 
 
 class OptionalCategory(Card):

@@ -147,11 +147,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
-        self.binder.bind(object.properties.batch_mode, self.cards.query.set_batch_mode)
-        self.binder.bind(self.cards.query.batchModeChanged, object.properties.batch_mode)
-
-        self.binder.bind(object.properties.input_query_path, self.cards.query.set_path)
-        self.binder.bind(self.cards.query.selectedSinglePath, object.properties.input_query_path)
+        self.cards.query.bind_batch_model(self.binder, object.input_queries)
 
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
@@ -165,32 +161,14 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.append_timestamp, self.cards.timestamp.setChecked)
         self.binder.bind(self.cards.timestamp.toggled, object.properties.append_timestamp)
 
-        self.binder.bind(self.cards.query.selectedSinglePath, object.properties.output_path, lambda p: p.parent)
-
         self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
         self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
-
-        self.binder.bind(self.cards.query.requestClear, object.clear_paths)
-        self.binder.bind(self.cards.query.requestDelete, object.delete_paths)
-        self.binder.bind(self.cards.query.requestedAddPaths, object.add_paths)
-        self.binder.bind(self.cards.query.requestedAddFolder, object.add_folder)
-
-        self.binder.bind(object.properties.input_query_list_total, self.cards.query.set_batch_total)
-        self.binder.bind(
-            object.properties.input_query_list_rows, self.cards.query.set_batch_help_visible, proxy=lambda x: x == 0
-        )
-
-        self.binder.bind(object.input_query_list.rowsInserted, self.cards.query.controls.batch_view.updateGeometry)
-        self.binder.bind(object.input_query_list.rowsRemoved, self.cards.query.controls.batch_view.updateGeometry)
-        self.binder.bind(object.input_query_list.modelReset, self.cards.query.controls.batch_view.updateGeometry)
 
         self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
         self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
         self.cards.options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
         self.binder.bind(object.properties.editable, self.setEditable)
-
-        self.cards.query.set_batch_model(object.input_query_list)
 
     def setEditable(self, editable: bool):
         for card in self.cards:

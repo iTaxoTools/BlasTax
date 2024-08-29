@@ -15,11 +15,9 @@ def initialize():
 
 def execute(
     work_dir: Path,
-    batch_mode: bool,
-    input_query_path: Path,
+    input_queries: list[Path],
     input_database_path: Path,
     input_nucleotides_path: Path,
-    input_query_list: list[Path],
     output_path: Path,
     blast_evalue: float,
     blast_num_threads: int,
@@ -28,21 +26,15 @@ def execute(
     from core import get_append_filename, get_blast_filename
     from itaxotools import abort, get_feedback, progress_handler
 
-    print(f"{batch_mode=}")
-    print(f"{input_query_path=}")
+    print(f"{input_queries=}")
     print(f"{input_database_path=}")
     print(f"{input_nucleotides_path=}")
-    print(f"{input_query_list=}")
     print(f"{output_path=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
 
-    if batch_mode:
-        input_query_paths = input_query_list
-    else:
-        input_query_paths = [input_query_path]
-    total = len(input_query_paths)
+    total = len(input_queries)
 
     timestamp = datetime.now() if append_timestamp else None
 
@@ -50,7 +42,7 @@ def execute(
         (
             (output_path / get_blast_filename(path, outfmt=6, timestamp=timestamp)).exists()
             or (output_path / get_append_filename(path, timestamp=timestamp)).exists()
-            for path in input_query_paths
+            for path in input_queries
         )
     ):
         if not get_feedback(None):
@@ -58,7 +50,7 @@ def execute(
 
     ts = perf_counter()
 
-    for i, path in enumerate(input_query_paths):
+    for i, path in enumerate(input_queries):
         progress_handler(f"{i}/{total}", i, 0, total)
         execute_single(
             work_dir=work_dir,

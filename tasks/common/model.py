@@ -3,6 +3,7 @@ from PySide6 import QtCore
 import os
 from pathlib import Path
 
+from itaxotools.common.bindings import Binder, Instance, Property, PropertyObject
 from itaxotools.common.utility import override
 from itaxotools.taxi_gui.loop import DataQuery
 from itaxotools.taxi_gui.model.tasks import TaskModel
@@ -86,3 +87,106 @@ class PathListModel(QtCore.QAbstractListModel):
                 all.update(path.glob("*.fas"))
                 all.update(path.glob("*.fasta"))
         return all
+
+
+class BatchQueryModel(PropertyObject):
+    batch_mode = Property(bool, False)
+    query_path = Property(Path, Path())
+    query_list = Property(PathListModel, Instance)
+    query_list_rows = Property(int, 0)
+    query_list_total = Property(int, 0)
+    parent_path = Property(Path, Path())
+
+    ready = Property(bool, False)
+
+    def __init__(self):
+        super().__init__()
+        self.binder = Binder()
+
+        for handle in [
+            self.query_list.rowsInserted,
+            self.query_list.rowsRemoved,
+            self.query_list.modelReset,
+        ]:
+            self.binder.bind(handle, self._update_query_list_rows)
+            self.binder.bind(handle, self._update_query_list_total)
+
+        for handle in [
+            self.properties.batch_mode,
+            self.properties.query_path,
+            self.query_list.rowsInserted,
+            self.query_list.rowsRemoved,
+            self.query_list.modelReset,
+        ]:
+            self.binder.bind(handle, self.check_ready)
+
+        self.binder.bind(self.properties.batch_mode, self.update_parent_path)
+
+        self.check_ready()
+
+    def check_ready(self):
+        self.ready = self.is_ready()
+
+    def is_ready(self):
+        if self.batch_mode:
+            if not self.query_list.get_all_paths():
+                return False
+        if not self.batch_mode:
+            if self.query_path == Path():
+                return False
+        return True
+
+    def get_all_paths(self):
+        if self.batch_mode:
+            return self.query_list.get_all_paths()
+        return [self.query_path]
+
+    def _update_query_list_rows(self):
+        self.query_list_rows = len(self.query_list.paths)
+
+    def _update_query_list_total(self):
+        self.query_list_total = len(self.query_list.get_all_paths())
+
+    def delete_paths(self, indices: list[int]):
+        if not indices:
+            return
+        self.query_list.remove_paths(indices)
+        self.update_parent_path()
+
+    def clear_paths(self):
+        self.query_list.clear()
+        self.update_parent_path()
+
+    def add_paths(self, paths: list[Path]):
+        if not paths:
+            return
+        self.query_list.add_paths(paths)
+        self.update_parent_path()
+
+    def add_folder(self, dir: Path):
+        self.query_list.add_paths([dir])
+        self.update_parent_path()
+
+    def set_path(self, path: Path):
+        self.query_path = path
+        self.update_parent_path()
+
+    def update_parent_path(self):
+        if self.batch_mode:
+            paths = self.query_list.paths
+            if not paths:
+                self.parent_path = Path()
+            else:
+                first: Path = paths[0]
+                if first.is_dir():
+                    self.parent_path = first
+                else:
+                    self.parent_path = first.parent
+        else:
+            self.parent_path = self.query_path.parent
+
+    def open(self, path: Path):
+        if self.batch_mode:
+            self.add_paths([path])
+        else:
+            self.set_path(path)
