@@ -28,7 +28,7 @@ class Model(BlastTaskModel):
     match_length = Property(int, 0)
 
     append_timestamp = Property(bool, False)
-    append_options = Property(bool, True)
+    append_configuration = Property(bool, True)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -80,7 +80,7 @@ class Model(BlastTaskModel):
             match_pident=self.match_pident,
             match_length=self.match_length,
             append_timestamp=self.append_timestamp,
-            append_options=self.append_options,
+            append_configuration=self.append_configuration,
         )
 
     def _update_num_threads_default(self):

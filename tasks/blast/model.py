@@ -29,7 +29,7 @@ class Model(BlastTaskModel):
     blast_extra_args = Property(str, "")
 
     append_timestamp = Property(bool, False)
-    append_options = Property(bool, True)
+    append_configuration = Property(bool, True)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -83,7 +83,7 @@ class Model(BlastTaskModel):
             blast_outfmt_options=self.blast_outfmt_options or self.properties.blast_outfmt_options.default,
             blast_extra_args=self.blast_extra_args,
             append_timestamp=self.append_timestamp,
-            append_options=self.append_options,
+            append_configuration=self.append_configuration,
         )
 
     def _update_num_threads_default(self):

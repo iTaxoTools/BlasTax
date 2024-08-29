@@ -190,6 +190,32 @@ class PathDatabaseSelector(PathSelector):
         self.selectedPath.emit(Path(filename))
 
 
+class OutputDirectorySelector(PathDirectorySelector):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.draw_config()
+
+    def draw_config(self):
+        label = QtWidgets.QLabel("Filename options:")
+        label.setStyleSheet("""font-size: 14px;""")
+        label.setMinimumWidth(150)
+
+        append_configuration = QtWidgets.QCheckBox("Append configuration values")
+        append_timestamp = QtWidgets.QCheckBox("Append timestamp")
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(append_configuration)
+        layout.addSpacing(16)
+        layout.addWidget(append_timestamp, 1)
+        layout.addSpacing(136)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.append_configuration = append_configuration
+        self.controls.append_timestamp = append_timestamp
+
+
 class BatchQuerySelector(Card):
     batchModeChanged = QtCore.Signal(bool)
     selectedSinglePath = QtCore.Signal(Path)
@@ -202,12 +228,12 @@ class BatchQuerySelector(Card):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_mode(text)
-        self.draw_single("\u25C0", "Query sequences")
-        self.draw_batch("\u25C0", "Query sequences")
+        self.draw_single("\u25B6", "Query sequences")
+        self.draw_batch("\u25B6", "Query sequences")
 
     def draw_mode(self, text):
         label = QtWidgets.QLabel(text + ":")
-        label.setStyleSheet("""font-size: 16px;""")
+        label.setStyleSheet("""font-size: 14px;""")
         label.setMinimumWidth(150)
 
         single = QtWidgets.QRadioButton("Single file")

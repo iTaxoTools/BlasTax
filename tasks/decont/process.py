@@ -25,7 +25,7 @@ def execute(
     blast_evalue: float,
     blast_num_threads: int,
     append_timestamp: bool,
-    append_options: bool,
+    append_configuration: bool,
 ) -> Results:
     from itaxotools import abort, get_feedback, progress_handler
 
@@ -40,7 +40,7 @@ def execute(
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
     print(f"{append_timestamp=}")
-    print(f"{append_options=}")
+    print(f"{append_configuration=}")
 
     total = len(input_query_paths)
 
@@ -48,7 +48,7 @@ def execute(
 
     blast_options: dict[str, str] = {}
     decont_options: dict[str, str] = {}
-    if append_options:
+    if append_configuration:
         blast_options = {
             blast_method: None,
             "evalue": blast_evalue,

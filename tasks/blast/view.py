@@ -13,9 +13,8 @@ from ..common.types import BLAST_OUTFMT_SPECIFIERS_TABULAR
 from ..common.view import (
     BlastTaskView,
     GraphicTitleCard,
-    OptionalCategory,
+    OutputDirectorySelector,
     PathDatabaseSelector,
-    PathDirectorySelector,
     PathFileSelector,
 )
 from ..common.widgets import (
@@ -248,12 +247,11 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = PathFileSelector("\u25C0  Query sequences", self)
-        self.cards.database = PathDatabaseSelector("\u25C0  BLAST database", self)
+        self.cards.query = PathFileSelector("\u25B6  Query sequences", self)
+        self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
+        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionsSelector(self)
         self.cards.format_options = FormatOptionsSelector(self)
-        self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
-        self.cards.timestamp = OptionalCategory("Append timestamp to output filename", "", self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
@@ -289,8 +287,15 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
 
-        self.binder.bind(object.properties.append_timestamp, self.cards.timestamp.setChecked)
-        self.binder.bind(self.cards.timestamp.toggled, object.properties.append_timestamp)
+        self.binder.bind(
+            object.properties.append_configuration, self.cards.output.controls.append_configuration.setChecked
+        )
+        self.binder.bind(
+            self.cards.output.controls.append_configuration.toggled, object.properties.append_configuration
+        )
+
+        self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
+        self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
 
         self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
         self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)

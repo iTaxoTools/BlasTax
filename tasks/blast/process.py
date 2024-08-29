@@ -25,7 +25,7 @@ def execute(
     blast_outfmt_options: str,
     blast_extra_args: str,
     append_timestamp: bool,
-    append_options: bool,
+    append_configuration: bool,
 ) -> Results:
     from core import get_blast_filename, run_blast
     from itaxotools import abort, get_feedback
@@ -47,11 +47,11 @@ def execute(
     print(f"{blast_outfmt_options=}")
     print(f"{blast_extra_args=}")
     print(f"{append_timestamp=}")
-    print(f"{append_options=}")
+    print(f"{append_configuration=}")
 
     timestamp = datetime.now() if append_timestamp else None
     options: dict[str, str] = {}
-    if append_options:
+    if append_configuration:
         options[blast_method] = None
         options["evalue"] = blast_evalue
         if blast_outfmt_options:

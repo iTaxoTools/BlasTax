@@ -23,7 +23,7 @@ def execute(
     pident_threshold: float,
     retrieve_original: bool,
     append_timestamp: bool,
-    append_options: bool,
+    append_configuration: bool,
 ) -> Results:
     from core import get_blast_filename, get_museo_filename, museoscript_original_reads, museoscript_parse, run_blast
     from itaxotools import abort, get_feedback
@@ -41,12 +41,12 @@ def execute(
     print(f"{pident_threshold=}")
     print(f"{retrieve_original=}")
     print(f"{append_timestamp=}")
-    print(f"{append_options=}")
+    print(f"{append_configuration=}")
 
     timestamp = datetime.now() if append_timestamp else None
     blast_options: dict[str, str] = {}
     museo_options: dict[str, str] = {}
-    if append_options:
+    if append_configuration:
         blast_options[blast_method] = None
         blast_options["evalue"] = blast_evalue
         parts = blast_outfmt_options.split(" ")
