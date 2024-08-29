@@ -224,16 +224,16 @@ class BatchQuerySelector(Card):
     requestDelete = QtCore.Signal(list)
     requestClear = QtCore.Signal()
 
-    def __init__(self, text, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.binder = Binder()
-        self.draw_mode(text)
-        self.draw_single("\u25B6", "Query sequences")
-        self.draw_batch("\u25B6", "Query sequences")
+        self.draw_mode()
+        self.draw_single("\u25B6  ", "Query sequences")
+        self.draw_batch("\u25B6  ", "Query sequences")
 
-    def draw_mode(self, text):
-        label = QtWidgets.QLabel(text + ":")
-        label.setStyleSheet("""font-size: 14px;""")
+    def draw_mode(self):
+        label = QtWidgets.QLabel("Input mode:")
+        label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
         single = QtWidgets.QRadioButton("Single file")
@@ -258,7 +258,7 @@ class BatchQuerySelector(Card):
         self.controls.batch_mode = group
 
     def draw_single(self, symbol, text):
-        label = QtWidgets.QLabel(f"{symbol}  {text}:")
+        label = QtWidgets.QLabel(f"{symbol}{text}:")
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
@@ -316,6 +316,7 @@ class BatchQuerySelector(Card):
         labels = QtWidgets.QGridLayout()
         labels.setHorizontalSpacing(0)
         labels.setVerticalSpacing(16)
+        labels.setColumnStretch(1, 1)
         labels.setRowStretch(3, 1)
         labels.addWidget(label_symbol, 0, 0)
         labels.addWidget(label_text, 0, 1)

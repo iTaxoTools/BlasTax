@@ -45,7 +45,7 @@ class PathListModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.DisplayRole:
             path = self.paths[index.row()]
             if path.is_dir():
-                return str(path.absolute()) + os.path.sep + "*.{fa,fas,fasta}"
+                return str(path.absolute()) + os.path.sep + "*.{fa,fas,fasta,fq,fastq}"
             return str(path.absolute())
 
     @override
@@ -86,6 +86,8 @@ class PathListModel(QtCore.QAbstractListModel):
                 all.update(path.glob("*.fa"))
                 all.update(path.glob("*.fas"))
                 all.update(path.glob("*.fasta"))
+                all.update(path.glob("*.fq"))
+                all.update(path.glob("*.fastq"))
         return all
 
 

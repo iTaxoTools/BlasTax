@@ -153,7 +153,7 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = BatchQuerySelector("Input mode", self)
+        self.cards.query = BatchQuerySelector(self)
         self.cards.ingroup = PathDatabaseSelector("\u25B6  BLAST ingroup", self)
         self.cards.outgroup = PathDatabaseSelector("\u25B6  BLAST outgroup", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
