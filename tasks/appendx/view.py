@@ -121,7 +121,7 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
         self.cards.timestamp = OptionalCategory("Append timestamp to output filenames", "", self)
 
-        self.cards.query.set_placeholder_text("Nucleotide FASTA or FASTQ sequences to match against database")
+        self.cards.query.set_placeholder_text("Nucleotide sequences to match against database (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this protein database")
         self.cards.extra.set_placeholder_text("Nucleotide sequences for each database entry")
         self.cards.output.set_placeholder_text("All output files will be saved here")

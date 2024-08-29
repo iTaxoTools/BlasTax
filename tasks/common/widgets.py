@@ -298,7 +298,7 @@ class GDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 class BatchQueryHelp(QtWidgets.QPlainTextEdit):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setPlaceholderText("FASTA or FASTQ sequences to match against database contents")
+        self.setPlaceholderText("Sequences to match against database contents (FASTA or FASTQ)")
         self.setEnabled(False)
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,

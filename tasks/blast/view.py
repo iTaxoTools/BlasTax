@@ -130,6 +130,7 @@ class HelpDialog(QtWidgets.QDialog):
 
         table = QtWidgets.QTableWidget()
         table.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
+        table.setSelectionMode(QtWidgets.QTableWidget.SingleSelection)
         table.setColumnCount(2)
         table.setHorizontalHeaderLabels(["Specifier", "Description"])
         table.horizontalHeaderItem(0).setTextAlignment(QtCore.Qt.AlignLeft)
@@ -254,7 +255,7 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
         self.cards.timestamp = OptionalCategory("Append timestamp to output filename", "", self)
 
-        self.cards.query.set_placeholder_text("FASTA or FASTQ sequences to match against database contents")
+        self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
         self.cards.output.set_placeholder_text("The output file will be saved here")
 

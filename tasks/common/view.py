@@ -237,7 +237,7 @@ class BatchQuerySelector(Card):
         label.setMinimumWidth(150)
 
         field = ElidedLineEdit()
-        field.setPlaceholderText("FASTA or FASTQ sequences to match against database contents")
+        field.setPlaceholderText("Sequences to match against database contents (FASTA or FASTQ)")
         field.textDeleted.connect(self._handle_single_path_deleted)
         field.setReadOnly(True)
 

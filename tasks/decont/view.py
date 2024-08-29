@@ -162,7 +162,7 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25B6  Output folder", self)
         self.cards.timestamp = OptionalCategory("Append timestamp to output filenames", "", self)
 
-        self.cards.query.set_placeholder_text("FASTA or FASTQ sequences to match against database contents")
+        self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.ingroup.set_placeholder_text("Queries that best match this database will be preserved")
         self.cards.outgroup.set_placeholder_text("Queries that best match this database will be discarded")
         self.cards.output.set_placeholder_text("All output files will be saved here")
