@@ -31,6 +31,8 @@ def execute(
 
     from .types import DecontVariable
 
+    blast_outfmt_options = "qseqid sseqid pident bitscore length"
+
     print(f"{input_query_paths=}")
     print(f"{ingroup_database_path=}")
     print(f"{outgroup_database_path=}")
@@ -49,13 +51,11 @@ def execute(
     blast_options: dict[str, str] = {}
     decont_options: dict[str, str] = {}
     if append_configuration:
-        blast_options = {
-            blast_method: None,
-            "evalue": blast_evalue,
-        }
-        decont_options = {
-            "variable": DecontVariable.from_column(decont_column).variable,
-        }
+        blast_options[blast_method] = None
+        blast_options["evalue"] = blast_evalue
+        parts = blast_outfmt_options.split(" ")
+        blast_options["columns"] = "_".join(parts)
+        decont_options["variable"] = DecontVariable.from_column(decont_column).variable
 
     target_paths_list = [
         get_target_paths(path, output_path, timestamp, blast_options, decont_options) for path in input_query_paths
@@ -162,8 +162,8 @@ def get_target_paths(
         query_path,
         "decontaminated",
         timestamp=timestamp,
-        **blast_options,
         **decont_options,
+        **blast_options,
     )
     blasted_outgroup_path = output_path / get_decont_blast_filename(
         query_path,
@@ -175,8 +175,8 @@ def get_target_paths(
         query_path,
         "contaminants",
         timestamp=timestamp,
-        **blast_options,
         **decont_options,
+        **blast_options,
     )
     return TargetPaths(
         blasted_ingroup_path=blasted_ingroup_path,
