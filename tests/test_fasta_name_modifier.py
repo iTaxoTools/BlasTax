@@ -103,6 +103,21 @@ fasta_name_modifier_tests = [
 #        None,
         "special_output_expected.fas",
     ),
+    FastaNameModifierTest(  # test trim and add
+        "FastaExample_simple.fas",
+        "simlpe_output_trim_add.fas",
+        True,
+        True,
+        True,
+        "end",
+        50,
+        True,
+#        "Beginning",
+#        "Beginning",
+        "simlpe_output_trim_add_expected.fas",
+         "end",
+        "end",
+    ),
 ]
 
 @pytest.mark.parametrize("test", fasta_name_modifier_tests)

@@ -312,9 +312,9 @@ def string_trimmer(komm_zeile: str,
     if add:
         if direc == 'beginning':
             strippi = new_komm.strip('>')
-            nk = '>' + addstring + strippi
+            new_komm = '>' + addstring + strippi
         elif direc == 'end':
-            nk = new_komm + addstring
+            new_komm = new_komm + addstring
 
     # Trimming
     if trim:
@@ -334,16 +334,16 @@ def string_trimmer(komm_zeile: str,
         if trimpos == 'beginning':
             startpos = laenge - int(trimmaxchar)
             if auto:
-                nk = '>' + new_komm[startpos:] + str(counter)
+                new_komm = '>' + new_komm[startpos:] + str(counter)
             else:
-                nk = '>' + new_komm[startpos:]
+                new_komm = '>' + new_komm[startpos:]
         elif trimpos == 'end':
             endpos = int(trimmaxchar)
             if auto:
-                nk = '>' + new_komm[1:endpos] + str(counter)
+                new_komm = '>' + new_komm[1:endpos] + str(counter)
             else:
-                nk = '>' + new_komm[1:endpos]
-        new_komm = nk
+                new_komm = '>' + new_komm[1:endpos]
+#        new_komm = nk
 
     # Sanitization: Replace characters not in letters_and_numbers with '_'
     if sanitize:
