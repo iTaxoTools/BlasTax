@@ -106,7 +106,7 @@ class DecontVariableSelector(Card):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        label = QtWidgets.QLabel("Decontamination variable:")
+        label = QtWidgets.QLabel("Decont. variable:")
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
@@ -117,7 +117,7 @@ class DecontVariableSelector(Card):
 
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 2, 0, 0)
-        buttons.setSpacing(16)
+        buttons.setSpacing(32)
 
         group = RadioButtonGroup()
         for variable in DecontVariable:
@@ -128,12 +128,12 @@ class DecontVariableSelector(Card):
         self.controls.variable = group
 
         layout = QtWidgets.QGridLayout()
-        layout.setColumnStretch(1, 10)
-        layout.setColumnStretch(2, 14)
-        layout.setHorizontalSpacing(32)
+        layout.setColumnStretch(1, 0)
+        layout.setColumnStretch(2, 10)
+        layout.setHorizontalSpacing(16)
         layout.setVerticalSpacing(16)
         layout.addWidget(label, 0, 0)
-        layout.addLayout(buttons, 0, 2)
+        layout.addLayout(buttons, 0, 1)
         layout.addWidget(description, 1, 0, 1, 3)
         self.addLayout(layout)
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
 
@@ -128,9 +129,9 @@ class SequenceSelectionOptions(Card):
         mode_layout.setSpacing(8)
 
         single = RichRadioButton(
-            "Single best match,", "matching the longest query sequence with the best identity percentage"
+            "Single best match,", "matching the longest aligned sequence with the best identity percentage"
         )
-        multiple = RichRadioButton("Multiple matches,", "fulfilling the criteria of length and identity set below")
+        multiple = RichRadioButton("Multiple matches,", "fulfilling certain criteria of length and identity")
 
         group = RadioButtonGroup()
         group.valueChanged.connect(self._handle_mode_changed)
@@ -142,6 +143,7 @@ class SequenceSelectionOptions(Card):
         mode_layout.addWidget(multiple)
 
         options_layout = QtWidgets.QGridLayout()
+        options_layout.setContentsMargins(0, 0, 0, 0)
         options_layout.setColumnMinimumWidth(0, 16)
         options_layout.setColumnMinimumWidth(1, 54)
         options_layout.setColumnStretch(3, 1)
@@ -169,19 +171,26 @@ class SequenceSelectionOptions(Card):
         self.controls.pident = field
         row += 1
 
+        options_widget = QtWidgets.QWidget()
+        options_widget.setLayout(options_layout)
+        options_widget.roll = VerticalRollAnimation(options_widget)
+        options_widget.roll._visible_target = True
+        self.controls.options_widget = options_widget
+
         self.addLayout(title_layout)
         self.addLayout(mode_layout)
-        self.addLayout(options_layout)
+        self.addWidget(options_widget)
 
     def _handle_mode_changed(self, value: bool):
         self.mode_changed.emit(value)
+        self.set_options_visible(value)
 
     def set_mode(self, value: bool):
         self.controls.mode.setValue(value)
+        self.set_options_visible(value)
 
-    def set_options_enabled(self, value: bool):
-        self.controls.length.setEnabled(value)
-        self.controls.pident.setEnabled(value)
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
 
 
 class View(BlastTaskView):

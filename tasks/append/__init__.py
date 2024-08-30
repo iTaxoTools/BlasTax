@@ -8,7 +8,7 @@ pixmap_medium = task_pixmaps_medium.append
 
 long_description = (
     "Given one or more query files and a BLAST database, search the database for sequence matches. "
-    "Then append any matching sequences from the database to the original query sequences and save as a new FASTA file. "
+    "Then append the aligned part of any matching sequences from the database to the original query sequences and save as a new FASTA file. "
     "Query files must be in FASTA or FASTQ format. "
     "Output will consist of two files per query: the BLAST output and a FASTA file."
 )
