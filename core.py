@@ -3,6 +3,7 @@ import platform
 import re
 import shlex
 import shutil
+import string
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -170,6 +171,9 @@ def blastx_parse(
     output_path: Path | str,
     extra_nucleotide_path: Path | str,
     database_name: str,
+    all_matches: bool = False,
+    pident_arg: float = 70.0,
+    length_arg: int = 100,
 ):
     infile = open(input_path, "r")
     infile2 = open(extra_nucleotide_path, "r")
@@ -211,7 +215,7 @@ def blastx_parse(
         splitti = line.split("\t")
         pident = splitti[1]
         #        print("SPLITTI 3: ", splitti[3])
-        if (float(pident) >= 70.0) and (float(splitti[0]) >= 100.0):
+        if (float(pident) >= pident_arg) and (int(splitti[0]) >= length_arg):
             infile2 = open(extra_nucleotide_path, "r")
             for line2 in infile2:
                 # Added. needed to be checked
@@ -250,26 +254,29 @@ def blastx_parse(
                     #                    print("HEADER: ", head_pident53_added)
                     #                    print("SEQUENCE: ", head_seq53_added)
                     #                    print("HEADER FROM DICT: ", any_key_starting_with_prefix)
-
-                    if any_key_starting_with_prefix:
-                        existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
-                        new_seq_length = len(head_seq53_added)
-                        #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
-                        if new_seq_length > existing_seq_length:
-                            dict_53_added.pop(any_key_starting_with_prefix, None)
-                            dict_53_added[head_pident53_added] = head_seq53_added
-                        elif new_seq_length == existing_seq_length:
-                            old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
-                            new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
-                            #                            print("OLD PIDENT: ", old_pident53)
-                            #                            print("NEW PIDENT: ", new_pident53)
-                            if new_pident53 > old_pident53:
+                    if all_matches:
+                        # Include all hitted sequences in dict_53_added
+                        dict_53_added[head_pident53_added] = head_seq53_added
+                    else:
+                        if any_key_starting_with_prefix:
+                            existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
+                            new_seq_length = len(head_seq53_added)
+                            #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                            if new_seq_length > existing_seq_length:
                                 dict_53_added.pop(any_key_starting_with_prefix, None)
                                 dict_53_added[head_pident53_added] = head_seq53_added
+                            elif new_seq_length == existing_seq_length:
+                                old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                                new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
+                                #                            print("OLD PIDENT: ", old_pident53)
+                                #                            print("NEW PIDENT: ", new_pident53)
+                                if new_pident53 > old_pident53:
+                                    dict_53_added.pop(any_key_starting_with_prefix, None)
+                                    dict_53_added[head_pident53_added] = head_seq53_added
+                            else:
+                                continue
                         else:
-                            continue
-                    else:
-                        dict_53_added[head_pident53_added] = head_seq53_added
+                            dict_53_added[head_pident53_added] = head_seq53_added
 
             for orient in r35:
                 index = orient.find(splitti[4])
@@ -290,28 +297,31 @@ def blastx_parse(
                         (key for key in dict_35_added if key.startswith(shorter_pident)),
                         None,
                     )
-
-                    if any_key_starting_with_prefix:
-                        existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
-                        new_seq_length = len(head_seq35_added)
-                        #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
-                        if new_seq_length > existing_seq_length:
-                            dict_35_added.pop(any_key_starting_with_prefix, None)
-                            #                            print("The sequence was removed: ", removed_value)
-                            dict_35_added[head_pident35_added] = head_seq35_added
-                        elif new_seq_length == existing_seq_length:
-                            old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
-                            new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
-                            #                            print("OLD PIDENT: ", old_pident53)
-                            #                            print("NEW PIDENT: ", new_pident53)
-                            if new_pident35 > old_pident35:
-                                dict_35_added.pop(any_key_starting_with_prefix, None)
-                                #                                print("The sequence was removed: ", removed_value)
-                                dict_35_added[head_pident35_added] = head_seq35_added
-                        else:
-                            continue
-                    else:
+                    if all_matches:
+                        # Include all hitted sequences in dict_35_added
                         dict_35_added[head_pident35_added] = head_seq35_added
+                    else:
+                        if any_key_starting_with_prefix:
+                            existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
+                            new_seq_length = len(head_seq35_added)
+                            #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                            if new_seq_length > existing_seq_length:
+                                dict_35_added.pop(any_key_starting_with_prefix, None)
+                                #                            print("The sequence was removed: ", removed_value)
+                                dict_35_added[head_pident35_added] = head_seq35_added
+                            elif new_seq_length == existing_seq_length:
+                                old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                                new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
+                                #                            print("OLD PIDENT: ", old_pident53)
+                                #                            print("NEW PIDENT: ", new_pident53)
+                                if new_pident35 > old_pident35:
+                                    dict_35_added.pop(any_key_starting_with_prefix, None)
+                                    #                                print("The sequence was removed: ", removed_value)
+                                    dict_35_added[head_pident35_added] = head_seq35_added
+                            else:
+                                continue
+                        else:
+                            dict_35_added[head_pident35_added] = head_seq35_added
 
     for header, sequence in dict_53_added.items():
         outfile.write(f"{header}{sequence}")
@@ -591,91 +601,38 @@ def get_decont_sequences_filename(
 def fasta_name_modifier(
     input_name: Path | str,
     output_name: Path | str,
+    trim: bool,
+    add: bool,
     sanitize: bool,
     trimposition: str,
-    maxchar: int,
+    trimmaxchar: int,
     renameauto: bool,
     direc: str = None,
     addstring: str = None,
 ) -> None:
-    letters_and_numbers = [
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-        "g",
-        "h",
-        "i",
-        "j",
-        "k",
-        "l",
-        "m",
-        "n",
-        "o",
-        "p",
-        "q",
-        "r",
-        "s",
-        "t",
-        "u",
-        "v",
-        "w",
-        "x",
-        "y",
-        "z",
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0",
-        "_",
-    ]
+    letters_and_numbers = string.ascii_letters + string.digits + ">_"
 
-    outfile = open(output_name, "w")
+    outfile = open(output_name, "w", encoding="utf-8")
     gene = []
     sequenzen = []
-    # new_command_lines = []
     counter = 1
 
-    with open(input_name, "r", encoding="iso-8859-1") as file:
+    with open(input_name, "r", encoding="utf-8") as file:
         for z in file:
             if ">" in z:
                 strippi = z.strip("\n")
                 new_line = string_trimmer(
-                    strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring
+                    strippi,
+                    counter,
+                    trim,
+                    add,
+                    sanitize,
+                    trimposition,
+                    trimmaxchar,
+                    renameauto,
+                    letters_and_numbers,
+                    direc,
+                    addstring,
                 )
                 gene.append(new_line)
                 counter = counter + 1
@@ -689,7 +646,17 @@ def fasta_name_modifier(
 
                 strippi = next.strip("\n")
                 new_line = string_trimmer(
-                    strippi, counter, sanitize, trimposition, maxchar, renameauto, letters_and_numbers, direc, addstring
+                    strippi,
+                    counter,
+                    trim,
+                    add,
+                    sanitize,
+                    trimposition,
+                    trimmaxchar,
+                    renameauto,
+                    letters_and_numbers,
+                    direc,
+                    addstring,
                 )
                 gene.append(new_line)
                 counter = counter + 1
