@@ -17,6 +17,9 @@ class BlastxParseTest(NamedTuple):
     extra_nucleotide_path: Path | str
     database_name: str
     expected_output: str
+    all_matches: bool
+    pident: float = 70.0
+    length: int = 100
 
     def validate(self, tmp_path: Path) -> None:
         input_path = TEST_DATA_DIR / self.input_path
@@ -24,9 +27,12 @@ class BlastxParseTest(NamedTuple):
         output_path = tmp_path / self.output_path
         database_name = self.database_name
         extra_nucleotide_path = TEST_DATA_DIR / self.extra_nucleotide_path
+        all_matches = self.all_matches
+        pident = self.pident
+        length = self.length
         expected_output = TEST_DATA_DIR / self.expected_output
         blastx_parse(
-            str(input_path), str(blast_result_path), str(output_path), str(extra_nucleotide_path), str(database_name)
+            str(input_path), str(blast_result_path), str(output_path), str(extra_nucleotide_path), str(database_name),all_matches, pident, length
         )
 
         assert output_path.exists()
@@ -44,14 +50,34 @@ class BlastxParseTest(NamedTuple):
 
 # New blast tests
 blastx_parse_tests = [
-    BlastxParseTest(
+    BlastxParseTest( # de-duplication, default
         "2gene1_nucleotides_query.fas",
         "2gene1_nucleotides_query.out",
         "2gene1_nucleotides_query_blastmatchesadded.fas",
         "2transcript_assembly_nucleotides.fas",
         "blastx_db",
         "2gene1_nucleotides_query_expected.fas",
+        False,
     ),
+    BlastxParseTest( # thresholds
+        "2gene1_nucleotides_query.fas",
+        "2gene1_nucleotides_query.out",
+        "2gene1_nucleotides_query_blastmatchesadded_thresholds.fas",
+        "2transcript_assembly_nucleotides.fas",
+        "blastx_db",
+        "2gene1_nucleotides_query_threshold_expected.fas",
+        False,
+        99.5,
+        150,
+    ),
+    BlastxParseTest( # all matches
+        "2gene1_nucleotides_query.fas",
+        "2gene1_nucleotides_query.out",
+        "2gene1_nucleotides_query_blastmatchesadded_all_matches.fas",
+        "2transcript_assembly_nucleotides.fas",
+        "blastx_db",
+        "2gene1_nucleotides_query_allmatches_expected.fas",
+        True,),
 ]
 
 

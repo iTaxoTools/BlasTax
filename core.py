@@ -167,6 +167,9 @@ def blastx_parse(
     output_path: Path | str,
     extra_nucleotide_path: Path | str,
     database_name: str,
+    all_matches: bool = False,
+    pident_arg: float = 70.0,
+    length_arg: int = 100,
 ):
     infile = open(input_path, "r")
     infile2 = open(extra_nucleotide_path, "r")
@@ -208,7 +211,7 @@ def blastx_parse(
         splitti = line.split("\t")
         pident = splitti[1]
         #        print("SPLITTI 3: ", splitti[3])
-        if (float(pident) >= 70.0) and (float(splitti[0]) >= 100.0):
+        if (float(pident) >= pident_arg) and (int(splitti[0]) >= length_arg):
             infile2 = open(extra_nucleotide_path, "r")
             for line2 in infile2:
                 # Added. needed to be checked
@@ -247,26 +250,29 @@ def blastx_parse(
                     #                    print("HEADER: ", head_pident53_added)
                     #                    print("SEQUENCE: ", head_seq53_added)
                     #                    print("HEADER FROM DICT: ", any_key_starting_with_prefix)
-
-                    if any_key_starting_with_prefix:
-                        existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
-                        new_seq_length = len(head_seq53_added)
-                        #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
-                        if new_seq_length > existing_seq_length:
-                            dict_53_added.pop(any_key_starting_with_prefix, None)
-                            dict_53_added[head_pident53_added] = head_seq53_added
-                        elif new_seq_length == existing_seq_length:
-                            old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
-                            new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
-                            #                            print("OLD PIDENT: ", old_pident53)
-                            #                            print("NEW PIDENT: ", new_pident53)
-                            if new_pident53 > old_pident53:
+                    if all_matches == True:
+                        # Include all hitted sequences in dict_53_added
+                        dict_53_added[head_pident53_added] = head_seq53_added
+                    else:
+                        if any_key_starting_with_prefix:
+                            existing_seq_length = len(dict_53_added[any_key_starting_with_prefix])
+                            new_seq_length = len(head_seq53_added)
+                            #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                            if new_seq_length > existing_seq_length:
                                 dict_53_added.pop(any_key_starting_with_prefix, None)
                                 dict_53_added[head_pident53_added] = head_seq53_added
+                            elif new_seq_length == existing_seq_length:
+                                old_pident53 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                                new_pident53 = float(head_pident53_added.split("_")[-1].rstrip())
+                                #                            print("OLD PIDENT: ", old_pident53)
+                                #                            print("NEW PIDENT: ", new_pident53)
+                                if new_pident53 > old_pident53:
+                                    dict_53_added.pop(any_key_starting_with_prefix, None)
+                                    dict_53_added[head_pident53_added] = head_seq53_added
+                            else:
+                                continue
                         else:
-                            continue
-                    else:
-                        dict_53_added[head_pident53_added] = head_seq53_added
+                            dict_53_added[head_pident53_added] = head_seq53_added
 
             for orient in r35:
                 index = orient.find(splitti[4])
@@ -287,28 +293,31 @@ def blastx_parse(
                         (key for key in dict_35_added if key.startswith(shorter_pident)),
                         None,
                     )
-
-                    if any_key_starting_with_prefix:
-                        existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
-                        new_seq_length = len(head_seq35_added)
-                        #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
-                        if new_seq_length > existing_seq_length:
-                            dict_35_added.pop(any_key_starting_with_prefix, None)
-                            #                            print("The sequence was removed: ", removed_value)
-                            dict_35_added[head_pident35_added] = head_seq35_added
-                        elif new_seq_length == existing_seq_length:
-                            old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
-                            new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
-                            #                            print("OLD PIDENT: ", old_pident53)
-                            #                            print("NEW PIDENT: ", new_pident53)
-                            if new_pident35 > old_pident35:
-                                dict_35_added.pop(any_key_starting_with_prefix, None)
-                                #                                print("The sequence was removed: ", removed_value)
-                                dict_35_added[head_pident35_added] = head_seq35_added
-                        else:
-                            continue
-                    else:
+                    if all_matches == True:
+                        # Include all hitted sequences in dict_35_added
                         dict_35_added[head_pident35_added] = head_seq35_added
+                    else:
+                        if any_key_starting_with_prefix:
+                            existing_seq_length = len(dict_35_added[any_key_starting_with_prefix])
+                            new_seq_length = len(head_seq35_added)
+                            #                        print("SEQ LENGTHS: ", existing_seq_length, "\t", new_seq_length)
+                            if new_seq_length > existing_seq_length:
+                                dict_35_added.pop(any_key_starting_with_prefix, None)
+                                #                            print("The sequence was removed: ", removed_value)
+                                dict_35_added[head_pident35_added] = head_seq35_added
+                            elif new_seq_length == existing_seq_length:
+                                old_pident35 = float(any_key_starting_with_prefix.split("_")[-1].rstrip())
+                                new_pident35 = float(head_pident35_added.split("_")[-1].rstrip())
+                                #                            print("OLD PIDENT: ", old_pident53)
+                                #                            print("NEW PIDENT: ", new_pident53)
+                                if new_pident35 > old_pident35:
+                                    dict_35_added.pop(any_key_starting_with_prefix, None)
+                                    #                                print("The sequence was removed: ", removed_value)
+                                    dict_35_added[head_pident35_added] = head_seq35_added
+                            else:
+                                continue
+                        else:
+                            dict_35_added[head_pident35_added] = head_seq35_added
 
     for header, sequence in dict_53_added.items():
         outfile.write(f"{header}{sequence}")
