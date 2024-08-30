@@ -42,8 +42,8 @@ icons = LazyResourceCollection(
 
 pixmaps = LazyResourceCollection(
     blastax=lambda: VectorPixmap(
-        get_data("logos/blastax.svg"),
-        size=QtCore.QSize(192, 48),
+        get_data("logos/blastax_banner.svg"),
+        size=QtCore.QSize(170, 48),
         colormap=skin.colormap_icon,
     ),
 )

@@ -18,7 +18,7 @@ def run():
     app.set_skin(skin)
 
     main = Main()
-    main.widgets.header.toolLogo.setFixedWidth(208)
+    main.widgets.header.toolLogo.setFixedWidth(188)
     main.resize(820, 580)
     main.show()
 
