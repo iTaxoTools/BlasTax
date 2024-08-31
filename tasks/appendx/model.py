@@ -24,6 +24,10 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid sseq qframe sframe"')
 
+    match_multiple = Property(bool, False)
+    match_pident = Property(float, 70.000)
+    match_length = Property(int, 100)
+
     append_timestamp = Property(bool, False)
     append_configuration = Property(bool, True)
 
@@ -77,6 +81,9 @@ class Model(BlastTaskModel):
             output_path=self.output_path,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            match_multiple=self.match_multiple,
+            match_pident=self.match_pident,
+            match_length=self.match_length,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

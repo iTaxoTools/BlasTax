@@ -22,6 +22,9 @@ def execute(
     output_path: Path,
     blast_evalue: float,
     blast_num_threads: int,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
@@ -36,6 +39,9 @@ def execute(
     print(f"{output_path=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
+    print(f"{match_multiple=}")
+    print(f"{match_pident=}")
+    print(f"{match_length=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -49,6 +55,13 @@ def execute(
         blast_options["evalue"] = blast_evalue
         parts = blast_outfmt_options.split(" ")
         blast_options["columns"] = "_".join(parts)
+        match_options["blastx"] = None
+        if match_multiple:
+            match_options["multiple"] = None
+        else:
+            match_options["single"] = None
+        match_options["pident"] = match_pident
+        match_options["length"] = match_length
 
     target_paths_list = [
         get_target_paths(path, output_path, timestamp, blast_options, match_options) for path in input_query_paths
@@ -73,6 +86,9 @@ def execute(
             blast_outfmt_options=blast_outfmt_options,
             blast_evalue=blast_evalue,
             blast_num_threads=blast_num_threads,
+            match_multiple=match_multiple,
+            match_pident=match_pident,
+            match_length=match_length,
         )
     progress_handler(f"{total}/{total}", total, 0, total)
 
@@ -92,6 +108,9 @@ def execute_single(
     blast_outfmt_options: str,
     blast_evalue: float,
     blast_num_threads: int,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
 ):
     from core import blastx_parse, run_blast
     from utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -121,6 +140,9 @@ def execute_single(
         output_path=appended_output_path,
         extra_nucleotide_path=input_nucleotides_path,
         database_name=input_database_path.stem,
+        all_matches=match_multiple,
+        pident_arg=match_pident,
+        length_arg=match_length,
     )
 
 
@@ -134,9 +156,7 @@ def get_target_paths(
     from core import get_append_filename, get_blast_filename
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
-    appended_output_path = output_path / get_append_filename(
-        query_path, timestamp=timestamp, **match_options, **blast_options
-    )
+    appended_output_path = output_path / get_append_filename(query_path, timestamp=timestamp, **match_options)
     return TargetPaths(
         blast_output_path=blast_output_path,
         appended_output_path=appended_output_path,

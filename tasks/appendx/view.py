@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
 
 from ..common.types import BlastMethod
 from ..common.view import (
@@ -21,6 +22,7 @@ from ..common.widgets import (
     BlastMethodCombobox,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
+    PidentSpinBox,
 )
 from . import long_description, pixmap_medium, title
 
@@ -104,6 +106,90 @@ class OptionsSelector(Card):
         self.addLayout(options_long_layout)
 
 
+class MatchOptionSelector(Card):
+    mode_changed = QtCore.Signal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Sequence selection:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Determine how sequences are retrieved from the nucleotide file.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        mode_layout = QtWidgets.QVBoxLayout()
+        mode_layout.setContentsMargins(12, 0, 0, 0)
+        mode_layout.setSpacing(8)
+
+        single = RichRadioButton(
+            "Single best match,", "matching the longest aligned sequence with the best identity percentage"
+        )
+        multiple = RichRadioButton(
+            "Multiple matches,", "retrieving all sequences that meet the identity and length criteria"
+        )
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_mode_changed)
+        group.add(single, False)
+        group.add(multiple, True)
+        self.controls.multiple = group
+
+        mode_layout.addWidget(single)
+        mode_layout.addWidget(multiple)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setContentsMargins(0, 4, 0, 0)
+        options_layout.setColumnMinimumWidth(0, 16)
+        options_layout.setColumnMinimumWidth(1, 54)
+        options_layout.setColumnStretch(3, 1)
+        options_layout.setHorizontalSpacing(32)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        description = QtWidgets.QLabel(
+            "For both single and multiple selection, the following criteria must be met for a sequence to be appended:"
+        )
+        options_layout.addWidget(description, row, 1, 1, 3)
+        row += 1
+        options_layout.setRowMinimumHeight(row, 8)
+        row += 1
+
+        name = QtWidgets.QLabel("Length:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Minimum alignment sequence length")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        self.controls.length = field
+        row += 1
+
+        name = QtWidgets.QLabel("Identity:")
+        field = PidentSpinBox()
+        description = QtWidgets.QLabel("Minimum identity percentage (pident)")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        self.controls.pident = field
+        row += 1
+
+        self.addLayout(title_layout)
+        self.addLayout(mode_layout)
+        self.addLayout(options_layout)
+
+    def _handle_mode_changed(self, value: bool):
+        self.mode_changed.emit(value)
+
+    def set_mode(self, value: bool):
+        self.controls.mode.setValue(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -117,7 +203,8 @@ class View(BlastTaskView):
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.extra = PathFileSelector("\u25B6  Nucleotide file", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.options = OptionsSelector(self)
+        self.cards.blast_options = OptionsSelector(self)
+        self.cards.match_options = MatchOptionSelector(self)
 
         self.cards.query.set_placeholder_text("Nucleotide sequences to match against database (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this protein database")
@@ -166,12 +253,18 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
         self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
 
-        self.binder.bind(object.properties.blast_method, self.cards.options.controls.blast_method.setValue)
-        self.binder.bind(self.cards.options.controls.blast_method.valueChanged, object.properties.blast_method)
+        self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
+        self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
 
-        self.cards.options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
-        self.cards.options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
-        self.cards.options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
+        self.cards.blast_options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
+        self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
+        self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
+
+        self.binder.bind(object.properties.match_multiple, self.cards.match_options.controls.multiple.setValue)
+        self.binder.bind(self.cards.match_options.controls.multiple.valueChanged, object.properties.match_multiple)
+        self.binder.bind(object.properties.match_pident, self.cards.match_options.controls.pident.setValue)
+        self.binder.bind(self.cards.match_options.controls.pident.valueChangedSafe, object.properties.match_pident)
+        self.cards.match_options.controls.length.bind_property(object.properties.match_length)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

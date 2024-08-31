@@ -28,7 +28,7 @@ from ..common.widgets import (
 from . import long_description, pixmap_medium, title
 
 
-class BlastOptionsSelector(Card):
+class BlastOptionSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
         label = QtWidgets.QLabel("BLAST options:")
@@ -250,7 +250,7 @@ class View(BlastTaskView):
         self.cards.query = PathFileSelector("\u25B6  Query sequences", self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.blast_options = BlastOptionsSelector(self)
+        self.cards.blast_options = BlastOptionSelector(self)
         self.cards.format_options = FormatOptionsSelector(self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")

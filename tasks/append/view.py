@@ -27,7 +27,7 @@ from ..common.widgets import (
 from . import long_description, pixmap_medium, title
 
 
-class BlastOptionsSelector(Card):
+class BlastOptionSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
         label = QtWidgets.QLabel("BLAST options:")
@@ -108,7 +108,7 @@ class BlastOptionsSelector(Card):
         self.addLayout(options_long_layout)
 
 
-class SequenceSelectionOptions(Card):
+class MatchOptionSelector(Card):
     mode_changed = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
@@ -205,8 +205,8 @@ class View(BlastTaskView):
         self.cards.query = BatchQuerySelector(self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.blast_options = BlastOptionsSelector(self)
-        self.cards.append_options = SequenceSelectionOptions(self)
+        self.cards.blast_options = BlastOptionSelector(self)
+        self.cards.match_options = MatchOptionSelector(self)
 
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
         self.cards.output.set_placeholder_text("All output files will be saved here")
@@ -257,11 +257,11 @@ class View(BlastTaskView):
         self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
         self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
 
-        self.binder.bind(object.properties.match_multiple, self.cards.append_options.controls.multiple.setValue)
-        self.binder.bind(self.cards.append_options.controls.multiple.valueChanged, object.properties.match_multiple)
-        self.binder.bind(object.properties.match_pident, self.cards.append_options.controls.pident.setValue)
-        self.binder.bind(self.cards.append_options.controls.pident.valueChangedSafe, object.properties.match_pident)
-        self.cards.append_options.controls.length.bind_property(object.properties.match_length)
+        self.binder.bind(object.properties.match_multiple, self.cards.match_options.controls.multiple.setValue)
+        self.binder.bind(self.cards.match_options.controls.multiple.valueChanged, object.properties.match_multiple)
+        self.binder.bind(object.properties.match_pident, self.cards.match_options.controls.pident.setValue)
+        self.binder.bind(self.cards.match_options.controls.pident.valueChangedSafe, object.properties.match_pident)
+        self.cards.match_options.controls.length.bind_property(object.properties.match_length)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

@@ -51,10 +51,11 @@ def execute(
     blast_options: dict[str, str] = {}
     match_options: dict[str, str] = {}
     if append_configuration:
-        blast_options["blastx"] = None
+        blast_options[blast_method] = None
         blast_options["evalue"] = blast_evalue
         parts = blast_outfmt_options.split(" ")
         blast_options["columns"] = "_".join(parts)
+        match_options[blast_method] = None
         if match_multiple:
             match_options["multiple"] = None
             match_options["pident"] = match_pident
@@ -154,9 +155,7 @@ def get_target_paths(
     from core import get_append_filename, get_blast_filename
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
-    appended_output_path = output_path / get_append_filename(
-        query_path, timestamp=timestamp, **match_options, **blast_options
-    )
+    appended_output_path = output_path / get_append_filename(query_path, timestamp=timestamp, **match_options)
     return TargetPaths(
         blast_output_path=blast_output_path,
         appended_output_path=appended_output_path,
