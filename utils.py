@@ -322,18 +322,8 @@ def string_trimmer(
 
     # Trimming
     if trim:
-        if counter > 9:
-            trimmaxchar = int(trimmaxchar) - 1
-        if counter > 99:
-            trimmaxchar = int(trimmaxchar) - 1
-        if counter > 999:
-            trimmaxchar = int(trimmaxchar) - 1
-        if counter > 9999:
-            trimmaxchar = int(trimmaxchar) - 1
-        if counter > 99999:
-            trimmaxchar = int(trimmaxchar) - 1
-        if counter > 999999:
-            trimmaxchar = int(trimmaxchar) - 1
+        counterpad = len(str(int(counter))) - 1
+        trimmaxchar = int(trimmaxchar) - counterpad
 
         if trimpos == "beginning":
             startpos = laenge - int(trimmaxchar)
