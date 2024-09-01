@@ -153,7 +153,7 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = BatchQuerySelector(self)
+        self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.ingroup = PathDatabaseSelector("\u25B6  BLAST ingroup", self)
         self.cards.outgroup = PathDatabaseSelector("\u25B6  BLAST outgroup", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
@@ -163,7 +163,6 @@ class View(BlastTaskView):
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.ingroup.set_placeholder_text("Queries that best match this database will be preserved")
         self.cards.outgroup.set_placeholder_text("Queries that best match this database will be discarded")
-        self.cards.output.set_placeholder_text("All output files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:

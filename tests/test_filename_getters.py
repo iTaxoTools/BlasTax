@@ -11,6 +11,7 @@ from core import (
     get_blast_filename,
     get_decont_blast_filename,
     get_decont_sequences_filename,
+    get_fasta_renamed_filename,
     get_museo_filename,
 )
 
@@ -93,6 +94,18 @@ class DecontSequencesFilenameTest(NamedTuple):
         assert filename == self.target_filename
 
 
+class FastaRenameFilenameTest(NamedTuple):
+    input_path: Path
+    target_filename: str
+    timestamp: datetime
+
+    def validate(self):
+        filename = get_fasta_renamed_filename(
+            self.input_path,
+            self.timestamp)
+        assert filename == self.target_filename
+
+
 filename_tests = [
     BlastFilenameTest(Path("some.fa"), "some.txt", 0, None, {}),
     BlastFilenameTest(Path("some.fasta"), "some.txt", 0, None, {}),
@@ -133,6 +146,9 @@ filename_tests = [
     DecontSequencesFilenameTest(Path("some.fa"), "some_decontaminated_evalue_0.1_single.fasta", "decontaminated", None, dict(evalue=0.1, single=None)),
     DecontSequencesFilenameTest(Path("some.fa"), "some_decontaminated_evalue_0.1_multiple_length_42_pident_97.321.fasta", "decontaminated", None, dict(evalue=0.1, multiple=None, length=42, pident=97.321)),
     DecontSequencesFilenameTest(Path("some.fa"), "some_decontaminated_evalue_0.1_17070329T061742.fasta", "decontaminated", datetime(1707, 3, 29, 6, 17, 42), dict(evalue=0.1)),
+
+    FastaRenameFilenameTest(Path("some.fa"), "some_renamed.fasta", None),
+    FastaRenameFilenameTest(Path("some.fa"), "some_renamed_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42)),
 ]
 
 

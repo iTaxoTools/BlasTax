@@ -15,7 +15,6 @@ from ..common.view import (
     BlastTaskView,
     GraphicTitleCard,
     OutputDirectorySelector,
-    PathDatabaseSelector,
 )
 from ..common.widgets import (
     BasePropertyLineEdit,
@@ -202,13 +201,11 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = BatchQuerySelector("Query sequences", self)
-        self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
+        self.cards.query = BatchQuerySelector("FASTA sequences", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.blast_options = BlastOptionSelector(self)
-        self.cards.match_options = MatchOptionSelector(self)
 
-        self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.query.set_placeholder_text("Sequences for which the identifiers will be renamed")
+        self.cards.output.controls.append_configuration.setVisible(False)
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -231,36 +228,13 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
-        self.cards.query.bind_batch_model(self.binder, object.input_queries)
-
-        self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
-        self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
+        self.cards.query.bind_batch_model(self.binder, object.input_sequences)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
 
-        self.binder.bind(
-            object.properties.append_configuration, self.cards.output.controls.append_configuration.setChecked
-        )
-        self.binder.bind(
-            self.cards.output.controls.append_configuration.toggled, object.properties.append_configuration
-        )
-
         self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
         self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
-
-        self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
-        self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
-
-        self.cards.blast_options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
-        self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
-        self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
-
-        self.binder.bind(object.properties.match_multiple, self.cards.match_options.controls.multiple.setValue)
-        self.binder.bind(self.cards.match_options.controls.multiple.valueChanged, object.properties.match_multiple)
-        self.binder.bind(object.properties.match_pident, self.cards.match_options.controls.pident.setValue)
-        self.binder.bind(self.cards.match_options.controls.pident.valueChangedSafe, object.properties.match_pident)
-        self.cards.match_options.controls.length.bind_property(object.properties.match_length)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

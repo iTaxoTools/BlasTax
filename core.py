@@ -597,6 +597,18 @@ def get_decont_sequences_filename(
     return path.name
 
 
+def get_fasta_renamed_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_renamed")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
 # Fasta sequence name modifier
 def fasta_name_modifier(
     input_name: Path | str,
@@ -662,9 +674,9 @@ def fasta_name_modifier(
                 counter = counter + 1
                 sequenzen.append(seq)
 
-    print(len(gene))
-    print(gene[0:5])
-    print(len(sequenzen))
+    # print(len(gene))
+    # print(gene[0:5])
+    # print(len(sequenzen))
 
     for i in range(0, len(sequenzen)):
         outfile.write(gene[i] + "\n")

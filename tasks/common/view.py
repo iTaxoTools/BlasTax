@@ -193,6 +193,7 @@ class PathDatabaseSelector(PathSelector):
 class OutputDirectorySelector(PathDirectorySelector):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
+        self.set_placeholder_text("All output files will be saved here")
         self.draw_config()
 
     def draw_config(self):
@@ -203,11 +204,14 @@ class OutputDirectorySelector(PathDirectorySelector):
         append_configuration = QtWidgets.QCheckBox("Append configuration values")
         append_timestamp = QtWidgets.QCheckBox("Append timestamp")
 
+        checkbox_layout = QtWidgets.QHBoxLayout()
+        checkbox_layout.setSpacing(16)
+        checkbox_layout.addWidget(append_configuration)
+        checkbox_layout.addWidget(append_timestamp, 1)
+
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(label)
-        layout.addWidget(append_configuration)
-        layout.addSpacing(16)
-        layout.addWidget(append_timestamp, 1)
+        layout.addLayout(checkbox_layout)
         layout.addSpacing(136)
         layout.setSpacing(16)
         self.addLayout(layout)
@@ -224,12 +228,12 @@ class BatchQuerySelector(Card):
     requestDelete = QtCore.Signal(list)
     requestClear = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, text, parent=None):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_mode()
-        self.draw_single("\u25B6  ", "Query sequences")
-        self.draw_batch("\u25B6  ", "Query sequences")
+        self.draw_single("\u25B6  ", text)
+        self.draw_batch("\u25B6  ", text)
 
     def draw_mode(self):
         label = QtWidgets.QLabel("Input mode:")

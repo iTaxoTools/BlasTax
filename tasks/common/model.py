@@ -39,13 +39,15 @@ class PathListModel(QtCore.QAbstractListModel):
     def __init__(self, paths=None):
         super().__init__()
         self.paths: list[Path] = paths or []
+        self.globs = ["fa", "fas", "fasta", "fq", "fastq"]
 
     @override
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
             path = self.paths[index.row()]
             if path.is_dir():
-                return str(path.absolute()) + os.path.sep + "*.{fa,fas,fasta,fq,fastq}"
+                globs = ",".join(self.globs)
+                return str(path.absolute()) + os.path.sep + f"*.{{{globs}}}"
             return str(path.absolute())
 
     @override
@@ -83,11 +85,8 @@ class PathListModel(QtCore.QAbstractListModel):
             if path.is_file():
                 all.add(path)
             elif path.is_dir():
-                all.update(path.glob("*.fa"))
-                all.update(path.glob("*.fas"))
-                all.update(path.glob("*.fasta"))
-                all.update(path.glob("*.fq"))
-                all.update(path.glob("*.fastq"))
+                for glob in self.globs:
+                    all.update(path.glob(f"*.{glob}"))
         return all
 
 
@@ -148,6 +147,9 @@ class BatchQueryModel(PropertyObject):
 
     def _update_query_list_total(self):
         self.query_list_total = len(self.query_list.get_all_paths())
+
+    def set_globs(self, globs: list[str]):
+        self.query_list.globs = globs
 
     def delete_paths(self, indices: list[int]):
         if not indices:

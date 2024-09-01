@@ -199,7 +199,7 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = BatchQuerySelector(self)
+        self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.extra = PathFileSelector("\u25B6  Nucleotide file", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
@@ -209,7 +209,6 @@ class View(BlastTaskView):
         self.cards.query.set_placeholder_text("Nucleotide sequences to match against database (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this protein database")
         self.cards.extra.set_placeholder_text("Nucleotide sequences for each database entry")
-        self.cards.output.set_placeholder_text("All output files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:

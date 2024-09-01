@@ -1,5 +1,5 @@
 from resources import icons, pixmaps
-from tasks import about, append, appendx, blast, create, decont, museo
+from tasks import about, append, appendx, blast, create, decont, museo, rename
 
 title = "BlasTax"
 icon = icons.blastax
@@ -14,5 +14,5 @@ tasks = [
     [create, blast],
     [append, appendx],
     [museo, decont],
-    [about],
+    [rename, about],
 ]

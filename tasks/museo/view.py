@@ -158,7 +158,6 @@ class View(BlastTaskView):
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
-        self.cards.output.set_placeholder_text("All output files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
