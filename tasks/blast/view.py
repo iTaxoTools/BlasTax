@@ -225,7 +225,6 @@ class FormatOptionsSelector(Card):
         options_widget = QtWidgets.QWidget()
         options_widget.setLayout(options_layout)
         options_widget.roll = VerticalRollAnimation(options_widget)
-        options_widget.roll._visible_target = True
         self.controls.options_widget = options_widget
 
         self.addLayout(title_layout)
@@ -304,6 +303,7 @@ class View(BlastTaskView):
         self.binder.bind(self.cards.format_options.controls.outfmt.valueChanged, object.properties.blast_outfmt)
         self.binder.bind(self.cards.format_options.help_dialog.restore_defaults, object.outfmt_restore_defaults)
         self.binder.bind(self.cards.format_options.help_dialog.add_specifier, object.outfmt_add_specifier)
+        self.cards.format_options.set_options_visible(object.blast_outfmt_show_more)
 
         self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 

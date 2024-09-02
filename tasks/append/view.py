@@ -174,7 +174,6 @@ class MatchOptionSelector(Card):
         options_widget = QtWidgets.QWidget()
         options_widget.setLayout(options_layout)
         options_widget.roll = VerticalRollAnimation(options_widget)
-        options_widget.roll._visible_target = True
         self.controls.options_widget = options_widget
 
         self.addLayout(title_layout)
@@ -261,6 +260,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.match_pident, self.cards.match_options.controls.pident.setValue)
         self.binder.bind(self.cards.match_options.controls.pident.valueChangedSafe, object.properties.match_pident)
         self.cards.match_options.controls.length.bind_property(object.properties.match_length)
+        self.cards.match_options.set_options_visible(object.match_multiple)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
