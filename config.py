@@ -13,6 +13,6 @@ show_save = False
 tasks = [
     [create, blast],
     [append, appendx],
-    [museo, decont],
+    [decont, museo],
     [rename, about],
 ]

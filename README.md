@@ -1,28 +1,54 @@
 # BlasTax
 
-A program to parse blast hits.
+[![GitHub - Tests](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/test.yml?label=tests)](
+    https://github.com/iTaxoTools/BlasTax/actions/workflows/test.yml)
+[![GitHub - Windows](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/windows.yml?label=windows)](
+    https://github.com/iTaxoTools/BlasTax/actions/workflows/windows.yml)
+[![GitHub - macOS](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/macos.yml?label=macos)](
+    https://github.com/iTaxoTools/BlasTax/actions/workflows/macos.yml)
 
-### Manual bundling
+A graphical user interface to run BLAST and parse hits.
 
-Bundling requires PyInstaller and the BLAST+ binaries.
-A helper script is included to fetch the latest BLAST+ binaries.
+- **Make BLAST database**: Create a BLAST database from a sequence file
+- **Regular BLAST**: Find regions of similarity between seuqneces in a query file and a BLAST database
+- **BLAST-Append**: Append the aligned part of matching sequences to the original query sequences
+- **BLAST-Append-X**: Like BLAST-Append, but appends nucleotides c orresponding to the protein database
+- **Decontaminate**: Remove contaminants from query sequences based on two ingroup and outgroup databases
+- **Museoscript**: Create sequence files from BLAST matches
+- **FastaSeqRename**: Rename FASTA sequence identifiers in preparation for BLAST analysis
 
-Bundling is best done within a virtual environment, such as with the use of pipenv.
+Input sequences must be in the FASTA or FASTQ file formats.
+
+![Screenshot](https://raw.githubusercontent.com/iTaxoTools/BlasTax/main/images/screenshot.png)
+
+## Executables
+
+Download and run the standalone executables without installing Python or BLAST+.
+
+[![Release](https://img.shields.io/badge/release-BlasTax_0.1.0-red?style=for-the-badge)](
+    https://github.com/iTaxoTools/BlasTax/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-blue.svg?style=for-the-badge&logo=windows)](
+    https://github.com/iTaxoTools/BlasTax/releases/latest)
+[![MacOS](https://img.shields.io/badge/macOS-slategray.svg?style=for-the-badge&logo=apple)](
+    https://github.com/iTaxoTools/BlasTax/releases/latest)
+
+## Running from source
+
+First clone the repository and install all dependencies.
 
 ```
+git clone https://github.com/iTaxoTools/BlasTax.git
+cd BlasTax
 pip install -r requirements.txt
-python tools/get_blast_binaries.py
-python gui.py
-pyinstaller gui.spec
 ```
 
-If all goes well, the bundle will be saved in the `dist` folder.
+Then fetch the BLAST+ binaries if not already installed on the system:
+```
+python tools/get_blast_binaries.py
+```
 
-PS. The binary getter can also be used when running the script directly to execute the program without installing BLAST+ on a system level.
+Finally run BlasTax using:
 
-
-### GitHub automation
-
-Compilation of the Windows bundle is done automatically on the GitHub cloud on every push.
-
-To see the latest build, go to the [Windows action](https://github.com/iTaxoTools/BlasTax/actions/workflows/ci.yml), click on the most recent workflow run, then click on the artifact named `itaxotools-blast-gui-windows` to download a zip file containing the unsigned executable.
+```
+python gui.py
+```
