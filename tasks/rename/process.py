@@ -17,7 +17,7 @@ def execute(
     input_paths: list[Path],
     output_path: Path,
     sanitize: bool,
-    rename_auto: bool,
+    auto_increment: bool,
     trim: bool,
     trim_position: str,
     trim_max_char: int,
@@ -32,7 +32,7 @@ def execute(
     print(f"{input_paths=}")
     print(f"{output_path=}")
     print(f"{sanitize=}")
-    print(f"{rename_auto=}")
+    print(f"{auto_increment=}")
     print(f"{trim=}")
     print(f"{trim_position=}")
     print(f"{trim_max_char=}")
@@ -63,7 +63,7 @@ def execute(
             sanitize=sanitize,
             trimposition=trim_position,
             trimmaxchar=trim_max_char,
-            renameauto=rename_auto,
+            renameauto=auto_increment,
             direc=add_position,
             addstring=add_text,
         )

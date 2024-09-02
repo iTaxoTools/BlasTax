@@ -26,6 +26,61 @@ from ..common.widgets import (
 from . import long_description, pixmap_medium, title
 
 
+class ClickableWidget(QtWidgets.QWidget):
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed and event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+    def leaveEvent(self, event):
+        self._mouse_pressed = False
+        super().leaveEvent(event)
+
+
+class OptionCard(Card):
+    toggled = QtCore.Signal(bool)
+
+    def __init__(self, text, description, parent=None):
+        super().__init__(parent)
+        self.draw_title(text, description)
+
+    def draw_title(self, text, description):
+        title = QtWidgets.QCheckBox(" " + text)
+        title.setStyleSheet("""font-size: 16px;""")
+        title.toggled.connect(self.toggled)
+        title.setFixedWidth(150)
+
+        label = QtWidgets.QLabel(description)
+        if not description:
+            label.setVisible(False)
+
+        widget = ClickableWidget()
+        widget.clicked.connect(title.toggle)
+
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(title)
+        layout.addWidget(label, 1)
+        layout.setSpacing(16)
+        self.addWidget(widget)
+
+        self.controls.title = title
+
+    def setChecked(self, checked: bool):
+        self.controls.title.setChecked(checked)
+
+
 class BlastOptionSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -203,6 +258,14 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.query = BatchQuerySelector("FASTA sequences", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.sanitize = OptionCard(
+            "Sanitize",
+            "Replace special characters with their ASCII representation, or an underscore if not applicable.",
+        )
+        self.cards.auto_increment = OptionCard(
+            "Auto auto_increment",
+            "Append a unique number at the end of each identifier, reflecting its position in the dataset.",
+        )
 
         self.cards.query.set_placeholder_text("Sequences for which the identifiers will be renamed")
         self.cards.output.controls.append_configuration.setVisible(False)
@@ -235,6 +298,12 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
         self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
+
+        self.binder.bind(object.properties.sanitize, self.cards.sanitize.setChecked)
+        self.binder.bind(self.cards.sanitize.toggled, object.properties.sanitize)
+
+        self.binder.bind(object.properties.auto_increment, self.cards.auto_increment.setChecked)
+        self.binder.bind(self.cards.auto_increment.toggled, object.properties.auto_increment)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

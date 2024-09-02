@@ -15,7 +15,7 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
 
     sanitize = Property(bool, True)
-    rename_auto = Property(bool, True)
+    auto_increment = Property(bool, True)
 
     trim = Property(bool, True)
     trim_position = Property(Position, Position.End)
@@ -60,7 +60,7 @@ class Model(BlastTaskModel):
             input_paths=self.input_sequences.get_all_paths(),
             output_path=self.output_path,
             sanitize=self.sanitize,
-            rename_auto=self.rename_auto,
+            auto_increment=self.auto_increment,
             trim=self.trim,
             trim_position=str(self.trim_position),
             trim_max_char=self.trim_max_char,
