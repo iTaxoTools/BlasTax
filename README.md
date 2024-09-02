@@ -52,3 +52,22 @@ Finally run BlasTax using:
 ```
 python gui.py
 ```
+
+## Citations
+
+*BlasTax* was developed in the framework of the *iTaxoTools* project:
+
+> *Vences M. et al. (2021): iTaxoTools 0.1: Kickstarting a specimen-based software toolkit for taxonomists. - Megataxa 6: 77-92.*
+
+Code by Nikita Kulikov, Anja-Kristina Schulz and Stefanos Patmanidis.
+
+BlasTax integrates the BLAST+ suite from NCBI:
+
+> *Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., and Madden, T.L. 2009. BLAST+: architecture and applications. BMC Bioinformatics, 10, 421.*
+
+Museoscript recoded following original concept Linux bash script:
+
+> *Rancilhac, L., Bruy, T., Scherz, M. D., Pereira, E. A., Preick, M., Straube, N., Lyra, M. L., Ohler, A., Streicher, J. W., Andreone,
+    F., Crottini, A., Hutter, C. R., Randrianantoandro,J. C., Rokotoarison, A., Glaw, F., Hofreiter, M. & Vences, M. (2020).
+    Target-enriched DNA sequencing from historical type material enables a partial revision of the Madagascar giant stream frogs (genus Mantidactylus).
+    Journal of Natural History, 1-32.*
