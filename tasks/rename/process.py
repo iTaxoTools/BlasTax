@@ -19,10 +19,10 @@ def execute(
     sanitize: bool,
     auto_increment: bool,
     trim: bool,
-    trim_position: str,
-    trim_max_char: int,
+    trim_direction: str,
+    trim_max_length: int,
     add: bool,
-    add_position: str,
+    add_direction: str,
     add_text: str,
     append_timestamp: bool,
 ) -> Results:
@@ -34,10 +34,10 @@ def execute(
     print(f"{sanitize=}")
     print(f"{auto_increment=}")
     print(f"{trim=}")
-    print(f"{trim_position=}")
-    print(f"{trim_max_char=}")
+    print(f"{trim_direction=}")
+    print(f"{trim_max_length=}")
     print(f"{add=}")
-    print(f"{add_position=}")
+    print(f"{add_direction=}")
     print(f"{add_text=}")
     print(f"{append_timestamp=}")
 
@@ -61,10 +61,10 @@ def execute(
             trim=trim,
             add=add,
             sanitize=sanitize,
-            trimposition=trim_position,
-            trimmaxchar=trim_max_char,
+            trimposition=trim_direction,
+            trimmaxchar=trim_max_length,
             renameauto=auto_increment,
-            direc=add_position,
+            direc=add_direction,
             addstring=add_text,
         )
     progress_handler(f"{total}/{total}", total, 0, total)

@@ -1,4 +1,4 @@
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from pathlib import Path
 
@@ -7,9 +7,8 @@ from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
+from itaxotools.taxi_gui.view.widgets import NoWheelComboBox
 
-from ..common.types import BlastMethod
 from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
@@ -17,13 +16,11 @@ from ..common.view import (
     OutputDirectorySelector,
 )
 from ..common.widgets import (
-    BasePropertyLineEdit,
-    BlastMethodCombobox,
-    FloatPropertyLineEdit,
     IntPropertyLineEdit,
-    PidentSpinBox,
+    PropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
+from .types import Direction
 
 
 class ClickableWidget(QtWidgets.QWidget):
@@ -81,167 +78,120 @@ class OptionCard(Card):
         self.controls.title.setChecked(checked)
 
 
-class BlastOptionSelector(Card):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        label = QtWidgets.QLabel("BLAST options:")
-        label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(150)
+class PositionCombobox(NoWheelComboBox):
+    valueChanged = QtCore.Signal(Direction)
 
-        description = QtWidgets.QLabel("Parametrize the method and arguments passed to the BLAST+ executables.")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        model = QtGui.QStandardItemModel()
+        for pos in Direction:
+            item = QtGui.QStandardItem()
+            item.setData(pos.name, QtCore.Qt.DisplayRole)
+            item.setData(pos, QtCore.Qt.UserRole)
+            model.appendRow(item)
+        self.setModel(model)
 
-        title_layout = QtWidgets.QHBoxLayout()
-        title_layout.addWidget(label)
-        title_layout.addWidget(description, 1)
-        title_layout.setSpacing(16)
+        self.currentIndexChanged.connect(self._handle_index_changed)
 
-        options_layout = QtWidgets.QGridLayout()
-        options_layout.setColumnMinimumWidth(0, 16)
-        options_layout.setColumnMinimumWidth(1, 54)
-        options_layout.setColumnStretch(3, 1)
-        options_layout.setHorizontalSpacing(32)
-        options_layout.setVerticalSpacing(8)
+    def _handle_index_changed(self, index):
+        self.valueChanged.emit(self.itemData(index, QtCore.Qt.UserRole))
+
+    def setValue(self, value):
+        index = self.findData(value, QtCore.Qt.UserRole)
+        self.setCurrentIndex(index)
+
+
+class AddOptionCard(OptionCard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_options()
+
+    def draw_options(self):
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setColumnMinimumWidth(0, 8)
+        layout.setColumnMinimumWidth(1, 72)
+        layout.setColumnStretch(3, 1)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(8)
         row = 0
 
-        name = QtWidgets.QLabel("Method:")
-        field = BlastMethodCombobox(
-            [
-                BlastMethod.blastn,
-                BlastMethod.blastp,
-                BlastMethod.tblastx,
-            ]
-        )
-        description = QtWidgets.QLabel("Comparison type between query and database")
+        name = QtWidgets.QLabel("Text:")
+        field = PropertyLineEdit()
+        description = QtWidgets.QLabel("Text to add to all identifiers")
         description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.blast_method = field
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.text = field
         row += 1
 
-        name = QtWidgets.QLabel("E-value:")
-        field = FloatPropertyLineEdit()
-        description = QtWidgets.QLabel("Expectation value threshold for saving hits")
+        name = QtWidgets.QLabel("Direction:")
+        field = PositionCombobox()
+        description = QtWidgets.QLabel("Direction from which to trim characters")
         description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.blast_evalue = field
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.direction = field
         row += 1
 
-        name = QtWidgets.QLabel("Threads:")
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
+
+        self.toggled.connect(self.set_options_visible)
+
+        self.addWidget(widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
+
+
+class TrimOptionCard(OptionCard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_options()
+
+    def draw_options(self):
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setColumnMinimumWidth(0, 8)
+        layout.setColumnMinimumWidth(1, 72)
+        layout.setColumnStretch(3, 1)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Max length:")
         field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Number of threads (CPUs) to use in the BLAST search")
+        description = QtWidgets.QLabel("Maximum allowed number of characters")
         description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.blast_num_threads = field
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.max_length = field
         row += 1
 
-        options_long_layout = QtWidgets.QGridLayout()
-        options_long_layout.setContentsMargins(0, 0, 0, 0)
-        options_long_layout.setColumnMinimumWidth(0, 16)
-        options_long_layout.setColumnMinimumWidth(1, 54)
-        options_long_layout.setColumnStretch(2, 1)
-        options_long_layout.setHorizontalSpacing(32)
-        options_long_layout.setVerticalSpacing(8)
-        row = 0
-
-        name = QtWidgets.QLabel("Locked:")
-        field = BasePropertyLineEdit()
-        field.setReadOnly(True)
+        name = QtWidgets.QLabel("Direction:")
+        field = PositionCombobox()
+        description = QtWidgets.QLabel("Direction from which to trim characters")
         description.setStyleSheet("QLabel { font-style: italic; }")
-        options_long_layout.addWidget(name, row, 1)
-        options_long_layout.addWidget(field, row, 2)
-        self.controls.blast_extra_args = field
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.direction = field
         row += 1
 
-        self.addLayout(title_layout)
-        self.addLayout(options_layout)
-        self.addLayout(options_long_layout)
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
 
+        self.toggled.connect(self.set_options_visible)
 
-class MatchOptionSelector(Card):
-    mode_changed = QtCore.Signal(bool)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        label = QtWidgets.QLabel("Sequence selection:")
-        label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(150)
-
-        description = QtWidgets.QLabel("Determine how matching sequences are retrieved from the database.")
-
-        title_layout = QtWidgets.QHBoxLayout()
-        title_layout.addWidget(label)
-        title_layout.addWidget(description, 1)
-        title_layout.setSpacing(16)
-
-        mode_layout = QtWidgets.QVBoxLayout()
-        mode_layout.setContentsMargins(12, 0, 0, 0)
-        mode_layout.setSpacing(8)
-
-        single = RichRadioButton(
-            "Single best match,", "matching the longest aligned sequence with the best identity percentage"
-        )
-        multiple = RichRadioButton("Multiple matches,", "fulfilling certain criteria of length and identity")
-
-        group = RadioButtonGroup()
-        group.valueChanged.connect(self._handle_mode_changed)
-        group.add(single, False)
-        group.add(multiple, True)
-        self.controls.multiple = group
-
-        mode_layout.addWidget(single)
-        mode_layout.addWidget(multiple)
-
-        options_layout = QtWidgets.QGridLayout()
-        options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.setColumnMinimumWidth(0, 16)
-        options_layout.setColumnMinimumWidth(1, 54)
-        options_layout.setColumnStretch(3, 1)
-        options_layout.setHorizontalSpacing(32)
-        options_layout.setVerticalSpacing(8)
-        row = 0
-
-        name = QtWidgets.QLabel("Length:")
-        field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Minimum alignment sequence length")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.length = field
-        row += 1
-
-        name = QtWidgets.QLabel("Identity:")
-        field = PidentSpinBox()
-        description = QtWidgets.QLabel("Minimum identity percentage (pident)")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 3)
-        self.controls.pident = field
-        row += 1
-
-        options_widget = QtWidgets.QWidget()
-        options_widget.setLayout(options_layout)
-        options_widget.roll = VerticalRollAnimation(options_widget)
-        options_widget.roll._visible_target = True
-        self.controls.options_widget = options_widget
-
-        self.addLayout(title_layout)
-        self.addLayout(mode_layout)
-        self.addWidget(options_widget)
-
-    def _handle_mode_changed(self, value: bool):
-        self.mode_changed.emit(value)
-        self.set_options_visible(value)
-
-    def set_mode(self, value: bool):
-        self.controls.mode.setValue(value)
-        self.set_options_visible(value)
+        self.addWidget(widget)
 
     def set_options_visible(self, value: bool):
         self.controls.options_widget.roll.setAnimatedVisible(value)
@@ -262,9 +212,17 @@ class View(BlastTaskView):
             "Sanitize",
             "Replace special characters with their ASCII representation, or an underscore if not applicable.",
         )
+        self.cards.add = AddOptionCard(
+            "Add text",
+            "Add the specified text to each identifier.",
+        )
         self.cards.auto_increment = OptionCard(
-            "Auto auto_increment",
+            "Auto increment",
             "Append a unique number at the end of each identifier, reflecting its position in the dataset.",
+        )
+        self.cards.trim = TrimOptionCard(
+            "Trim",
+            "Trim each identifier to fit within a specified character length.",
         )
 
         self.cards.query.set_placeholder_text("Sequences for which the identifiers will be renamed")
@@ -302,8 +260,24 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.sanitize, self.cards.sanitize.setChecked)
         self.binder.bind(self.cards.sanitize.toggled, object.properties.sanitize)
 
+        self.binder.bind(object.properties.add, self.cards.add.setChecked)
+        self.binder.bind(self.cards.add.toggled, object.properties.add)
+
+        self.binder.bind(self.cards.add.controls.direction.valueChanged, object.properties.add_direction)
+        self.binder.bind(object.properties.add_direction, self.cards.add.controls.direction.setValue)
+        self.cards.add.controls.text.bind_property(object.properties.add_text)
+        self.cards.add.set_options_visible(object.add)
+
         self.binder.bind(object.properties.auto_increment, self.cards.auto_increment.setChecked)
         self.binder.bind(self.cards.auto_increment.toggled, object.properties.auto_increment)
+
+        self.binder.bind(object.properties.trim, self.cards.trim.setChecked)
+        self.binder.bind(self.cards.trim.toggled, object.properties.trim)
+
+        self.binder.bind(self.cards.trim.controls.direction.valueChanged, object.properties.trim_direction)
+        self.binder.bind(object.properties.trim_direction, self.cards.trim.controls.direction.setValue)
+        self.cards.trim.controls.max_length.bind_property(object.properties.trim_max_length)
+        self.cards.trim.set_options_visible(object.trim)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

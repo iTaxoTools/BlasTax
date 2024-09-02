@@ -5,7 +5,7 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BatchQueryModel, BlastTaskModel
 from . import process, title
-from .types import Position
+from .types import Direction
 
 
 class Model(BlastTaskModel):
@@ -18,12 +18,12 @@ class Model(BlastTaskModel):
     auto_increment = Property(bool, True)
 
     trim = Property(bool, True)
-    trim_position = Property(Position, Position.End)
-    trim_max_char = Property(int, 50)
+    trim_direction = Property(Direction, Direction.End)
+    trim_max_length = Property(int, 50)
 
-    add = Property(bool, True)
-    add_position = Property(Position, Position.End)
-    add_text = Property(str, "_")
+    add = Property(bool, False)
+    add_direction = Property(Direction, Direction.End)
+    add_text = Property(str, "")
 
     append_timestamp = Property(bool, False)
 
@@ -62,10 +62,10 @@ class Model(BlastTaskModel):
             sanitize=self.sanitize,
             auto_increment=self.auto_increment,
             trim=self.trim,
-            trim_position=str(self.trim_position),
-            trim_max_char=self.trim_max_char,
+            trim_direction=str(self.trim_direction),
+            trim_max_length=self.trim_max_length,
             add=self.add,
-            add_position=str(self.add_position),
+            add_direction=str(self.add_direction),
             add_text=self.add_text,
             append_timestamp=self.append_timestamp,
         )
