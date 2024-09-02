@@ -57,6 +57,7 @@ task_pixmaps_large = LazyResourceCollection(
     appendx=lambda: VectorPixmap(get_data("graphics/appendx.svg"), Size.Large.size),
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Large.size),
     decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Large.size),
+    rename=lambda: VectorPixmap(get_data("graphics/rename.svg"), Size.Large.size),
 )
 
 
@@ -68,4 +69,5 @@ task_pixmaps_medium = LazyResourceCollection(
     appendx=lambda: VectorPixmap(get_data("graphics/appendx.svg"), Size.Medium.size),
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Medium.size),
     decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Medium.size),
+    rename=lambda: VectorPixmap(get_data("graphics/rename.svg"), Size.Medium.size),
 )
