@@ -6,13 +6,12 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import LongLabel
+from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup, RichRadioButton
 
 from ..common.types import BlastMethod
 from ..common.view import (
     BlastTaskView,
     GraphicTitleCard,
-    OptionalCategory,
     OutputDirectorySelector,
     PathDatabaseSelector,
     PathFileSelector,
@@ -135,6 +134,48 @@ class IdentityThresholdCard(Card):
         self.controls.field.setValue(value)
 
 
+class RetrievalOptionSelector(Card):
+    mode_changed = QtCore.Signal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Sequence retrieval:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Determine which sequences are retrieved on a match.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        mode_layout = QtWidgets.QVBoxLayout()
+        mode_layout.setContentsMargins(12, 0, 0, 0)
+        mode_layout.setSpacing(8)
+
+        alignment = RichRadioButton("Alignment,", "the aligned parts of the reads as detected by BLAST")
+        original = RichRadioButton("Original reads,", "the full sequences from the query fasta file")
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_mode_changed)
+        group.add(alignment, False)
+        group.add(original, True)
+        self.controls.mode = group
+
+        mode_layout.addWidget(alignment)
+        mode_layout.addWidget(original)
+
+        self.addLayout(title_layout)
+        self.addLayout(mode_layout)
+
+    def _handle_mode_changed(self, value: bool):
+        self.mode_changed.emit(value)
+
+    def set_mode(self, value: bool):
+        self.controls.mode.setValue(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -149,12 +190,7 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.pident_threshold = IdentityThresholdCard(self)
-        self.cards.retrieve_original = OptionalCategory(
-            "Retrieve original reads",
-            "Retrieve and save the full original reads from the query fasta file, "
-            "rather than just the matching part of the reads as detected by BLAST.",
-            self,
-        )
+        self.cards.retrieval = RetrievalOptionSelector()
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
@@ -204,8 +240,8 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
         self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
 
-        self.binder.bind(object.properties.retrieve_original, self.cards.retrieve_original.setChecked)
-        self.binder.bind(self.cards.retrieve_original.toggled, object.properties.retrieve_original)
+        self.binder.bind(object.properties.retrieve_original, self.cards.retrieval.set_mode)
+        self.binder.bind(self.cards.retrieval.mode_changed, object.properties.retrieve_original)
 
         self.binder.bind(object.properties.pident_threshold, self.cards.pident_threshold.setValue)
         self.binder.bind(self.cards.pident_threshold.valueChanged, object.properties.pident_threshold)
