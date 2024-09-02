@@ -7,7 +7,6 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BatchQueryModel, BlastTaskModel
 from ..common.types import BlastMethod
-from ..common.utils import get_database_index_from_path
 from . import process, title
 from .types import DecontVariable
 
@@ -91,7 +90,10 @@ class Model(BlastTaskModel):
         property.set(cpus)
 
     def open(self, path: Path):
-        if db := get_database_index_from_path(path):
-            self.input_database_path = db
-        else:
-            self.input_queries.open(path)
+        self.input_queries.open(path)
+
+    def open_ingroup(self, path: Path):
+        self.ingroup_database_path = path
+
+    def open_outgroup(self, path: Path):
+        self.outgroup_database_path = path

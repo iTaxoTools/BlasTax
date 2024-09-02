@@ -9,6 +9,7 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup
 
 from ..common.types import BlastMethod
+from ..common.utils import get_database_index_from_path
 from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
@@ -231,4 +232,35 @@ class View(BlastTaskView):
         )
         if not filename:
             return
-        self.object.open(Path(filename))
+        path = Path(filename)
+        if db := get_database_index_from_path(path):
+            if self.clarify_ingroup():
+                self.object.open_ingroup(db)
+            else:
+                self.object.open_outgroup(db)
+        else:
+            self.object.open(Path(filename))
+
+    def clarify_ingroup(self):
+        msgBox = QtWidgets.QMessageBox(self.window())
+        msgBox.setWindowTitle(app.config.title)
+        msgBox.setIcon(QtWidgets.QMessageBox.Question)
+        msgBox.setText("How should this database be treated?")
+
+        self._clarify_ingroup_button = None
+
+        def set_button(value):
+            self._clarify_ingroup_button = value
+
+        ingroup_button = QtWidgets.QPushButton("Ingroup")
+        outgroup_button = QtWidgets.QPushButton("Outgroup")
+
+        ingroup_button.clicked.connect(lambda: set_button(True))
+        outgroup_button.clicked.connect(lambda: set_button(False))
+
+        msgBox.addButton(ingroup_button, QtWidgets.QMessageBox.ActionRole)
+        msgBox.addButton(outgroup_button, QtWidgets.QMessageBox.ActionRole)
+
+        self.window().msgShow(msgBox)
+
+        return self._clarify_ingroup_button
