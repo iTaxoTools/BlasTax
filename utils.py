@@ -312,10 +312,11 @@ def string_trimmer(
     laenge = len(new_komm)
     nk = ""
 
+    new_komm = komm_zeile.replace("﻿>", ">")  # Replace look-alike characters
     # Adding string at the beginning or end
     if add:
         if direc == "beginning":
-            strippi = new_komm.strip(">")
+            strippi = new_komm.lstrip(">")
             new_komm = ">" + addstring + strippi
         elif direc == "end":
             new_komm = new_komm + addstring
@@ -323,22 +324,21 @@ def string_trimmer(
     # Trimming
     if trim:
         counterpad = len(str(int(counter))) - 1
-        trimmaxchar = int(trimmaxchar) - counterpad
+        if auto:
+            trimmaxchar = int(trimmaxchar) - counterpad - 1
+        else:
+            trimmaxchar = int(trimmaxchar) - counterpad
 
         if trimpos == "beginning":
             startpos = laenge - int(trimmaxchar)
-            if auto:
-                new_komm = ">" + new_komm[startpos:] + str(counter)
-            else:
-                new_komm = ">" + new_komm[startpos:]
+            new_komm = ">" + new_komm[startpos:]
         elif trimpos == "end":
             endpos = int(trimmaxchar)
-            if auto:
-                new_komm = ">" + new_komm[1:endpos] + str(counter)
-            else:
-                new_komm = ">" + new_komm[1:endpos]
-    #        new_komm = nk
+            new_komm = ">" + new_komm[1:endpos]
 
+    # Autoincrement
+    if auto:
+            new_komm = f"{new_komm}_{counter}"
     # Sanitization: Replace characters not in letters_and_numbers with '_'
     if sanitize:
         nk = ""

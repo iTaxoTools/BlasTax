@@ -118,6 +118,32 @@ fasta_name_modifier_tests = [
          "end",
         "end",
     ),
+    FastaNameModifierTest(  # autoincreament without trimming
+        "FastaExample_complex3.fas",
+        "complex_output_auto_notrim.fas",
+        False,
+        False,
+        False,
+        "",
+        0,
+        True,
+#        "Beginning",
+#        "Beginning",
+        "complex_output_auto_notrim_expected.fas",
+    ),
+    FastaNameModifierTest(  # sanitizing, trimming, auto, add (_) at the beginning
+        "FastaExample_complex3.fas",
+        "complex_output_auto_trim_san_add_beginning.fas",
+        True,
+        True,
+        True,
+        "end",
+        50,
+        True,
+        "complex_output_auto_trim_san_add_beginning_expected.fas",
+        "beginning",
+        "_",
+    ),
 ]
 
 @pytest.mark.parametrize("test", fasta_name_modifier_tests)
