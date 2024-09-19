@@ -7,10 +7,12 @@
 [![GitHub - macOS](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/macos.yml?label=macos)](
     https://github.com/iTaxoTools/BlasTax/actions/workflows/macos.yml)
 
+**WORK IN PROGRESS**
+
 A graphical user interface to run BLAST and parse hits.
 
 - **Make BLAST database**: Create a BLAST database from a sequence file
-- **Regular BLAST**: Find regions of similarity between seuqneces in a query file and a BLAST database
+- **Regular BLAST**: Find regions of similarity between sequences in a query file and a BLAST database
 - **BLAST-Append**: Append the aligned part of matching sequences to the original query sequences
 - **BLAST-Append-X**: Like BLAST-Append, but appends nucleotides c orresponding to the protein database
 - **Decontaminate**: Remove contaminants from query sequences based on two ingroup and outgroup databases
