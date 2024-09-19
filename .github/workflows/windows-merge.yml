@@ -12,6 +12,8 @@ jobs:
   build-executable:
     name: Build Windows executable (merge task only)
     runs-on: windows-2019
+    env:
+      BLASTAX_MERGE: true
 
     steps:
       - name: Checkout
@@ -28,9 +30,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-
-      - name: Set environment variable
-        run: echo "BLASTAX_MERGE=true" >> $GITHUB_ENV
 
       - name: Make executable
         uses: iTaxoTools/TaxIGui/.github/actions/make-executable@main
