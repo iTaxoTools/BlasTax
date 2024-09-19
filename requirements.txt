@@ -17,7 +17,7 @@ itaxotools-calculate-distances==0.1.1
 itaxotools-common==0.3.3
 itaxotools-spart-parser==0.1.3
 itaxotools-taxi-gui @ git+https://github.com/iTaxoTools/TaxIGui.git@main
-itaxotools-taxi2==2.2.0
+itaxotools-taxi2 @ git+https://github.com/iTaxoTools/TaxI2.git@main
 kiwisolver==1.4.5
 macholib==1.16.3
 matplotlib==3.9.1
