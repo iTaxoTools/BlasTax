@@ -2,6 +2,13 @@
 
 # Build a Windows .exe binary
 
+if [[ "$BLASTAX_MERGE" == "true" ]]; then
+  echo "BLASTAX_MERGE is set to true. Executing alternate script."
+  SCRIPT_DIR=$(dirname "$0")
+  "$SCRIPT_DIR/make-executable-merge.sh"
+  exit 0
+fi
+
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Reading config..."

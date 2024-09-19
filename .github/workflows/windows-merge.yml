@@ -1,16 +1,16 @@
-name: Windows
+name: Windows-Merge
 
 on: workflow_dispatch
 # on: push
 
 env:
-  ARTIFACT_EXECUTABLE: itaxotools-blast-gui-windows
+  ARTIFACT_EXECUTABLE: itaxotools-blast-gui-merge-windows
 
 
 jobs:
 
   build-executable:
-    name: Build Windows executable
+    name: Build Windows executable (merge task only)
     runs-on: windows-2019
 
     steps:
@@ -29,11 +29,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Get BLAST+ binaries
-        uses: ./.github/actions/get-blast-binaries
-
-      - name: Update version file
-        run: python tools/update-version-file.py
+      - name: Set environment variable
+        run: echo "BLASTAX_MERGE=true" >> $GITHUB_ENV
 
       - name: Make executable
         uses: iTaxoTools/TaxIGui/.github/actions/make-executable@main
