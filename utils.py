@@ -338,7 +338,7 @@ def string_trimmer(
 
     # Autoincrement
     if auto:
-            new_komm = f"{new_komm}_{counter}"
+        new_komm = f"{new_komm}_{counter}"
     # Sanitization: Replace characters not in letters_and_numbers with '_'
     if sanitize:
         nk = ""

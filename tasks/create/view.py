@@ -8,7 +8,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup
+from itaxotools.taxi_gui.view.widgets import GLineEdit, LongLabel, RadioButtonGroup
 
 from ..common.view import BlastTaskView, GraphicTitleCard, PathDirectorySelector, PathFileSelector
 from . import long_description, pixmap_medium, title
@@ -21,6 +21,7 @@ class NameSelector(Card):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_main(text)
+        self.draw_warning()
 
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -35,12 +36,16 @@ class NameSelector(Card):
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(label)
         layout.addWidget(field, 1)
-        layout.addSpacing(136)
         layout.setSpacing(16)
         self.addLayout(layout)
 
         self.controls.label = label
         self.controls.field = field
+
+    def draw_warning(self):
+        warning = "WARNING:  For best results in downstream analysis, use short database names (10-20 characters) without special characters."
+        label = LongLabel(warning)
+        self.addWidget(label)
 
     def _handle_name_changed(self, name: str):
         self.nameChanged.emit(str(name))
@@ -109,7 +114,7 @@ class View(BlastTaskView):
         self.cards.database_type = TypeSelector("Database type")
 
         self.cards.input_path.set_placeholder_text("Sequences to go into the new database")
-        self.cards.database_name.set_placeholder_text("Determines filename and title")
+        self.cards.database_name.set_placeholder_text("Determines filenames and title")
         self.cards.output_path.set_placeholder_text("Database files will be saved here")
 
         layout = QtWidgets.QVBoxLayout()
