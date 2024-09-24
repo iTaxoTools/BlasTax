@@ -10,7 +10,7 @@ from itaxotools.taxi2.sequences import SequenceHandler
 def get_file_groups(
     directory: Path,
     matching_regex: str,
-) -> list[str]:
+) -> dict[str, set]:
     regex = re.compile(matching_regex)
     groups = defaultdict(set)
 

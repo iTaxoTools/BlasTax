@@ -271,6 +271,30 @@ class FloatPropertyLineEdit(PropertyLineEdit):
         self.setValidator(validator)
 
 
+class GSpinBox(QtWidgets.QSpinBox):
+    valueChangedSafe = QtCore.Signal(int)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setStyleSheet("QSpinBox { padding-left: 2px; padding-right: 4px; }")
+        self.valueChanged.connect(self._handleEdit)
+        self._guard = Guard()
+
+    def _handleEdit(self, value):
+        with self._guard:
+            self.valueChangedSafe.emit(value)
+
+    @override
+    def setValue(self, value):
+        if self._guard:
+            return
+        super().setValue(value)
+
+    @override
+    def wheelEvent(self, event):
+        event.ignore()
+
+
 class GDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     valueChangedSafe = QtCore.Signal(float)
 
