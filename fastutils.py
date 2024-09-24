@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from typing import TextIO, Tuple, Iterator, List, Optional, Any, Union, IO, Generator, cast
-import re
-import os
 import gzip
+import os
+import re
+from typing import IO, Any, Generator, Iterator, List, Optional, TextIO, Tuple, Union, cast
 
 rePattern = type(re.compile(""))
 
@@ -12,7 +12,7 @@ def ext_gz(path: Union[str, os.PathLike]) -> str:
     Returns the extension, returns internal extension for gzip archives
     """
     root, ext = os.path.splitext(path)
-    if ext == '.gz':
+    if ext == ".gz":
         _, ext = os.path.splitext(root)
     return ext
 
@@ -33,7 +33,7 @@ def make_template(filename: str) -> str:
         ext = ".fas"
     elif ext == ".":
         ext = ""
-    return filename + '#' + ext
+    return filename + "#" + ext
 
 
 def template_files(template: str, mode: str, compressed: bool) -> Generator[IO[Any], str, None]:
@@ -44,12 +44,12 @@ def template_files(template: str, mode: str, compressed: bool) -> Generator[IO[A
     Send 'stop' to finish iteration and close the last file.
     """
     # destruct the template
-    root, _, ext = template.partition('#')
+    root, _, ext = template.partition("#")
     # track the number of files
     count = 0
     while True:
         # generate new file name
-        filename = root + '_' + str(count) + ext
+        filename = root + "_" + str(count) + ext
         count += 1
         # open the file, possibly with gzip
         if compressed:
@@ -60,7 +60,7 @@ def template_files(template: str, mode: str, compressed: bool) -> Generator[IO[A
         with file:
             command = yield file
         # stop iteration if received 'stop' command
-        if command == 'stop':
+        if command == "stop":
             break
 
 
@@ -71,7 +71,7 @@ def fasta_iter(file: TextIO) -> Iterator[Tuple[str, List[str]]]:
         line = file.readline()
         if not line:
             return
-        if line[0] == '>':
+        if line[0] == ">":
             break
     # seqid now contains the first sequence identifier
     seqid = line
@@ -84,7 +84,7 @@ def fasta_iter(file: TextIO) -> Iterator[Tuple[str, List[str]]]:
                 # EOF => emit the last record
                 yield (seqid, sequence_list)
                 return
-            elif line[0] == '>':
+            elif line[0] == ">":
                 # next record starts => emit the current record and remember the new seqid
                 yield (seqid, sequence_list)
                 seqid = line
@@ -101,7 +101,7 @@ def fasta_iter_chunks(file: TextIO) -> Iterator[List[str]]:
         line = file.readline()
         if not line:
             return
-        if line[0] == '>':
+        if line[0] == ">":
             break
     # seqid now contains the first sequence identifier
     seqid = line
@@ -114,7 +114,7 @@ def fasta_iter_chunks(file: TextIO) -> Iterator[List[str]]:
                 # EOF => emit the last record
                 yield sequence_list
                 return
-            elif line[0] == '>':
+            elif line[0] == ">":
                 # next record starts => emit the current record and remember the new seqid
                 yield sequence_list
                 seqid = line
@@ -162,8 +162,7 @@ class PatternTokens:
     def __init__(self, text: str):
         """Creates peekable iterator over tokens in 'text'"""
         # standard iterator over tokens
-        self.tokens: Iterator[str] = map(lambda m: m.group(0), re.finditer(
-            r'\(|\)|"[^"]*"|\w+', text))
+        self.tokens: Iterator[str] = map(lambda m: m.group(0), re.finditer(r'\(|\)|"[^"]*"|\w+', text))
         # saves the peeked token
         self.peeked: Optional[str] = None
 
@@ -273,7 +272,7 @@ def parse_pattern_term(tokens: PatternTokens) -> Any:
         # the expression is a bare string
         next(tokens)
         return re.compile(re.escape(peeked[1:-1]), re.IGNORECASE)
-    elif peeked == '(':
+    elif peeked == "(":
         # the expression is a bracketed expression
         # remove '(' from the iterator
         next(tokens)
@@ -284,7 +283,7 @@ def parse_pattern_term(tokens: PatternTokens) -> Any:
             closing = next(tokens)
         except StopIteration:
             raise ValueError("EOL")
-        if closing == ')':
+        if closing == ")":
             return p
         else:
             raise ValueError(closing)
@@ -302,11 +301,9 @@ class Pattern:
             self.pattern = parse_pattern_or(PatternTokens(pattern))
         except ValueError as err:
             if err.args[0] == "parse error":
-                raise ValueError(
-                    f"Pattern '{pattern}' can't be parsed.") from err
+                raise ValueError(f"Pattern '{pattern}' can't be parsed.") from err
             elif err.args[0] == "EOL":
-                raise ValueError(
-                    f"Pattern '{pattern}' ends unexpectedly.") from err
+                raise ValueError(f"Pattern '{pattern}' ends unexpectedly.") from err
             else:
                 raise ValueError(f"Unexpected token: {err.args[0]}") from err
 
