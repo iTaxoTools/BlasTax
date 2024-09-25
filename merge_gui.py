@@ -12,9 +12,9 @@ def run():
     import config
     from itaxotools.taxi_gui.app import Application, skin
     from itaxotools.taxi_gui.main import Main
-    from tasks import fastmerge, merge
+    from tasks import fastmerge, groupmerge
 
-    config.tasks = [[merge], [fastmerge]]
+    config.tasks = [[groupmerge], [fastmerge]]
 
     app = Application()
     app.set_config(config)
