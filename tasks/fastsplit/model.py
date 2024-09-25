@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from fastsplit import parse_size
 from fastutils import make_template
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
@@ -74,11 +75,20 @@ class Model(BlastTaskModel):
             return ""
         return make_template(path.name)
 
+    def get_safe_max_size(self) -> int:
+        max_size = self.max_size or self.properties.max_size.default
+        try:
+            return parse_size(max_size)
+        except Exception:
+            return None
+
     def check_options_valid(self) -> bool:
-        if self.output_format != FileFormat.text:
-            return True
-        if self.split_option not in [SplitOption.max_size, SplitOption.split_n]:
-            return False
+        if self.output_format == FileFormat.text:
+            if self.split_option not in [SplitOption.max_size, SplitOption.split_n]:
+                return False
+        if self.split_option == SplitOption.max_size:
+            if not self.get_safe_max_size():
+                return False
         return True
 
     def get_options_dict(self) -> dict:
@@ -89,7 +99,7 @@ class Model(BlastTaskModel):
 
         match self.split_option:
             case SplitOption.max_size:
-                max_size = self.max_size
+                max_size = self.get_safe_max_size()
             case SplitOption.split_n:
                 split_n = self.split_n
             case SplitOption.pattern_identifier:
@@ -112,6 +122,7 @@ class Model(BlastTaskModel):
             input_path=self.input_path,
             output_path=self.output_path,
             filename_template=self.filename_template,
+            output_format=self.output_format.key,
             compress=self.compress,
             **self.get_options_dict(),
         )

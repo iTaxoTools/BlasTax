@@ -131,6 +131,7 @@ class FileFormatSelector(Card):
         radio = QtWidgets.QRadioButton(str(option))
         group.add(radio, option)
         field = PropertyLineEdit()
+        self.controls.pattern_identifier_radio = radio
         self.controls.pattern_identifier = field
         layout.addWidget(radio, row, 0)
         layout.addWidget(field, row, 1)
@@ -140,6 +141,7 @@ class FileFormatSelector(Card):
         radio = QtWidgets.QRadioButton(str(option))
         group.add(radio, option)
         field = PropertyLineEdit()
+        self.controls.pattern_sequence_radio = radio
         self.controls.pattern_sequence = field
         layout.addWidget(radio, row, 0)
         layout.addWidget(field, row, 1)
@@ -148,7 +150,7 @@ class FileFormatSelector(Card):
         layout.setRowMinimumHeight(row, 12)
         row += 1
 
-        label = QtWidgets.QLabel("The search words should be in double quotes.")
+        label = QtWidgets.QLabel("The search words for patterns should be in double quotes.")
         layout.addWidget(label, row, 0, 1, 2)
         row += 1
 
@@ -171,7 +173,10 @@ class FileFormatSelector(Card):
         self.controls.option_group.setValue(value)
 
     def set_pattern_available(self, value: bool):
-        self.controls.options.setEnabled(value)
+        self.controls.pattern_identifier_radio.setEnabled(value)
+        self.controls.pattern_identifier.setEnabled(value)
+        self.controls.pattern_sequence_radio.setEnabled(value)
+        self.controls.pattern_sequence.setEnabled(value)
 
 
 class View(BlastTaskView):
