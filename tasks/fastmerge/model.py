@@ -17,6 +17,7 @@ class Model(BlastTaskModel):
     format_group = Property(FormatGroup, FormatGroup.all)
     pattern_identifier = Property(str, "")
     pattern_sequence = Property(str, "")
+    compress = Property(bool, False)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -49,11 +50,12 @@ class Model(BlastTaskModel):
 
         self.exec(
             process.execute,
-            input_path=self.input_path,
+            input_paths=self.input_sequences.get_all_paths(),
             output_path=self.output_path,
             format_group=self.format_group,
             pattern_identifier=self.pattern_identifier,
             pattern_sequence=self.pattern_sequence,
+            compress=self.compress,
         )
 
     def open(self, path: Path):

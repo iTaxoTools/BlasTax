@@ -152,6 +152,9 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.format_group, self.cards.group.set_value)
         self.binder.bind(self.cards.group.valueChanged, object.properties.format_group)
 
+        self.binder.bind(object.properties.compress, self.cards.compress.setChecked)
+        self.binder.bind(self.cards.compress.toggled, object.properties.compress)
+
         self.cards.input.bind_batch_model(self.binder, object.input_sequences)
         self.cards.group.controls.pattern_identifier.bind_property(object.properties.pattern_identifier)
         self.cards.group.controls.pattern_sequence.bind_property(object.properties.pattern_sequence)

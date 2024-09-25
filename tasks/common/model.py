@@ -88,8 +88,11 @@ class PathListModel(QtCore.QAbstractListModel):
             if path.is_file():
                 all.add(path)
             elif path.is_dir():
-                for glob in self.globs:
-                    all.update(path.glob(f"*.{glob}"))
+                if self.globs:
+                    for glob in self.globs:
+                        all.update(path.glob(f"*.{glob}"))
+                else:
+                    all.update(x for x in path.iterdir() if x.is_file())
         return all
 
 
