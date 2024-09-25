@@ -58,7 +58,9 @@ task_pixmaps_large = LazyResourceCollection(
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Large.size),
     decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Large.size),
     rename=lambda: VectorPixmap(get_data("graphics/rename.svg"), Size.Large.size),
-    merge=lambda: VectorPixmap(get_data("graphics/merge.svg"), Size.Large.size),
+    fastmerge=lambda: VectorPixmap(get_data("graphics/fastmerge.svg"), Size.Large.size),
+    fastsplit=lambda: VectorPixmap(get_data("graphics/fastsplit.svg"), Size.Large.size),
+    groupmerge=lambda: VectorPixmap(get_data("graphics/groupmerge.svg"), Size.Large.size),
 )
 
 
@@ -71,5 +73,7 @@ task_pixmaps_medium = LazyResourceCollection(
     museo=lambda: VectorPixmap(get_data("graphics/museo.svg"), Size.Medium.size),
     decont=lambda: VectorPixmap(get_data("graphics/decont.svg"), Size.Medium.size),
     rename=lambda: VectorPixmap(get_data("graphics/rename.svg"), Size.Medium.size),
-    merge=lambda: VectorPixmap(get_data("graphics/merge.svg"), Size.Medium.size),
+    fastmerge=lambda: VectorPixmap(get_data("graphics/fastmerge.svg"), Size.Medium.size),
+    fastsplit=lambda: VectorPixmap(get_data("graphics/fastsplit.svg"), Size.Medium.size),
+    groupmerge=lambda: VectorPixmap(get_data("graphics/groupmerge.svg"), Size.Medium.size),
 )

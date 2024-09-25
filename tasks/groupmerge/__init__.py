@@ -3,8 +3,8 @@ from resources import task_pixmaps_large, task_pixmaps_medium
 title = "GroupMerge"
 description = "Merge FASTA files by filename"
 
-pixmap = task_pixmaps_large.merge
-pixmap_medium = task_pixmaps_medium.merge
+pixmap = task_pixmaps_large.groupmerge
+pixmap_medium = task_pixmaps_medium.groupmerge
 
 long_description = (
     "Given a folder containing multiple FASTA sequence files, match files "
