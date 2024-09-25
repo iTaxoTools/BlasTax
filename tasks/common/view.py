@@ -165,6 +165,17 @@ class PathFileSelector(PathSelector):
         self.selectedPath.emit(Path(filename))
 
 
+class PathFileOutSelector(PathSelector):
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Save file",
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
+
+
 class PathDirectorySelector(PathSelector):
     def _handle_browse(self, *args):
         filename = QtWidgets.QFileDialog.getExistingDirectory(

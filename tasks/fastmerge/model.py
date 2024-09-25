@@ -23,6 +23,8 @@ class Model(BlastTaskModel):
         self.can_open = True
         self.can_save = False
 
+        self.input_sequences.set_globs([])
+
         self.subtask_init = SubtaskModel(self, bind_busy=False)
         self.input_sequences.batch_mode = True
 
@@ -55,5 +57,4 @@ class Model(BlastTaskModel):
         )
 
     def open(self, path: Path):
-        self.input_path = path
-        self.output_path = path
+        self.input_sequences.open(path)

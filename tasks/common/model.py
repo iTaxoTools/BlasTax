@@ -46,8 +46,11 @@ class PathListModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.DisplayRole:
             path = self.paths[index.row()]
             if path.is_dir():
-                globs = ",".join(self.globs)
-                return str(path.absolute()) + os.path.sep + f"*.{{{globs}}}"
+                if self.globs:
+                    globs = ",".join(self.globs)
+                    return str(path.absolute()) + os.path.sep + f"*.{{{globs}}}"
+                else:
+                    return str(path.absolute()) + os.path.sep + "*"
             return str(path.absolute())
 
     @override
