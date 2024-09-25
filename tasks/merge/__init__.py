@@ -1,7 +1,7 @@
 from resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "FastaMerge"
-description = "Merge FASTA files"
+title = "GroupMerge"
+description = "Merge FASTA files by filename"
 
 pixmap = task_pixmaps_large.merge
 pixmap_medium = task_pixmaps_medium.merge

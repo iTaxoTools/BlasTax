@@ -248,18 +248,21 @@ class BatchQuerySelector(Card):
         group.add(single, False)
         group.add(batch, True)
 
-        layout = QtWidgets.QHBoxLayout()
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(label)
         layout.addWidget(single)
         layout.addWidget(batch, 1)
         layout.addSpacing(136)
         layout.setSpacing(16)
-        self.addLayout(layout)
+        self.addWidget(widget)
 
         self.controls.label = label
         self.controls.single = single
         self.controls.batch = batch
         self.controls.batch_mode = group
+        self.controls.header = widget
 
     def draw_single(self, symbol, text):
         label = QtWidgets.QLabel(f"{symbol}{text}:")
