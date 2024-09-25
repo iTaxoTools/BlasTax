@@ -16,9 +16,9 @@ from ..common.view import (
     PathDirectorySelector,
     PathFileSelector,
 )
-from ..common.widgets import PropertyLineEdit
+from ..common.widgets import IntPropertyLineEdit, PropertyLineEdit
 from . import long_description, pixmap_medium, title
-from .types import FileFormat
+from .types import FileFormat, SplitOption
 
 
 class TemplateSelector(Card):
@@ -60,6 +60,7 @@ class TemplateSelector(Card):
 
 class FileFormatSelector(Card):
     valueChanged = QtCore.Signal(FileFormat)
+    optionChanged = QtCore.Signal(SplitOption)
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
@@ -71,28 +72,28 @@ class FileFormatSelector(Card):
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
-        text = QtWidgets.QRadioButton(str(FileFormat.text))
         fasta = QtWidgets.QRadioButton(str(FileFormat.fasta))
         fastq = QtWidgets.QRadioButton(str(FileFormat.fastq))
+        text = QtWidgets.QRadioButton(str(FileFormat.text))
 
         group = RadioButtonGroup()
         group.valueChanged.connect(self._handle_value_changed)
-        group.add(text, FileFormat.text)
         group.add(fasta, FileFormat.fasta)
         group.add(fastq, FileFormat.fastq)
+        group.add(text, FileFormat.text)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(label)
-        layout.addWidget(text)
         layout.addWidget(fasta)
-        layout.addWidget(fastq, 1)
+        layout.addWidget(fastq)
+        layout.addWidget(text, 1)
         layout.setSpacing(16)
         self.addLayout(layout)
 
         self.controls.label = label
-        self.controls.all = all
         self.controls.fasta = fasta
         self.controls.fastq = fastq
+        self.controls.text = text
         self.controls.group = group
 
     def draw_options(self):
@@ -104,17 +105,43 @@ class FileFormatSelector(Card):
         layout.setColumnStretch(1, 1)
         row = 0
 
-        label = QtWidgets.QLabel("Sequence identifier pattern:")
+        group = RadioButtonGroup()
+        self.controls.option_group = group
+        group.valueChanged.connect(self._handle_option_changed)
+
+        option = SplitOption.max_size
+        radio = QtWidgets.QRadioButton(str(option))
+        group.add(radio, option)
         field = PropertyLineEdit()
-        self.controls.pattern_identifier = field
-        layout.addWidget(label, row, 0)
+        self.controls.max_size = field
+        layout.addWidget(radio, row, 0)
         layout.addWidget(field, row, 1)
         row += 1
 
-        label = QtWidgets.QLabel("Sequence motif pattern:")
+        option = SplitOption.split_n
+        radio = QtWidgets.QRadioButton(str(option))
+        group.add(radio, option)
+        field = IntPropertyLineEdit()
+        self.controls.split_n = field
+        layout.addWidget(radio, row, 0)
+        layout.addWidget(field, row, 1)
+        row += 1
+
+        option = SplitOption.pattern_identifier
+        radio = QtWidgets.QRadioButton(str(option))
+        group.add(radio, option)
+        field = PropertyLineEdit()
+        self.controls.pattern_identifier = field
+        layout.addWidget(radio, row, 0)
+        layout.addWidget(field, row, 1)
+        row += 1
+
+        option = SplitOption.pattern_sequence
+        radio = QtWidgets.QRadioButton(str(option))
+        group.add(radio, option)
         field = PropertyLineEdit()
         self.controls.pattern_sequence = field
-        layout.addWidget(label, row, 0)
+        layout.addWidget(radio, row, 0)
         layout.addWidget(field, row, 1)
         row += 1
 
@@ -133,13 +160,18 @@ class FileFormatSelector(Card):
 
     def _handle_value_changed(self, value: FileFormat):
         self.valueChanged.emit(value)
-        self.set_options_visible(value)
+
+    def _handle_option_changed(self, value: SplitOption):
+        self.optionChanged.emit(value)
 
     def set_value(self, value: FileFormat):
         self.controls.group.setValue(value)
 
-    def set_options_visible(self, value: FileFormat):
-        self.controls.options.roll.setAnimatedVisible(value != FileFormat.all)
+    def set_option(self, value: SplitOption):
+        self.controls.option_group.setValue(value)
+
+    def set_pattern_available(self, value: bool):
+        self.controls.options.setEnabled(value)
 
 
 class View(BlastTaskView):
@@ -154,7 +186,7 @@ class View(BlastTaskView):
         self.cards.input = PathFileSelector("\u25C0  Input file", self)
         self.cards.output = PathDirectorySelector("\u25C0  Output file", self)
         self.cards.template = TemplateSelector("Filename template", self)
-        # self.cards.group = FileFormatSelector("Output format", self)
+        self.cards.format = FileFormatSelector("Output format", self)
         self.cards.compress = OptionalCategory("Compress output", "", self)
 
         self.cards.input.set_placeholder_text("Sequence file that will be split")
@@ -191,15 +223,19 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.filename_template, self.cards.template.set_name)
         self.binder.bind(self.cards.template.nameChanged, object.properties.filename_template)
 
-        # self.binder.bind(object.properties.format_group, self.cards.options.set_value)
-        # self.binder.bind(self.cards.options.valueChanged, object.properties.format_group)
+        self.binder.bind(object.properties.output_format, self.cards.format.set_value)
+        self.binder.bind(self.cards.format.valueChanged, object.properties.output_format)
+        self.binder.bind(object.properties.split_option, self.cards.format.set_option)
+        self.binder.bind(self.cards.format.optionChanged, object.properties.split_option)
+        self.binder.bind(object.properties.pattern_available, self.cards.format.set_pattern_available)
 
         self.binder.bind(object.properties.compress, self.cards.compress.setChecked)
         self.binder.bind(self.cards.compress.toggled, object.properties.compress)
 
-        # self.cards.input.bind_batch_model(self.binder, object.input_sequences)
-        # self.cards.options.controls.pattern_identifier.bind_property(object.properties.pattern_identifier)
-        # self.cards.options.controls.pattern_sequence.bind_property(object.properties.pattern_sequence)
+        self.cards.format.controls.max_size.bind_property(object.properties.max_size)
+        self.cards.format.controls.split_n.bind_property(object.properties.split_n)
+        self.cards.format.controls.pattern_identifier.bind_property(object.properties.pattern_identifier)
+        self.cards.format.controls.pattern_sequence.bind_property(object.properties.pattern_sequence)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

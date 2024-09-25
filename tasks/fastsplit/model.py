@@ -20,7 +20,7 @@ class Model(BlastTaskModel):
     split_option = Property(SplitOption, SplitOption.max_size)
 
     split_n = Property(int, 4)
-    max_size = Property(int, 1024)
+    max_size = Property(str, "1k")
     pattern_available = Property(bool, True)
     pattern_identifier = Property(str, "")
     pattern_sequence = Property(str, "")

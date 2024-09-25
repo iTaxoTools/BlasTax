@@ -19,8 +19,8 @@ class FileFormat(Enum):
 class SplitOption(Enum):
     max_size = "Maximum size", "maxsize"
     split_n = "Number of output files", "split_n"
-    pattern_identifier = "Sequence identifier pattern", "seqid"
-    pattern_sequence = "Sequence motif pattern", "sequence"
+    pattern_identifier = "Seq. identifier pattern", "seqid"
+    pattern_sequence = "Seq. motif pattern", "sequence"
 
     def __init__(self, description: str, key: str):
         self.description = description
