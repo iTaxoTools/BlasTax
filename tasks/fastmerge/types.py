@@ -8,9 +8,9 @@ class FormatGroup(Enum):
     fasta = "FASTA only", {".fas", ".fasta"}
     fastq = "FASTQ only", {".fq", ".fastq"}
 
-    def __init__(self, text: str, types: set | None):
-        self.text = text
+    def __init__(self, description: str, types: set | None):
+        self.description = description
         self.types = types
 
     def __str__(self):
-        return self.text
+        return self.description
