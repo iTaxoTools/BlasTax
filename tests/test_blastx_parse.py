@@ -87,7 +87,7 @@ blastx_parse_tests = [
         "2gene1_nucleotides_query_blastmatchesadded_thresholds_common_name.fas",
         "2transcript_assembly_nucleotides.fas",
         "blastx_db",
-        "2gene1_nucleotides_query_threshold_expected.fas",
+        "2gene1_nucleotides_query_threshold_expected_common_name.fas",
         False,
         99.5,
         150,
