@@ -20,6 +20,7 @@ class BlastxParseTest(NamedTuple):
     all_matches: bool
     pident: float = 70.0
     length: int = 100
+    user_spec_name: str = None
 
     def validate(self, tmp_path: Path) -> None:
         input_path = TEST_DATA_DIR / self.input_path
@@ -30,9 +31,10 @@ class BlastxParseTest(NamedTuple):
         all_matches = self.all_matches
         pident = self.pident
         length = self.length
+        user_spec_name = self.user_spec_name
         expected_output = TEST_DATA_DIR / self.expected_output
         blastx_parse(
-            str(input_path), str(blast_result_path), str(output_path), str(extra_nucleotide_path), str(database_name),all_matches, pident, length
+            str(input_path), str(blast_result_path), str(output_path), str(extra_nucleotide_path), str(database_name),all_matches, pident, length, user_spec_name
         )
 
         assert output_path.exists()
@@ -50,7 +52,7 @@ class BlastxParseTest(NamedTuple):
 
 # New blast tests
 blastx_parse_tests = [
-    BlastxParseTest( # de-duplication, default
+    BlastxParseTest(  # de-duplication, default
         "2gene1_nucleotides_query.fas",
         "2gene1_nucleotides_query.out",
         "2gene1_nucleotides_query_blastmatchesadded.fas",
@@ -59,7 +61,7 @@ blastx_parse_tests = [
         "2gene1_nucleotides_query_expected.fas",
         False,
     ),
-    BlastxParseTest( # thresholds
+    BlastxParseTest(  # thresholds
         "2gene1_nucleotides_query.fas",
         "2gene1_nucleotides_query.out",
         "2gene1_nucleotides_query_blastmatchesadded_thresholds.fas",
@@ -70,14 +72,27 @@ blastx_parse_tests = [
         99.5,
         150,
     ),
-    BlastxParseTest( # all matches
+    BlastxParseTest(  # all matches
         "2gene1_nucleotides_query.fas",
         "2gene1_nucleotides_query.out",
         "2gene1_nucleotides_query_blastmatchesadded_all_matches.fas",
         "2transcript_assembly_nucleotides.fas",
         "blastx_db",
         "2gene1_nucleotides_query_allmatches_expected.fas",
-        True,),
+        True,
+    ),
+    BlastxParseTest( # thresholds, name fixing
+        "2gene1_nucleotides_query.fas",
+        "2gene1_nucleotides_query.out",
+        "2gene1_nucleotides_query_blastmatchesadded_thresholds_common_name.fas",
+        "2transcript_assembly_nucleotides.fas",
+        "blastx_db",
+        "2gene1_nucleotides_query_threshold_expected.fas",
+        False,
+        99.5,
+        150,
+        "shared_name"
+    ),
 ]
 
 

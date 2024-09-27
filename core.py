@@ -174,11 +174,17 @@ def blastx_parse(
     all_matches: bool = False,
     pident_arg: float = 70.0,
     length_arg: int = 100,
+    user_spec_name: str = None,
 ):
     infile = open(input_path, "r")
     infile2 = open(extra_nucleotide_path, "r")
     resultfile = open(blast_result_path, "r")
     outfile = open(output_path, "w")
+
+    # modify the user_spec_name
+    if user_spec_name is not None:
+        if not user_spec_name.startswith(">"):
+            user_spec_name = ">" + user_spec_name
 
     # Query-Sequences into output file
     for line in infile:
@@ -324,9 +330,15 @@ def blastx_parse(
                             dict_35_added[head_pident35_added] = head_seq35_added
 
     for header, sequence in dict_53_added.items():
-        outfile.write(f"{header}{sequence}")
+        if user_spec_name is not None:
+            outfile.write(f"{user_spec_name}\n{sequence}")
+        else:
+            outfile.write(f"{header}{sequence}")
     for header, sequence in dict_35_added.items():
-        outfile.write(f"{header}{sequence}")
+        if user_spec_name is not None:
+            outfile.write(f"{user_spec_name}\n{sequence}")
+        else:
+            outfile.write(f"{header}{sequence}")
 
     infile.close()
     outfile.close()
@@ -341,7 +353,12 @@ def blast_parse(
     all_matches: bool = False,
     pident_arg: float = None,
     length_arg: int = None,
+    user_spec_name: str = None,
 ):
+    # modify the user_spec_name
+    if user_spec_name is not None:
+        if not user_spec_name.startswith(">"):
+            user_spec_name = ">" + user_spec_name
     # copy the content of the input file to a new output file
     blastfile = open(blast_result_path, "r")
     try:
@@ -352,53 +369,68 @@ def blast_parse(
     # add upp blast hits to the new output file
     outfile = open(output_path, "a")
     outfile.write("\n")
+    # to keep multiple hits per query file but with unique seqid
     if all_matches:
-        for line in blastfile:
-            splitti = line.split("\t")
-            pident = float(splitti[1])
-            sequence = f"{splitti[4]}\n"
-            header = f">{database_name}_{splitti[3]}"
-            if pident_arg is not None and length_arg is not None:
-                if pident >= pident_arg and len(sequence) - 1 >= length_arg:
-                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
-            elif pident_arg is not None:
-                if pident > pident_arg:
-                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
-            elif length_arg is not None:
-                if len(sequence) - 1 >= length_arg:
-                    outfile.write(f"{header}_pident_{pident}\n{sequence}")
-            else:
-                outfile.write(f"{header}_pident_{pident}\n{sequence}")
-    else:
         dict_head_pident = {}
         dict_head_seq = {}
         for line in blastfile:
             splitti = line.split("\t")
-            # print(splitti, splitti[3])
             pident = splitti[1]
-            sequence_line = f"{splitti[4]}\n"
+            sequence = f"{splitti[4]}\n"
             short_header = f">{database_name}_{splitti[3]}"
-
+            # keep track for the seqid to keep only unique seqid
             if short_header in dict_head_seq:
                 old_seqlen = len(dict_head_seq[short_header])
                 old_pident = dict_head_pident[short_header]
-                if len(sequence_line) > old_seqlen:
+                if len(sequence) > old_seqlen:
                     dict_head_pident[short_header] = pident[:-2]
-                    dict_head_seq[short_header] = sequence_line
+                    dict_head_seq[short_header] = sequence
                 elif pident[:-2] > old_pident:
                     dict_head_pident[short_header] = pident[:-2]
-                    dict_head_seq[short_header] = sequence_line
+                    dict_head_seq[short_header] = sequence
                 else:
                     continue
-
+            # check whether a hit fulfills requirements to be added to the dictionary with unique seID
             else:
-                dict_head_pident[short_header] = pident[:-2]
-                dict_head_seq[short_header] = sequence_line
-        #                list_of_headers.append(short_header)
+                if pident_arg is not None and length_arg is not None:
+                    if pident >= pident_arg and len(sequence) - 1 >= length_arg:
+                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_seq[short_header] = sequence
+                elif pident_arg is not None:
+                    if pident > pident_arg:
+                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_seq[short_header] = sequence
+                elif length_arg is not None:
+                    if len(sequence) - 1 >= length_arg:
+                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_seq[short_header] = sequence
+                else:
+                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_seq[short_header] = sequence
 
-        #            outfile.writelines([header_line, sequence_line])
         for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
-            outfile.write(f"{header}_pident_{dict_head_pident[header]}\n{sequence}")
+            if user_spec_name is not None:
+                outfile.write(f"{user_spec_name}\n{sequence}")
+            else:
+                outfile.write(f"{header}_pident_{dict_head_pident[header]}\n{sequence}")
+    # to keep just one hit per query file
+    else:
+        max_seq_len = 0
+        for line in blastfile:
+            splitti = line.split("\t")
+            pident = splitti[1]
+            sequence_line = f"{splitti[4]}\n"
+            header = f">{database_name}_{splitti[3]}"
+            if (len(sequence_line) - 1) > max_seq_len:
+                max_seq_len = len(sequence_line) - 1
+                final_header = header
+                final_sequence_line = sequence_line
+                final_pident = pident
+
+        if user_spec_name is not None:
+            outfile.write(f"{user_spec_name}\n{final_sequence_line}")
+        else:
+            outfile.write(f"{final_header}_pident_{final_pident}\n{final_sequence_line}")
 
     outfile.close()
     blastfile.close()
@@ -410,9 +442,18 @@ def museoscript_original_reads(
     output_path: Path | str,
     pident_threshold: float,
 ):
+    query_list = {}
+    header = None
+    # read the file into dictionary when multilines seq -> one value
     with open(original_query_path, "r") as org_query:
-        query_list = org_query.readlines()
-
+        for line in org_query:
+            line = line.strip()
+            if line.startswith(">"):
+                header = line[1:]
+                query_list[header] = ""
+            else:
+                query_list[header] += line  # Concatenate sequence lines
+    #  write original reads to the output file
     with open(blast_path, "r") as blast:
         with open(output_path, "w") as museo:
             for line in blast:
@@ -420,10 +461,15 @@ def museoscript_original_reads(
                 pident = splitti[4]
                 header = splitti[0]
                 if float(pident) >= pident_threshold:
-                    for i, element in enumerate(query_list):
-                        if header in element:
-                            museo.write(f">{splitti[0]}_{splitti[1]}_{pident}\n")
-                            museo.write(query_list[i + 1])
+                    # Search for a matching key in the query_sequences where the BLAST header is a substring
+                    matching_header = None
+                    for query_header in query_list:
+                        if header in query_header:
+                            matching_header = query_header
+                            break
+                    if matching_header:
+                        museo.write(f">{splitti[0]}_{splitti[1]}_{pident}\n")
+                        museo.write(query_list[matching_header] + "\n")
 
 
 def museoscript_parse(

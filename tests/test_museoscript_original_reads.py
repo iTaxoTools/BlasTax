@@ -51,6 +51,13 @@ museo_orig_tests = [
         0.9,
         "museoscript_output_orig_expected.out",
     ),
+MuseoOrigTest(
+        "blast_output_fastq_expected.out",
+        "HI.4019.002.index_7.ANN0831_R1_small_multilines.fasta",
+        "museoscript_output_orig_multilines.out",
+        0.9,
+        "museoscript_output_orig_expected.out",
+    ),
 ]
 
 

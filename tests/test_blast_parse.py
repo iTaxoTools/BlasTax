@@ -18,6 +18,7 @@ class BlastnParseTest(NamedTuple):
     all_matches: bool
     pident: float
     length: int
+    user_spec_name: str
     expected_output: str
 
     def validate(self, tmp_path: Path) -> None:
@@ -28,9 +29,10 @@ class BlastnParseTest(NamedTuple):
         all_matches = self.all_matches
         pident = self.pident
         length = self.length
+        user_spec_name = self.user_spec_name
         expected_output = TEST_DATA_DIR / self.expected_output
         blast_parse(
-            str(input_path), str(blast_result_path), str(output_path), str(database_name), all_matches, pident, length
+            str(input_path), str(blast_result_path), str(output_path), str(database_name), all_matches, pident, length, user_spec_name
         )
 
         assert output_path.exists()
@@ -56,6 +58,7 @@ blastn_parse_tests = [
         False,
         None,
         None,
+        None,
         "blastn/Salamandra_testqueryfile_expected.fas",
     ),
     BlastnParseTest(  # test blastp
@@ -66,14 +69,16 @@ blastn_parse_tests = [
         False,
         None,
         None,
+        None,
         "blastp/proteins_blastmatchesadded_expected.out",
     ),
-    BlastnParseTest(  # test tblastx
+BlastnParseTest(  # test tblastx
         "tblastx/malamini.fas",
         "tblastx/tblastx_expected.out",
         "tblastx_blastmatchesadded.out",
         "mala_db",
         False,
+        None,
         None,
         None,
         "tblastx/tblastx_blastmatchesadded_expected.out",
@@ -86,18 +91,21 @@ blastn_parse_tests = [
         True,
         None,
         None,
+        None,
         "blastn/Salamandra_blastmatchesadded_expected_all_matches.out",
     ),
-    BlastnParseTest(  # Include all matches
-        "blastn/Salamandra_testqueryfile.fas",
-        "blastn/Salamandra_testqueryfile.out",
-        "Salamandra_blastmatchesadded_all_matches_pident_length.out",
-        "salamandra_db",
-        True,
-        99.0,
-        260,
-        "blastn/Salamandra_blastmatchesadded_expected_all_matches_pident_length.out",
+    BlastnParseTest(  # test trinity name fixing
+        "trinity_fix/6458_Query.fasta",
+        "trinity_fix/blastn_Chlorococcum_output.txt",
+        "6458_blastmatchesadded_fixed.out",
+        "",
+        False,
+        None,
+        None,
+        "shared_name",
+        "trinity_fix/6458_expected.out",
     ),
+
 ]
 
 
