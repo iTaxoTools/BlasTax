@@ -29,6 +29,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Install macOS wheels
+        uses: iTaxoTools/TaxIGui/.github/actions/install-macos-wheels@main
+
       - name: Get BLAST+ binaries
         uses: ./.github/actions/get-blast-binaries
 
