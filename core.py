@@ -675,7 +675,7 @@ def fasta_name_modifier(
     sequenzen = []
     counter = 1
 
-    with open(input_name, "r", encoding="utf-8") as file:
+    with open(input_name, "r", encoding="utf-8", errors="surrogateescape") as file:
         for z in file:
             if ">" in z:
                 strippi = z.strip("\n")

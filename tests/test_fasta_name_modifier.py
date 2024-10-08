@@ -52,10 +52,10 @@ class FastaNameModifierTest(NamedTuple):
         assert output_name.exists()
 
         # Verify that the output matches the expected output
-        with open(output_name, "r") as output_file:
+        with open(output_name, "r", encoding="utf-8", errors="surrogateescape") as output_file:
             output_data = output_file.read()
 
-        with open(expected_output, "r") as expected_file:
+        with open(expected_output, "r", encoding="utf-8", errors="surrogateescape") as expected_file:
             expected_data = expected_file.read()
 
         assert output_data == expected_data
