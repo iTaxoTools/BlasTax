@@ -7,6 +7,7 @@ addopts = [
 [tool.ruff]
 extend-select = ["I"]
 line-length = 120
+ignore = ["E731"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["itaxotools"]
