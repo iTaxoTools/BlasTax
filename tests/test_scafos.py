@@ -119,6 +119,24 @@ fuse_tests = [
             Sequence("id4", "TGGT", {"species": "Y"}),
         ]),
     ),
+    FuseTest(
+        FuseMethod.ByFillingGaps,
+        Sequences([]),
+        Sequences([]),
+    ),
+    FuseTest(
+        FuseMethod.ByFillingGaps,
+        Sequences([
+            Sequence("id1", "AC--", {"species": "X"}),
+            Sequence("id2", "--GT", {"species": "X"}),
+            Sequence("id3", "---A", {"species": "Y"}),
+            Sequence("id4", "T---", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("X_id1_id2", "ACGT", {"species": "X"}),
+            Sequence("Y_id3_id4", "T--A", {"species": "Y"}),
+        ]),
+    ),
 ]
 
 

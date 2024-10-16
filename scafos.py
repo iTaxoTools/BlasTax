@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from enum import Enum, auto
-from itertools import groupby
+from itertools import chain, groupby
 from pathlib import Path
 from typing import Callable, Iterator, NamedTuple
 
@@ -10,6 +10,8 @@ from itaxotools.taxi2.distances import Distance, DistanceHandler, DistanceMetric
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.pairs import SequencePair, SequencePairs
 from itaxotools.taxi2.sequences import Sequence, Sequences
+
+GAP_CHARACTERS = "-?*"
 
 
 class TagMethod(Enum):
@@ -21,6 +23,7 @@ class TagMethod(Enum):
 class FuseMethod(Enum):
     ByMaxLength = auto()
     ByMinimumDistance = auto()
+    ByFillingGaps = auto()
 
 
 class DistanceGroups(NamedTuple):
@@ -77,9 +80,7 @@ def tag_species_by_method(sequence: Sequence, method: TagMethod) -> Sequence:
 
 def count_non_gaps(seq: str) -> int:
     counter = Counter(seq)
-    gaps = counter["-"]
-    gaps += counter["?"]
-    gaps += counter["*"]
+    gaps = sum(counter[gap] for gap in GAP_CHARACTERS)
     return counter.total() - gaps
 
 
@@ -194,8 +195,47 @@ def fuse_by_minimum_distance(
     return Sequences(list(sequences))
 
 
+def _group_sequences_by_species(data: Sequences) -> Iterator[Iterator[Sequence]]:
+    keyfunc = lambda item: item.extras["species"]
+    data = sorted(data, key=keyfunc)
+    for _, group in groupby(data, keyfunc):
+        yield list(group)
+
+
+def _get_most_common_character(characters: Iterator[str]) -> str:
+    counter = Counter(characters)
+    for gap in GAP_CHARACTERS:
+        del counter[gap]
+    common = counter.most_common(1)
+    if not common:
+        return GAP_CHARACTERS[0]
+    return common[0][0]
+
+
+def _assemble_sequence_from_most_common_characters(seqs: Iterator[str]) -> str:
+    sequence = "".join(_get_most_common_character(characters) for characters in zip(*seqs))
+    return sequence
+
+
+def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[list[Sequence]]) -> Iterator[Sequences]:
+    for group in groups:
+        ids = (sequence.id for sequence in group)
+        seqs = (sequence.seq for sequence in group)
+        species = group[0].extras["species"]
+        id = "_".join(chain([species], ids))
+        seq = _assemble_sequence_from_most_common_characters(seqs)
+        yield Sequence(id, seq, extras=dict(species=species))
+
+
+def fuse_by_filling_gaps(sequences: Sequences) -> Sequences:
+    groups = _group_sequences_by_species(sequences)
+    sequences = _aggregate_sequence_groups_by_filling_gaps(groups)
+    return Sequences(list(sequences))
+
+
 def get_fuse_method_callable(method: FuseMethod) -> Callable:
     return {
         FuseMethod.ByMaxLength: fuse_by_max_length,
         FuseMethod.ByMinimumDistance: fuse_by_minimum_distance,
+        FuseMethod.ByFillingGaps: fuse_by_filling_gaps,
     }[method]
