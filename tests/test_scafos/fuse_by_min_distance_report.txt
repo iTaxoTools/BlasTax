@@ -1,0 +1,13 @@
+seqid (query)	species (query)	seqid (reference)	species (reference)	p
+id1	X	id2	X	0.000000
+id1	X	id3	Y	1.000000
+id1	X	id4	Y	0.500000
+id2	X	id1	X	0.000000
+id2	X	id3	Y	1.000000
+id2	X	id4	Y	0.500000
+id3	Y	id1	X	1.000000
+id3	Y	id2	X	1.000000
+id3	Y	id4	Y	0.500000
+id4	Y	id1	X	0.500000
+id4	Y	id2	X	0.500000
+id4	Y	id3	Y	0.500000

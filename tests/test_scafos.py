@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import NamedTuple
 
 import pytest
@@ -7,9 +8,22 @@ from scafos import (
     FuseMethod,
     TagMethod,
     count_non_gaps,
+    fuse_by_minimum_distance,
     get_fuse_method_callable,
     tag_species_by_method,
 )
+
+from .pytest_utils import assert_file_equals
+
+TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
+
+
+def assert_sequences_equal(output_sequences: Sequences, expected_sequences: Sequences):
+    generated_list = list(output_sequences)
+    expected_list = list(expected_sequences)
+    assert len(expected_list) == len(generated_list)
+    for sequence in expected_list:
+        assert sequence in generated_list
 
 
 class TagTest(NamedTuple):
@@ -38,11 +52,7 @@ class FuseTest(NamedTuple):
 
     def validate(self):
         output = get_fuse_method_callable(self.method)(self.input)
-        generated_list = list(output)
-        expected_list = list(self.expected)
-        assert len(expected_list) == len(generated_list)
-        for sequence in expected_list:
-            assert sequence in generated_list
+        assert_sequences_equal(output, self.expected)
 
 
 tag_tests = [
@@ -120,3 +130,28 @@ def test_tag_species(test: TagTest):
 @pytest.mark.parametrize("test", fuse_tests)
 def test_fuse_sequences(test: FuseTest):
     test.validate()
+
+
+def test_fuse_by_min_reports(tmp_path: Path):
+    distance_report_output = tmp_path / "distance_report.txt"
+    mean_report_output = tmp_path / "mean_report.txt"
+    distance_report_expected = TEST_DATA_DIR / "fuse_by_min_distance_report.txt"
+    mean_report_expected = TEST_DATA_DIR / "fuse_by_min_mean_report.txt"
+
+    sequences_input = Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id2", "ACGT", {"species": "X"}),
+            Sequence("id3", "TGCA", {"species": "Y"}),
+            Sequence("id4", "TGGT", {"species": "Y"}),
+    ])
+
+    sequences_expected = Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id4", "TGGT", {"species": "Y"}),
+    ])
+
+    output = fuse_by_minimum_distance(sequences_input, distance_report_output, mean_report_output)
+
+    assert_sequences_equal(output, sequences_expected)
+    assert_file_equals(distance_report_output, distance_report_expected)
+    assert_file_equals(mean_report_output, mean_report_expected)

@@ -1,0 +1,5 @@
+id	species	mean
+id1	X	0.75
+id2	X	0.75
+id3	Y	1.0
+id4	Y	0.5
