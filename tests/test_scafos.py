@@ -8,6 +8,7 @@ from scafos import (
     FuseMethod,
     TagMethod,
     count_non_gaps,
+    fuse_by_filling_gaps,
     fuse_by_minimum_distance,
     get_fuse_method_callable,
     tag_species_by_method,
@@ -173,3 +174,14 @@ def test_fuse_by_min_reports(tmp_path: Path):
     assert_sequences_equal(output, sequences_expected)
     assert_file_equals(distance_report_output, distance_report_expected)
     assert_file_equals(mean_report_output, mean_report_expected)
+
+
+def test_fuse_by_filling_gaps_uneven_lengths():
+    with pytest.raises(Exception, match="'Y'"):
+        sequences = Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id2", "ACGT", {"species": "X"}),
+            Sequence("id3", "TGCA", {"species": "Y"}),
+            Sequence("id4", "TGGTGGT", {"species": "Y"}),
+        ])
+        fuse_by_filling_gaps(sequences)

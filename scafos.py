@@ -212,18 +212,22 @@ def _get_most_common_character(characters: Iterator[str]) -> str:
     return common[0][0]
 
 
-def _assemble_sequence_from_most_common_characters(seqs: Iterator[str]) -> str:
+def _assemble_sequence_from_most_common_characters(seqs: list[str]) -> str:
+    if not all(len(s) == len(seqs[0]) for s in seqs):
+        return None
     sequence = "".join(_get_most_common_character(characters) for characters in zip(*seqs))
     return sequence
 
 
 def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[list[Sequence]]) -> Iterator[Sequences]:
     for group in groups:
-        ids = (sequence.id for sequence in group)
-        seqs = (sequence.seq for sequence in group)
+        ids = [sequence.id for sequence in group]
+        seqs = [sequence.seq for sequence in group]
         species = group[0].extras["species"]
         id = "_".join(chain([species], ids))
         seq = _assemble_sequence_from_most_common_characters(seqs)
+        if seq is None:
+            raise Exception(f"Not all sequences are of the same length for species: {repr(species)}")
         yield Sequence(id, seq, extras=dict(species=species))
 
 
