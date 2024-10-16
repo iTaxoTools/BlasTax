@@ -3,7 +3,13 @@ from typing import NamedTuple
 import pytest
 
 from itaxotools.taxi2.sequences import Sequence, Sequences
-from scafos import TagMethod, count_non_gaps, fuse_by_max_length, fuse_by_min_distance, tag_species_by_method
+from scafos import (
+    FuseMethod,
+    TagMethod,
+    count_non_gaps,
+    get_fuse_method_callable,
+    tag_species_by_method,
+)
 
 
 class TagTest(NamedTuple):
@@ -26,24 +32,12 @@ class GapTest(NamedTuple):
 
 
 class FuseTest(NamedTuple):
+    method: FuseMethod
     input: Sequences
     expected: Sequences
 
     def validate(self):
-        output = fuse_by_max_length(self.input)
-        generated_list = list(output)
-        expected_list = list(self.expected)
-        assert len(expected_list) == len(generated_list)
-        for sequence in expected_list:
-            assert sequence in generated_list
-
-
-class FuseTest2(NamedTuple):
-    input: Sequences
-    expected: Sequences
-
-    def validate(self):
-        output = fuse_by_min_distance(self.input)
+        output = get_fuse_method_callable(self.method)(self.input)
         generated_list = list(output)
         expected_list = list(self.expected)
         assert len(expected_list) == len(generated_list)
@@ -80,10 +74,12 @@ gap_tests = [
 
 fuse_tests = [
     FuseTest(
+        FuseMethod.ByMaxLength,
         Sequences([]),
         Sequences([]),
     ),
     FuseTest(
+        FuseMethod.ByMaxLength,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
             Sequence("id2", "ACGT", {"species": "X"}),
@@ -95,15 +91,13 @@ fuse_tests = [
             Sequence("id3", "ACGT", {"species": "Y"}),
         ]),
     ),
-]
-
-
-fuse_tests2 = [
-    # FuseTest2(
-    #     Sequences([]),
-    #     Sequences([]),
-    # ),
-    FuseTest2(
+    FuseTest(
+        FuseMethod.ByMinimumDistance,
+        Sequences([]),
+        Sequences([]),
+    ),
+    FuseTest(
+        FuseMethod.ByMinimumDistance,
         Sequences([
             Sequence("id1", "ACGT", {"species": "X"}),
             Sequence("id2", "ACGT", {"species": "X"}),
@@ -123,15 +117,6 @@ def test_tag_species(test: TagTest):
     test.validate()
 
 
-@pytest.mark.parametrize("test", tag_tests)
-def test_gap_species(test: GapTest):
-    test.validate()
-
-
 @pytest.mark.parametrize("test", fuse_tests)
 def test_fuse_sequences(test: FuseTest):
-    test.validate()
-
-@pytest.mark.parametrize("test", fuse_tests2)
-def test_fuse_sequences_2(test: FuseTest2):
     test.validate()

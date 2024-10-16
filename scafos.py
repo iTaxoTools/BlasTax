@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from enum import Enum, auto
 from itertools import groupby
 from pathlib import Path
-from typing import Iterator, NamedTuple
+from typing import Callable, Iterator, NamedTuple
 
 from itaxotools.taxi2.distances import Distance, DistanceHandler, DistanceMetric
 from itaxotools.taxi2.handlers import FileHandler
@@ -16,6 +16,11 @@ class TagMethod(Enum):
     SpeciesAfterPipe = auto()
     SpeciesBeforeFirstUnderscore = auto()
     SpeciesBeforeSecondUnderscore = auto()
+
+
+class FuseMethod(Enum):
+    ByMaxLength = auto()
+    ByMinimumDistance = auto()
 
 
 class DistanceGroups(NamedTuple):
@@ -94,32 +99,32 @@ def fuse_by_max_length(sequences: Sequences) -> Sequences:
     return Sequences(list(species_dict.values()))
 
 
-def drop_identical_pairs(pairs: Iterator[SequencePair]) -> Iterator[SequencePair]:
+def _drop_identical_pairs(pairs: Iterator[SequencePair]) -> Iterator[SequencePair]:
     for pair in pairs:
         if pair.x.id != pair.y.id:
             yield pair
 
 
-def calculate_distances(pairs: Iterator[SequencePair]) -> Iterator[Distance]:
+def _calculate_distances(pairs: Iterator[SequencePair]) -> Iterator[Distance]:
     metric = DistanceMetric.Uncorrected()
     for x, y in pairs:
         yield metric.calculate(x, y)
 
 
-def report_distances(distances: Iterator[Distance], path: Path) -> Iterator[Distance]:
+def _report_distances(distances: Iterator[Distance], path: Path) -> Iterator[Distance]:
     with DistanceHandler.Linear.WithExtras(path, "w") as file:
         for distance in distances:
             file.write(distance)
             yield distance
 
 
-def group_distances(distances: Iterator[Distance]) -> Iterator[DistanceGroups]:
+def _group_distances_by_left_id(distances: Iterator[Distance]) -> Iterator[DistanceGroups]:
     keyfunc = lambda distance: distance.x.id
     for left, group in groupby(distances, keyfunc):
         yield DistanceGroups(left, list(group))
 
 
-def aggregate_groups(groups: Iterator[DistanceGroups]) -> Iterator[AggregatedDistances]:
+def _aggregate_distance_groups(groups: Iterator[DistanceGroups]) -> Iterator[AggregatedDistances]:
     for group in groups:
         distance_dict: dict[str, list[float]] = defaultdict(list)
         for distance in group.others:
@@ -131,7 +136,7 @@ def aggregate_groups(groups: Iterator[DistanceGroups]) -> Iterator[AggregatedDis
         yield AggregatedDistances(sequence, distance_dict)
 
 
-def calculate_mean(data: Iterator[AggregatedDistances]) -> Iterator[AggregatedMean]:
+def _calculate_means(data: Iterator[AggregatedDistances]) -> Iterator[AggregatedMean]:
     for item in data:
         species = item.sequence.extras["species"]
         if species in item.species_distances:
@@ -144,36 +149,53 @@ def calculate_mean(data: Iterator[AggregatedDistances]) -> Iterator[AggregatedMe
         yield AggregatedMean(item.sequence, mean_of_means)
 
 
-def report_means(means: Iterator[AggregatedMean], path: Path) -> Iterator[AggregatedMean]:
+def _report_means(means: Iterator[AggregatedMean], path: Path) -> Iterator[AggregatedMean]:
     with FileHandler.Tabular.Tabfile(path, "w", columns=["id", "species", "mean"]) as file:
         for item in means:
             file.write((item.sequence.id, item.sequence.extras["species"], str(item.mean)))
             yield item
 
 
-def group_species(data: Iterator[AggregatedMean]) -> Iterator[DistanceGroups]:
+def _group_means_by_species(data: Iterator[AggregatedMean]) -> Iterator[DistanceGroups]:
     keyfunc = lambda item: item.sequence.extras["species"]
     data = sorted(data, key=keyfunc)
     for key, group in groupby(data, keyfunc):
         yield MeanGroups(key, list(group))
 
 
-def keep_minimum_mean(groups: Iterator[MeanGroups]) -> Iterator[Sequence]:
+def _keep_minimum_mean(groups: Iterator[MeanGroups]) -> Iterator[Sequence]:
     for group in groups:
         selected = min(group.items, key=lambda item: item.mean)
         yield selected.sequence
 
 
-def fuse_by_min_distance(sequences: Sequences) -> Sequences:
+def fuse_by_minimum_distance(
+    sequences: Sequences,
+    distance_report: Path = None,
+    mean_report: Path = None,
+) -> Sequences:
     pairs = SequencePairs.fromProduct(sequences, sequences)
-    pairs = drop_identical_pairs(pairs)
-    distances = calculate_distances(pairs)
-    distances = report_distances(distances, "report_distances.txt")
-    groups = group_distances(distances)
-    aggregated = aggregate_groups(groups)
-    means = calculate_mean(aggregated)
-    means = report_means(means, "report_means.txt")
-    groups = group_species(means)
-    sequences = keep_minimum_mean(groups)
+    pairs = _drop_identical_pairs(pairs)
+    distances = _calculate_distances(pairs)
+
+    if distance_report is not None:
+        distances = _report_distances(distances, distance_report)
+
+    groups = _group_distances_by_left_id(distances)
+    aggregated = _aggregate_distance_groups(groups)
+    means = _calculate_means(aggregated)
+
+    if mean_report is not None:
+        means = _report_means(means, mean_report)
+
+    groups = _group_means_by_species(means)
+    sequences = _keep_minimum_mean(groups)
 
     return Sequences(list(sequences))
+
+
+def get_fuse_method_callable(method: FuseMethod) -> Callable:
+    return {
+        FuseMethod.ByMaxLength: fuse_by_max_length,
+        FuseMethod.ByMinimumDistance: fuse_by_minimum_distance,
+    }[method]
