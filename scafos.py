@@ -20,7 +20,7 @@ class TagMethod(Enum):
     SpeciesBeforeSecondUnderscore = auto()
 
 
-class FuseMethod(Enum):
+class AmalgamationMethod(Enum):
     ByMaxLength = auto()
     ByMinimumDistance = auto()
     ByFillingGaps = auto()
@@ -237,9 +237,9 @@ def fuse_by_filling_gaps(sequences: Sequences) -> Sequences:
     return Sequences(list(sequences))
 
 
-def get_fuse_method_callable(method: FuseMethod) -> Callable:
+def get_fuse_method_callable(method: AmalgamationMethod) -> Callable:
     return {
-        FuseMethod.ByMaxLength: fuse_by_max_length,
-        FuseMethod.ByMinimumDistance: fuse_by_minimum_distance,
-        FuseMethod.ByFillingGaps: fuse_by_filling_gaps,
+        AmalgamationMethod.ByMaxLength: fuse_by_max_length,
+        AmalgamationMethod.ByMinimumDistance: fuse_by_minimum_distance,
+        AmalgamationMethod.ByFillingGaps: fuse_by_filling_gaps,
     }[method]

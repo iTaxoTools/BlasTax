@@ -12,9 +12,9 @@ def run():
     import config
     from itaxotools.taxi_gui.app import Application, skin
     from itaxotools.taxi_gui.main import Main
-    from tasks import fastmerge, fastsplit, groupmerge
+    from tasks import scafos
 
-    config.tasks = [[groupmerge], [fastmerge], [fastsplit]]
+    config.tasks = [scafos]
 
     app = Application()
     app.set_config(config)

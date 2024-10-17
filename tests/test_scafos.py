@@ -5,7 +5,7 @@ import pytest
 
 from itaxotools.taxi2.sequences import Sequence, Sequences
 from scafos import (
-    FuseMethod,
+    AmalgamationMethod,
     TagMethod,
     count_non_gaps,
     fuse_by_filling_gaps,
@@ -47,7 +47,7 @@ class GapTest(NamedTuple):
 
 
 class FuseTest(NamedTuple):
-    method: FuseMethod
+    method: AmalgamationMethod
     input: Sequences
     expected: Sequences
 
@@ -85,12 +85,12 @@ gap_tests = [
 
 fuse_tests = [
     FuseTest(
-        FuseMethod.ByMaxLength,
+        AmalgamationMethod.ByMaxLength,
         Sequences([]),
         Sequences([]),
     ),
     FuseTest(
-        FuseMethod.ByMaxLength,
+        AmalgamationMethod.ByMaxLength,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
             Sequence("id2", "ACGT", {"species": "X"}),
@@ -103,12 +103,12 @@ fuse_tests = [
         ]),
     ),
     FuseTest(
-        FuseMethod.ByMinimumDistance,
+        AmalgamationMethod.ByMinimumDistance,
         Sequences([]),
         Sequences([]),
     ),
     FuseTest(
-        FuseMethod.ByMinimumDistance,
+        AmalgamationMethod.ByMinimumDistance,
         Sequences([
             Sequence("id1", "ACGT", {"species": "X"}),
             Sequence("id2", "ACGT", {"species": "X"}),
@@ -121,12 +121,12 @@ fuse_tests = [
         ]),
     ),
     FuseTest(
-        FuseMethod.ByFillingGaps,
+        AmalgamationMethod.ByFillingGaps,
         Sequences([]),
         Sequences([]),
     ),
     FuseTest(
-        FuseMethod.ByFillingGaps,
+        AmalgamationMethod.ByFillingGaps,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
             Sequence("id2", "--GT", {"species": "X"}),
