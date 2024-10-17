@@ -6,13 +6,13 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
-from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import NoWheelComboBox
 
 from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
+    OptionCard,
     OutputDirectorySelector,
 )
 from ..common.widgets import (
@@ -21,61 +21,6 @@ from ..common.widgets import (
 )
 from . import long_description, pixmap_medium, title
 from .types import Direction
-
-
-class ClickableWidget(QtWidgets.QWidget):
-    clicked = QtCore.Signal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._mouse_pressed = False
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self._mouse_pressed = True
-
-    def mouseReleaseEvent(self, event):
-        if self._mouse_pressed and event.button() == QtCore.Qt.LeftButton:
-            self._mouse_pressed = False
-            if self.rect().contains(event.pos()):
-                self.clicked.emit()
-
-    def leaveEvent(self, event):
-        self._mouse_pressed = False
-        super().leaveEvent(event)
-
-
-class OptionCard(Card):
-    toggled = QtCore.Signal(bool)
-
-    def __init__(self, text, description, parent=None):
-        super().__init__(parent)
-        self.draw_title(text, description)
-
-    def draw_title(self, text, description):
-        title = QtWidgets.QCheckBox(" " + text)
-        title.setStyleSheet("""font-size: 16px;""")
-        title.toggled.connect(self.toggled)
-        title.setFixedWidth(150)
-
-        label = QtWidgets.QLabel(description)
-        if not description:
-            label.setVisible(False)
-
-        widget = ClickableWidget()
-        widget.clicked.connect(title.toggle)
-
-        layout = QtWidgets.QHBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(title)
-        layout.addWidget(label, 1)
-        layout.setSpacing(16)
-        self.addWidget(widget)
-
-        self.controls.title = title
-
-    def setChecked(self, checked: bool):
-        self.controls.title.setChecked(checked)
 
 
 class PositionCombobox(NoWheelComboBox):

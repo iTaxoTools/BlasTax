@@ -16,6 +16,7 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
 
     amalgamation_method = Property(AmalgamationMethodTexts, AmalgamationMethodTexts.ByMaxLength)
+    save_reports = Property(bool, False)
 
     append_timestamp = Property(bool, False)
     append_configuration = Property(bool, True)
@@ -58,6 +59,7 @@ class Model(BlastTaskModel):
             input_paths=self.input_sequences.get_all_paths(),
             output_path=self.output_path,
             amalgamation_method=self.amalgamation_method,
+            save_reports=self.save_reports,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

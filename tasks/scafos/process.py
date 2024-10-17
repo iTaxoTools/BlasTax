@@ -17,12 +17,14 @@ def execute(
     input_paths: list[Path],
     output_path: Path,
     amalgamation_method: AmalgamationMethodTexts,
+    save_reports: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
     print(f"{input_paths=}")
     print(f"{output_path=}")
     print(f"{amalgamation_method=}")
+    print(f"{save_reports=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 

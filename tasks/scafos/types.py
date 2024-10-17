@@ -16,7 +16,7 @@ class TargetPaths:
 
 class AmalgamationMethodTexts(Enum):
     ByMaxLength = "Select by maximum length", "keep the sequence with maximum number of information"
-    ByMinimumDistance = "Select by minimum distance", "keep the sequence that is closest to other species"
+    ByMinimumDistance = "Select by minimum distance", "keep the sequence that is closest to other species by average"
     ByFillingGaps = "Fuse by filling gaps", "keep the most common character of each position"
 
     def __init__(self, title: str, description: str):

@@ -8,7 +8,7 @@ from itaxotools.taxi_gui.utility import human_readable_seconds
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
-from itaxotools.taxi_gui.view.widgets import LongLabel, RadioButtonGroup
+from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchQueryModel
 from .types import Results
@@ -443,28 +443,52 @@ class BatchQuerySelector(Card):
         binder.bind(object.query_list.modelReset, self.controls.batch_view.updateGeometry)
 
 
-class OptionalCategory(Card):
+class ClickableWidget(QtWidgets.QWidget):
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed and event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+    def leaveEvent(self, event):
+        self._mouse_pressed = False
+        super().leaveEvent(event)
+
+
+class OptionCard(Card):
     toggled = QtCore.Signal(bool)
 
     def __init__(self, text, description, parent=None):
         super().__init__(parent)
+        self.draw_title(text, description)
 
+    def draw_title(self, text, description):
         title = QtWidgets.QCheckBox(" " + text)
         title.setStyleSheet("""font-size: 16px;""")
         title.toggled.connect(self.toggled)
+        title.setFixedWidth(150)
 
-        label = LongLabel(description)
-        if not description:
-            label.setVisible(False)
+        label = QtWidgets.QLabel(description)
 
-        layout = QtWidgets.QGridLayout()
-        layout.addWidget(title, 0, 0)
-        layout.addWidget(label, 1, 0)
-        layout.setColumnStretch(0, 1)
-        layout.setColumnMinimumWidth(1, 120)
-        layout.setHorizontalSpacing(32)
-        layout.setVerticalSpacing(12)
-        self.addLayout(layout)
+        widget = ClickableWidget()
+        widget.clicked.connect(title.toggle)
+
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(title)
+        layout.addWidget(label, 1)
+        layout.setSpacing(16)
+        self.addWidget(widget)
 
         self.controls.title = title
 

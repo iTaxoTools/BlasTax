@@ -13,7 +13,7 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
-    OptionalCategory,
+    OptionCard,
     PathFileOutSelector,
 )
 from ..common.widgets import PropertyLineEdit
@@ -117,7 +117,7 @@ class View(BlastTaskView):
         self.cards.input = BatchQuerySelector("Input sequences", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.group = FormatGroupSelector("File types", self)
-        self.cards.compress = OptionalCategory("Compress output", "", self)
+        self.cards.compress = OptionCard("Compress output", "", self)
 
         self.cards.input.controls.header.setVisible(False)
         self.cards.input.controls.single_query.roll._visible_target = False

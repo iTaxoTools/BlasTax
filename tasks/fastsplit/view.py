@@ -12,7 +12,7 @@ from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup
 from ..common.view import (
     BlastTaskView,
     GraphicTitleCard,
-    OptionalCategory,
+    OptionCard,
     PathDirectorySelector,
     PathFileSelector,
 )
@@ -192,7 +192,7 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25C0  Output file", self)
         self.cards.template = TemplateSelector("Filename template", self)
         self.cards.format = FileFormatSelector("Output format", self)
-        self.cards.compress = OptionalCategory("Compress output", "", self)
+        self.cards.compress = OptionCard("Compress output", "", self)
 
         self.cards.input.set_placeholder_text("Sequence file that will be split")
         self.cards.output.set_placeholder_text("Folder that will contain all output files")

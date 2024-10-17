@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
 
@@ -12,6 +13,7 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
+    OptionCard,
     OutputDirectorySelector,
 )
 from . import long_description, pixmap_medium, title
@@ -19,7 +21,7 @@ from .types import AmalgamationMethodTexts
 
 
 class AmalgamationMethodSelector(Card):
-    method_changed = QtCore.Signal(bool)
+    method_changed = QtCore.Signal(AmalgamationMethodTexts)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -39,6 +41,7 @@ class AmalgamationMethodSelector(Card):
         mode_layout.setSpacing(8)
 
         group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_method_changed)
         self.controls.method = group
 
         for method in AmalgamationMethodTexts:
@@ -48,6 +51,9 @@ class AmalgamationMethodSelector(Card):
 
         self.addLayout(title_layout)
         self.addLayout(mode_layout)
+
+    def _handle_method_changed(self, value: AmalgamationMethodTexts):
+        self.method_changed.emit(value)
 
     def set_method(self, value: bool):
         self.controls.method.setValue(value)
@@ -65,8 +71,12 @@ class View(BlastTaskView):
         self.cards.query = BatchQuerySelector("Input sequences", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.method = AmalgamationMethodSelector(self)
+        self.cards.report = OptionCard(
+            "Save reports:", "Report p-distance pairs and mean species distance for each input file.", self
+        )
 
         self.cards.query.set_placeholder_text("Input sequences for amalgamation (FASTA, FASTQ or ALI)")
+        self.cards.report.roll = VerticalRollAnimation(self.cards.report)
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -106,6 +116,15 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.amalgamation_method, self.cards.method.set_method)
         self.binder.bind(self.cards.method.method_changed, object.properties.amalgamation_method)
+
+        self.binder.bind(
+            object.properties.amalgamation_method,
+            self.cards.report.roll.setAnimatedVisible,
+            proxy=lambda x: x == AmalgamationMethodTexts.ByMinimumDistance,
+        )
+
+        self.binder.bind(object.properties.save_reports, self.cards.report.setChecked)
+        self.binder.bind(self.cards.report.toggled, object.properties.save_reports)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
