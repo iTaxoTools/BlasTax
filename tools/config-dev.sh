@@ -4,9 +4,9 @@
 [ ! "$CODESIGN_IDENTITY" ] && CODESIGN_IDENTITY="UNKNOWN"
 
 # program specifics
-APP_NAME="BlasTaxMerge"
-APP_IDENTIFIER="org.itaxotools.blastax"
-APP_SCRIPT="../merge_gui.py"
+APP_NAME="BlasTax-Scafos"
+APP_IDENTIFIER="org.itaxotools.blastax.scafos"
+APP_SCRIPT="../gui_dev.py"
 APP_ENTITLEMENTS="data/entitlements.plist"
 APP_ICON_ICNS="data/blastax.icns"
 APP_ICON_ICO="data/blastax.ico"

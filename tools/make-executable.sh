@@ -2,10 +2,10 @@
 
 # Build a Windows .exe binary
 
-if [[ "$BLASTAX_MERGE" == "true" ]]; then
-  echo "BLASTAX_MERGE is set to true. Executing alternate script."
+if [[ "$BLASTAX_DEV" == "true" ]]; then
+  echo "BLASTAX_DEV is set to true. Executing alternate script."
   SCRIPT_DIR=$(dirname "$0")
-  "$SCRIPT_DIR/make-executable-merge.sh"
+  "$SCRIPT_DIR/make-executable-dev.sh"
   exit 0
 fi
 

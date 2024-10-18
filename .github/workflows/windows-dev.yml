@@ -4,7 +4,7 @@ on: workflow_dispatch
 # on: push
 
 env:
-  ARTIFACT_EXECUTABLE: itaxotools-blast-gui-merge-windows
+  ARTIFACT_EXECUTABLE: itaxotools-blast-gui-dev-windows
 
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     name: Build Windows executable (merge task only)
     runs-on: windows-2019
     env:
-      BLASTAX_MERGE: true
+      BLASTAX_DEV: true
 
     steps:
       - name: Checkout
