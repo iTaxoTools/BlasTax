@@ -14,6 +14,7 @@ from core import (
     get_fasta_renamed_filename,
     get_museo_filename,
 )
+from scafos import get_scafos_filename
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 
@@ -106,6 +107,20 @@ class FastaRenameFilenameTest(NamedTuple):
         assert filename == self.target_filename
 
 
+class ScafosFilenameTest(NamedTuple):
+    input_path: Path
+    target_filename: str
+    timestamp: datetime
+    kwargs: dict[str, str]
+
+    def validate(self):
+        filename = get_scafos_filename(
+            self.input_path,
+            self.timestamp,
+            **self.kwargs)
+        assert filename == self.target_filename
+
+
 filename_tests = [
     BlastFilenameTest(Path("some.fa"), "some.txt", 0, None, {}),
     BlastFilenameTest(Path("some.fasta"), "some.txt", 0, None, {}),
@@ -149,6 +164,11 @@ filename_tests = [
 
     FastaRenameFilenameTest(Path("some.fa"), "some_renamed.fasta", None),
     FastaRenameFilenameTest(Path("some.fa"), "some_renamed_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42)),
+
+    ScafosFilenameTest(Path("some.fa"), "some_chimeras.fasta", None, {}),
+    ScafosFilenameTest(Path("some.fa"), "some_chimeras_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42), {}),
+    ScafosFilenameTest(Path("some.fa"), "some_chimeras_fuse_by_filling_gaps.fasta", None, dict(fuse_by_filling_gaps=None)),
+    ScafosFilenameTest(Path("some.fa"), "some_chimeras_fuse_by_filling_gaps_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42), dict(fuse_by_filling_gaps=None)),
 ]
 
 

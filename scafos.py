@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from datetime import datetime
 from enum import Enum, auto
 from itertools import chain, groupby
 from pathlib import Path
 from typing import Callable, Iterator, NamedTuple
 
+from core import get_info_suffix, get_timestamp_suffix
 from itaxotools.taxi2.distances import Distance, DistanceHandler, DistanceMetric
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.pairs import SequencePair, SequencePairs
@@ -243,3 +245,20 @@ def get_fuse_method_callable(method: AmalgamationMethod) -> Callable:
         AmalgamationMethod.ByMinimumDistance: fuse_by_minimum_distance,
         AmalgamationMethod.ByFillingGaps: fuse_by_filling_gaps,
     }[method]
+
+
+def get_scafos_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+    **kwargs,
+) -> str:
+    path = input_path.with_suffix(".fasta")
+    path = path.with_stem(path.stem + "_chimeras")
+
+    info = get_info_suffix(**kwargs)
+    path = path.with_stem(path.stem + info)
+
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name

@@ -7,18 +7,32 @@ from pathlib import Path
 
 @dataclass
 class TargetPaths:
-    blast_output_path: Path
-    appended_output_path: Path
+    chimeras_path: Path
 
     def __iter__(self):
         return iter(vars(self).values())
 
 
-class AmalgamationMethodTexts(Enum):
-    ByMaxLength = "Select by maximum length", "keep the sequence with maximum number of information"
-    ByMinimumDistance = "Select by minimum distance", "keep the sequence that is closest to other species by average"
-    ByFillingGaps = "Fuse by filling gaps", "keep the most common character of each position"
+@dataclass
+class DistanceTargetPaths(TargetPaths):
+    distances_path: Path
+    means_path: Path
 
-    def __init__(self, title: str, description: str):
+
+class AmalgamationMethodTexts(Enum):
+    ByMaxLength = (
+        "select_by_max_length",
+        "Select by maximum length",
+        "keep the sequence with maximum number of information",
+    )
+    ByMinimumDistance = (
+        "select_by_min_distance",
+        "Select by minimum distance",
+        "keep the sequence that is closest to other species in average",
+    )
+    ByFillingGaps = "fuse_by_filling_gaps", "Fuse by filling gaps", "keep the most common character of each position"
+
+    def __init__(self, key: str, title: str, description: str):
+        self.key = key
         self.title = title
         self.description = description
