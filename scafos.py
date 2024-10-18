@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from datetime import datetime
 from enum import Enum, auto
-from itertools import chain, groupby
+from itertools import groupby
 from pathlib import Path
 from typing import Callable, Iterator, NamedTuple
 
@@ -51,7 +51,8 @@ class MeanGroups(NamedTuple):
 def _tag_species_after_pipe(sequence: Sequence) -> Sequence:
     parts = sequence.id.split("|")
     if len(parts) != 2:
-        return sequence
+        raise Exception(f"Could not extract species from identifier: {repr(sequence.id)}")
+    sequence = Sequence(sequence.id, sequence.seq, dict(sequence.extras))
     sequence.extras["species"] = parts[1]
     return sequence
 
@@ -59,7 +60,8 @@ def _tag_species_after_pipe(sequence: Sequence) -> Sequence:
 def _tag_species_before_first_underscore(sequence: Sequence) -> Sequence:
     parts = sequence.id.split("_")
     if len(parts) < 2:
-        return sequence
+        raise Exception(f"Could not extract species from identifier: {repr(sequence.id)}")
+    sequence = Sequence(sequence.id, sequence.seq, dict(sequence.extras))
     sequence.extras["species"] = parts[0]
     return sequence
 
@@ -67,8 +69,9 @@ def _tag_species_before_first_underscore(sequence: Sequence) -> Sequence:
 def _tag_species_before_second_underscore(sequence: Sequence) -> Sequence:
     parts = sequence.id.split("_")
     if len(parts) < 3:
-        return sequence
-    sequence.extras["species"] = parts[1]
+        raise Exception(f"Could not extract species from identifier: {repr(sequence.id)}")
+    sequence = Sequence(sequence.id, sequence.seq, dict(sequence.extras))
+    sequence.extras["species"] = "_".join(parts[:2])
     return sequence
 
 
@@ -86,7 +89,7 @@ def count_non_gaps(seq: str) -> int:
     return counter.total() - gaps
 
 
-def fuse_by_max_length(sequences: Sequences) -> Sequences:
+def select_by_max_length(sequences: Sequences) -> Sequences:
     species_dict: dict[str, Sequence] = {}
     species_length: dict[str, Sequence] = {}
     for sequence in sequences:
@@ -172,7 +175,7 @@ def _keep_minimum_mean(groups: Iterator[MeanGroups]) -> Iterator[Sequence]:
         yield selected.sequence
 
 
-def fuse_by_minimum_distance(
+def select_by_minimum_distance(
     sequences: Sequences,
     distance_report: Path = None,
     mean_report: Path = None,
@@ -223,10 +226,10 @@ def _assemble_sequence_from_most_common_characters(seqs: list[str]) -> str:
 
 def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[list[Sequence]]) -> Iterator[Sequences]:
     for group in groups:
-        ids = [sequence.id for sequence in group]
+        # ids = [sequence.id for sequence in group]
         seqs = [sequence.seq for sequence in group]
         species = group[0].extras["species"]
-        id = "_".join(chain([species], ids))
+        id = species + "_chimera"
         seq = _assemble_sequence_from_most_common_characters(seqs)
         if seq is None:
             raise Exception(f"Not all sequences are of the same length for species: {repr(species)}")
@@ -239,10 +242,10 @@ def fuse_by_filling_gaps(sequences: Sequences) -> Sequences:
     return Sequences(list(sequences))
 
 
-def get_fuse_method_callable(method: AmalgamationMethod) -> Callable:
+def get_amalgamation_method_callable(method: AmalgamationMethod) -> Callable:
     return {
-        AmalgamationMethod.ByMaxLength: fuse_by_max_length,
-        AmalgamationMethod.ByMinimumDistance: fuse_by_minimum_distance,
+        AmalgamationMethod.ByMaxLength: select_by_max_length,
+        AmalgamationMethod.ByMinimumDistance: select_by_minimum_distance,
         AmalgamationMethod.ByFillingGaps: fuse_by_filling_gaps,
     }[method]
 

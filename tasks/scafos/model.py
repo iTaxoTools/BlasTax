@@ -6,7 +6,7 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BatchQueryModel, BlastTaskModel
 from . import process, title
-from .types import AmalgamationMethodTexts
+from .types import AmalgamationMethodTexts, TagMethodTexts
 
 
 class Model(BlastTaskModel):
@@ -15,6 +15,7 @@ class Model(BlastTaskModel):
     input_sequences = Property(BatchQueryModel, Instance)
     output_path = Property(Path, Path())
 
+    tag_method = Property(TagMethodTexts, TagMethodTexts.SpeciesBeforeFirstUnderscore)
     amalgamation_method = Property(AmalgamationMethodTexts, AmalgamationMethodTexts.ByMaxLength)
     save_reports = Property(bool, False)
 
@@ -58,6 +59,7 @@ class Model(BlastTaskModel):
             process.execute,
             input_paths=self.input_sequences.get_all_paths(),
             output_path=self.output_path,
+            tag_method=self.tag_method,
             amalgamation_method=self.amalgamation_method,
             save_reports=self.save_reports,
             append_timestamp=self.append_timestamp,

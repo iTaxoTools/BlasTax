@@ -9,8 +9,8 @@ from scafos import (
     TagMethod,
     count_non_gaps,
     fuse_by_filling_gaps,
-    fuse_by_minimum_distance,
-    get_fuse_method_callable,
+    get_amalgamation_method_callable,
+    select_by_minimum_distance,
     tag_species_by_method,
 )
 
@@ -46,30 +46,37 @@ class GapTest(NamedTuple):
         assert length == self.expected
 
 
-class FuseTest(NamedTuple):
+class AmalgamationTest(NamedTuple):
     method: AmalgamationMethod
     input: Sequences
     expected: Sequences
 
     def validate(self):
-        output = get_fuse_method_callable(self.method)(self.input)
+        output = get_amalgamation_method_callable(self.method)(self.input)
         assert_sequences_equal(output, self.expected)
 
 
 tag_tests = [
-    TagTest(TagMethod.SpeciesAfterPipe, Sequence("id1", "ATC"), Sequence("id1", "ATC")),
-    TagTest(TagMethod.SpeciesAfterPipe, Sequence("id1", "ATC", {"voucher": "X"}), Sequence("id1", "ATC", {"voucher": "X"})),
     TagTest(TagMethod.SpeciesAfterPipe, Sequence("id1|species1", "ATC"), Sequence("id1|species1", "ATC", {"species": "species1"})),
 
-    TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("id1", "ATC"), Sequence("id1", "ATC")),
-    TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("id1", "ATC", {"voucher": "X"}), Sequence("id1", "ATC", {"voucher": "X"})),
     TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("species1_id1", "ATC"), Sequence("species1_id1", "ATC", {"species": "species1"})),
     TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("species1_id1_xyz", "ATC"), Sequence("species1_id1_xyz", "ATC", {"species": "species1"})),
 
+   TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("genus1_species1_id1", "ATC"), Sequence("genus1_species1_id1", "ATC", {"species": "genus1_species1"})),
+    TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("genus1_species1_id1_xyz", "ATC"), Sequence("genus1_species1_id1_xyz", "ATC", {"species": "genus1_species1"})),
+]
+
+
+tag_tests_bad = [
+    TagTest(TagMethod.SpeciesAfterPipe, Sequence("id1", "ATC"), Sequence("id1", "ATC")),
+    TagTest(TagMethod.SpeciesAfterPipe, Sequence("id1", "ATC", {"voucher": "X"}), Sequence("id1", "ATC", {"voucher": "X"})),
+
+    TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("id1", "ATC"), Sequence("id1", "ATC")),
+    TagTest(TagMethod.SpeciesBeforeFirstUnderscore, Sequence("id1", "ATC", {"voucher": "X"}), Sequence("id1", "ATC", {"voucher": "X"})),
+
     TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("id1", "ATC"), Sequence("id1", "ATC")),
     TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("id1", "ATC", {"voucher": "X"}), Sequence("id1", "ATC", {"voucher": "X"})),
-    TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("genus1_species1_id1", "ATC"), Sequence("genus1_species1_id1", "ATC", {"species": "species1"})),
-    TagTest(TagMethod.SpeciesBeforeSecondUnderscore, Sequence("genus1_species1_id1_xyz", "ATC"), Sequence("genus1_species1_id1_xyz", "ATC", {"species": "species1"})),
+
 ]
 
 
@@ -83,13 +90,13 @@ gap_tests = [
 ]
 
 
-fuse_tests = [
-    FuseTest(
+amalgamation_tests = [
+    AmalgamationTest(
         AmalgamationMethod.ByMaxLength,
         Sequences([]),
         Sequences([]),
     ),
-    FuseTest(
+    AmalgamationTest(
         AmalgamationMethod.ByMaxLength,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
@@ -102,12 +109,12 @@ fuse_tests = [
             Sequence("id3", "ACGT", {"species": "Y"}),
         ]),
     ),
-    FuseTest(
+    AmalgamationTest(
         AmalgamationMethod.ByMinimumDistance,
         Sequences([]),
         Sequences([]),
     ),
-    FuseTest(
+    AmalgamationTest(
         AmalgamationMethod.ByMinimumDistance,
         Sequences([
             Sequence("id1", "ACGT", {"species": "X"}),
@@ -120,12 +127,12 @@ fuse_tests = [
             Sequence("id4", "TGGT", {"species": "Y"}),
         ]),
     ),
-    FuseTest(
+    AmalgamationTest(
         AmalgamationMethod.ByFillingGaps,
         Sequences([]),
         Sequences([]),
     ),
-    FuseTest(
+    AmalgamationTest(
         AmalgamationMethod.ByFillingGaps,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
@@ -134,8 +141,8 @@ fuse_tests = [
             Sequence("id4", "T---", {"species": "Y"}),
         ]),
         Sequences([
-            Sequence("X_id1_id2", "ACGT", {"species": "X"}),
-            Sequence("Y_id3_id4", "T--A", {"species": "Y"}),
+            Sequence("X_chimera", "ACGT", {"species": "X"}),
+            Sequence("Y_chimera", "T--A", {"species": "Y"}),
         ]),
     ),
 ]
@@ -146,8 +153,15 @@ def test_tag_species(test: TagTest):
     test.validate()
 
 
-@pytest.mark.parametrize("test", fuse_tests)
-def test_fuse_sequences(test: FuseTest):
+
+@pytest.mark.parametrize("test", tag_tests_bad)
+def test_tag_species_bad(test: TagTest):
+    with pytest.raises(Exception, match="Could not extract species from identifier"):
+        test.validate()
+
+
+@pytest.mark.parametrize("test", amalgamation_tests)
+def test_fuse_sequences(test: AmalgamationTest):
     test.validate()
 
 
@@ -169,7 +183,7 @@ def test_fuse_by_min_reports(tmp_path: Path):
             Sequence("id4", "TGGT", {"species": "Y"}),
     ])
 
-    output = fuse_by_minimum_distance(sequences_input, distance_report_output, mean_report_output)
+    output = select_by_minimum_distance(sequences_input, distance_report_output, mean_report_output)
 
     assert_sequences_equal(output, sequences_expected)
     assert_file_equals(distance_report_output, distance_report_expected)

@@ -17,7 +17,46 @@ from ..common.view import (
     OutputDirectorySelector,
 )
 from . import long_description, pixmap_medium, title
-from .types import AmalgamationMethodTexts
+from .types import AmalgamationMethodTexts, TagMethodTexts
+
+
+class TagMethodSelector(Card):
+    method_changed = QtCore.Signal(TagMethodTexts)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Species detection:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Determine how species are inferred from sequence identifiers.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        mode_layout = QtWidgets.QVBoxLayout()
+        mode_layout.setContentsMargins(12, 0, 0, 0)
+        mode_layout.setSpacing(8)
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_method_changed)
+        self.controls.method = group
+
+        for method in TagMethodTexts:
+            button = RichRadioButton(f"{method.title}:", f"{method.description}.")
+            group.add(button, method)
+            mode_layout.addWidget(button)
+
+        self.addLayout(title_layout)
+        self.addLayout(mode_layout)
+
+    def _handle_method_changed(self, value: TagMethodTexts):
+        self.method_changed.emit(value)
+
+    def set_method(self, value: bool):
+        self.controls.method.setValue(value)
 
 
 class AmalgamationMethodSelector(Card):
@@ -70,7 +109,8 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.query = BatchQuerySelector("Input sequences", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.method = AmalgamationMethodSelector(self)
+        self.cards.tag_method = TagMethodSelector(self)
+        self.cards.amalgamation_method = AmalgamationMethodSelector(self)
         self.cards.report = OptionCard(
             "Save reports:", "Report p-distance pairs and mean species distance for each input file.", self
         )
@@ -114,8 +154,11 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
         self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
 
-        self.binder.bind(object.properties.amalgamation_method, self.cards.method.set_method)
-        self.binder.bind(self.cards.method.method_changed, object.properties.amalgamation_method)
+        self.binder.bind(object.properties.tag_method, self.cards.tag_method.set_method)
+        self.binder.bind(self.cards.tag_method.method_changed, object.properties.tag_method)
+
+        self.binder.bind(object.properties.amalgamation_method, self.cards.amalgamation_method.set_method)
+        self.binder.bind(self.cards.amalgamation_method.method_changed, object.properties.amalgamation_method)
 
         self.binder.bind(
             object.properties.amalgamation_method,
