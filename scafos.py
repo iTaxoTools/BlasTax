@@ -13,7 +13,7 @@ from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.pairs import SequencePair, SequencePairs
 from itaxotools.taxi2.sequences import Sequence, Sequences
 
-GAP_CHARACTERS = "-?*"
+GAP_CHARACTERS = "-?* "
 
 
 class TagMethod(Enum):
@@ -265,3 +265,13 @@ def get_scafos_filename(
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
     return path.name
+
+
+def get_overlapping_positions(a: str, b: str, exclude: str = GAP_CHARACTERS) -> list[int]:
+    if len(a) != len(b):
+        raise Exception(f"Sequences must have the same length: {repr(a)}, {repr(b)}")
+    return [i for i in range(len(a)) if a[i] == b[i] and not (a[i] in exclude or b[i] in exclude)]
+
+
+def get_characters_in_positions(s: str, positions: list[int]) -> str:
+    return "".join(s[i] for i in positions)

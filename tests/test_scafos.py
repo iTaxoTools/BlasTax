@@ -5,11 +5,14 @@ import pytest
 
 from itaxotools.taxi2.sequences import Sequence, Sequences
 from scafos import (
+    GAP_CHARACTERS,
     AmalgamationMethod,
     TagMethod,
     count_non_gaps,
     fuse_by_filling_gaps,
     get_amalgamation_method_callable,
+    get_characters_in_positions,
+    get_overlapping_positions,
     select_by_minimum_distance,
     tag_species_by_method,
 )
@@ -54,6 +57,28 @@ class AmalgamationTest(NamedTuple):
     def validate(self):
         output = get_amalgamation_method_callable(self.method)(self.input)
         assert_sequences_equal(output, self.expected)
+
+
+class OverlapTest(NamedTuple):
+    a: str
+    b: str
+    expected: list[int]
+    exclude: str = GAP_CHARACTERS
+
+    def validate(self):
+        output = get_overlapping_positions(self.a, self.b, self.exclude)
+        assert output == self.expected
+
+
+class PositionTest(NamedTuple):
+    s: str
+    pos: list[int]
+    expected: str
+
+    def validate(self):
+        output = get_characters_in_positions(self.s, self.pos)
+        assert output == self.expected
+
 
 
 tag_tests = [
@@ -147,11 +172,30 @@ amalgamation_tests = [
     ),
 ]
 
+overlap_tests = [
+    OverlapTest("ATCG", "ATCG", [0, 1, 2, 3]),
+    OverlapTest("ATCG", "A-*G", [0, 3]),
+    OverlapTest("ATCG", "GCTA", []),
+    OverlapTest("ATCG", "A-NG", [0, 3], exclude="-N"),
+]
+
+
+overlap_tests_bad = [
+    OverlapTest("ATCG", "ATC", [0, 1, 2]),
+]
+
+
+position_tests = [
+    PositionTest("ATCG", [0, 1, 2, 3], "ATCG"),
+    PositionTest("ATCG", [0, 1, 3], "ATG"),
+    PositionTest("ATCG", [2], "C"),
+    PositionTest("ATCG", [], ""),
+]
+
 
 @pytest.mark.parametrize("test", tag_tests)
 def test_tag_species(test: TagTest):
     test.validate()
-
 
 
 @pytest.mark.parametrize("test", tag_tests_bad)
@@ -162,6 +206,22 @@ def test_tag_species_bad(test: TagTest):
 
 @pytest.mark.parametrize("test", amalgamation_tests)
 def test_fuse_sequences(test: AmalgamationTest):
+    test.validate()
+
+
+@pytest.mark.parametrize("test", overlap_tests)
+def test_overlap(test: OverlapTest):
+    test.validate()
+
+
+@pytest.mark.parametrize("test", overlap_tests_bad)
+def test_overlap_bad(test: TagTest):
+    with pytest.raises(Exception, match="Sequences must have the same length"):
+        test.validate()
+
+
+@pytest.mark.parametrize("test", position_tests)
+def test_position(test: PositionTest):
     test.validate()
 
 
