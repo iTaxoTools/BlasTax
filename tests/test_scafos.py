@@ -170,6 +170,22 @@ amalgamation_tests = [
             Sequence("Y_chimera", "T--A", {"species": "Y"}),
         ]),
     ),
+    # AmalgamationTest(
+    #     AmalgamationMethod.ByTrimmingParalogs,
+    #     Sequences([]),
+    #     Sequences([]),
+    # ),
+    # AmalgamationTest(
+    #     AmalgamationMethod.ByTrimmingParalogs,
+    #     Sequences([
+    #         Sequence("id1", "ACGT", {"species": "X"}),
+    #         Sequence("id2", "ACGA", {"species": "X"}),
+    #         Sequence("id3", "TGCA", {"species": "Y"}),
+    #         Sequence("id4", "TGGT", {"species": "Y"}),
+    #         Sequence("id5", "ACCA", {"species": "Y"}),
+    #     ]),
+    #     Sequences([]),
+    # ),
 ]
 
 overlap_tests = [

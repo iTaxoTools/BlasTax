@@ -26,6 +26,7 @@ class AmalgamationMethod(Enum):
     ByMaxLength = auto()
     ByMinimumDistance = auto()
     ByFillingGaps = auto()
+    ByTrimmingParalogs = auto()
 
 
 class DistanceGroups(NamedTuple):
@@ -200,11 +201,11 @@ def select_by_minimum_distance(
     return Sequences(list(sequences))
 
 
-def _group_sequences_by_species(data: Sequences) -> Iterator[Iterator[Sequence]]:
+def _group_sequences_by_species(data: Sequences) -> Iterator[tuple[str, list[Sequence]]]:
     keyfunc = lambda item: item.extras["species"]
     data = sorted(data, key=keyfunc)
-    for _, group in groupby(data, keyfunc):
-        yield list(group)
+    for species, group in groupby(data, keyfunc):
+        yield species, list(group)
 
 
 def _get_most_common_character(characters: Iterator[str]) -> str:
@@ -224,11 +225,10 @@ def _assemble_sequence_from_most_common_characters(seqs: list[str]) -> str:
     return sequence
 
 
-def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[list[Sequence]]) -> Iterator[Sequences]:
-    for group in groups:
+def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[tuple[str, list[Sequence]]]) -> Iterator[Sequences]:
+    for species, group in groups:
         # ids = [sequence.id for sequence in group]
         seqs = [sequence.seq for sequence in group]
-        species = group[0].extras["species"]
         id = species + "_chimera"
         seq = _assemble_sequence_from_most_common_characters(seqs)
         if seq is None:
@@ -247,6 +247,7 @@ def get_amalgamation_method_callable(method: AmalgamationMethod) -> Callable:
         AmalgamationMethod.ByMaxLength: select_by_max_length,
         AmalgamationMethod.ByMinimumDistance: select_by_minimum_distance,
         AmalgamationMethod.ByFillingGaps: fuse_by_filling_gaps,
+        AmalgamationMethod.ByTrimmingParalogs: select_by_excluding_paralogs,
     }[method]
 
 
@@ -275,3 +276,23 @@ def get_overlapping_positions(a: str, b: str, exclude: str = GAP_CHARACTERS) -> 
 
 def get_characters_in_positions(s: str, positions: list[int]) -> str:
     return "".join(s[i] for i in positions)
+
+
+def select_by_excluding_paralogs(sequences: Sequences):
+    #     groups = _group_sequences_by_species(sequences)
+    #     groups = list(groups)
+
+    #     for species, group in groups:
+    #         for a, b in combinations(group, 2):
+    #             if a.seq == b.seq:
+    #                 print(species, a.id, b.id, "IDENTICAL")
+    #                 continue
+    #             positions = get_overlapping_positions(a.seq, b.seq)
+    #             print(">", species, a.id, b.id, positions)
+    #             for other_species, other_group in groups:
+    #                 if other_species == species:
+    #                     continue
+
+    #     assert False
+
+    return Sequences([])
