@@ -50,9 +50,15 @@ class Options:
         if self.input_type == "all":
             self.translation_6 = self.output_path.with_name("translation_6.fasta")
 
+    def close_files(self):
+        self.input_file.close()
+        self.output_file.close()
+        self.log_file.close()
+        self.nucleotide_file.close()
+
 
 def prot_record(record, options: Options):
-    protein = translate_DNA_record(record, options.code)
+    protein = translate_DNA_record(record, options)
     return SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
 
 
@@ -426,13 +432,15 @@ def translate(options: Options):
     else:
         prot_record_partial = partial(prot_record, options=options)
         records = map(prot_record_partial, SeqIO.parse(options.input_file, "fasta"))
-        SeqIO.write(records, options.output_file, "fasta")
+        options.output_file.close()
+        SeqIO.write(records, options.output_path, "fasta")
+    options.close_files()
 
 
 if __name__ == "__main__":
     options = Options(
         input_path=Path(sys.argv[2]),
-        output_path=Path(sys.argv[14]) if len(sys.argv > 14) else None,
+        output_path=Path(sys.argv[14]) if len(sys.argv) > 14 else None,
         log_path=Path("translator.log"),
         nucleotide_path=Path("nucleotids"),
         input_type=sys.argv[4],

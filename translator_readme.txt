@@ -27,6 +27,11 @@ The script also generates a log file with some special informations(translator.l
 
 ----
 
+Example script call:
+```
+python .\translator.py i data/mala.fas type all stop yes frame 1 code 1 log yes out foobar.buz
+```
+
 ORF = open reading frame
 
 input type in [all, cds, cds_stop, transcript]
