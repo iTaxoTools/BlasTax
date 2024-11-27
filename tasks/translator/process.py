@@ -19,7 +19,7 @@ def execute(
     input_type: str,
     stop: str,
     frame: str,
-    code: str,
+    code: int,
 ) -> Results:
     print(f"{input_path=}")
     print(f"{output_path=}")

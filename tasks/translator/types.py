@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from enum import Enum
 
+from codons import get_codon_tables
+
+CODON_TABLE_VERSION, CODON_TABLES = get_codon_tables()
+
 
 class InputType(Enum):
     cds = "Searching for the translation without any stop or minimal number of stops", "cds"
@@ -21,10 +25,6 @@ class InputType(Enum):
 
     def __str__(self):
         return self.description
-
-
-class CodonTable(Enum):
-    pass
 
 
 class ReadingFrame(Enum):

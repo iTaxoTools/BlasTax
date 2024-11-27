@@ -2,6 +2,7 @@ from PySide6 import QtCore, QtGui
 
 from enum import Enum
 from pathlib import Path
+from typing import Iterator
 
 from itaxotools.common.widgets import VectorPixmap
 from itaxotools.taxi_gui.app import skin
@@ -27,12 +28,17 @@ def text_from_path(path) -> str:
         return file.read()
 
 
+def lines_from_path(path) -> Iterator[str]:
+    for line in open(path).readlines():
+        yield line
+
+
 documents = LazyResourceCollection(
     about=lambda: text_from_path(get_data("documents/about.html")),
     blast=lambda: text_from_path(get_data("documents/blast.html")),
     museo=lambda: text_from_path(get_data("documents/museo.html")),
     version=lambda: text_from_path(get_data("documents/version.txt")).strip(),
-    gc=lambda: text_from_path(get_data("documents/gc.prt")),
+    gc=lambda: lines_from_path(get_data("documents/gc.prt")),
 )
 
 

@@ -5,7 +5,7 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BlastTaskModel
 from . import process, title
-from .types import CodonTable, InputType, ReadingFrame
+from .types import InputType, ReadingFrame
 
 
 class Model(BlastTaskModel):
@@ -20,7 +20,7 @@ class Model(BlastTaskModel):
 
     option_type = Property(InputType, False)
     option_frame = Property(ReadingFrame, None)
-    option_code = Property(CodonTable, None)
+    option_code = Property(int, None)
     option_stop = Property(bool, False)
     option_log = Property(bool, False)
 
