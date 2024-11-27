@@ -1,49 +1,67 @@
 # Translator, AKS, 02.09.24, Anpassungen ab 28.10.24
 
 import sys
+from dataclasses import dataclass, field
+from functools import partial
+from os import devnull
+from pathlib import Path
+from typing import Literal, TextIO
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 # print(Bio.Data.CodonTable.standard_dna_table)
-stops = ["TAA", "TAG", "TGA"]
-
-arg_len = len(sys.argv)
-input_name = sys.argv[2]
-input_type = sys.argv[4]
-stop = sys.argv[6]
-frame = sys.argv[8]
-code = sys.argv[10]
-output_type = sys.argv[12]
-if arg_len > 14:
-    output_name = sys.argv[14]
-if arg_len <= 14:
-    out_split = input_name.split(".")
-    output_name = out_split[0] + "_aa" + ".fasta"
-log_file = "translator.log"
-nucl_file = "nucleotids"
-loggi = open(log_file, "w")
-nucli = open(nucl_file, "w")
-
-global_yes_fasta = 1
-
-# overwriting parameter argv6
-if input_type == "cds":
-    stop = "no"
-if input_type == "cds_stop":
-    stop = "no"
+STOPS = ["TAA", "TAG", "TGA"]
 
 
-def prot_record(record):
-    protein = translate_DNA_record(record, code)
+@dataclass
+class Options:
+    input_path: Path
+    output_path: Path | None
+    log_path: Path | None
+    nucleotide_path: Path | None
+    input_type: Literal["cds", "cds_stop", "transscript", "all"]
+    stop: Literal["yes", "no"]
+    frame: Literal["autodetect", "1", "2", "3", "4", "5", "6"]
+    code: str | int  # codon table
+
+    input_file: TextIO = field(init=False, default=None)
+    output_file: TextIO = field(init=False, default=None)
+    log_file: TextIO = field(init=False, default=None)
+    nucleotide_file: TextIO = field(init=False, default=None)
+    translation_6: TextIO = field(init=False, default=None)
+
+    def __post_init__(self):
+        if self.output_path is None:
+            self.output_path = self.input_path.with_stem(self.input_path.stem + "_aa")
+            self.output_path = self.output_path.with_suffix(".fasta")
+        if self.log_path is None:
+            self.log_path = Path(devnull)
+        if self.nucleotide_path is None:
+            self.nucleotide_path = Path(devnull)
+        if self.input_type == "cds":
+            self.stop = "no"
+        if self.input_type == "cds_stop":
+            self.stop = "no"
+        self.input_file = open(self.input_path, "r")
+        self.output_file = open(self.output_path, "w")
+        self.log_file = open(self.log_path, "w")
+        self.nucleotide_file = open(self.log_path, "w")
+        if self.input_type == "all":
+            self.translation_6 = self.output_path.with_name("translation_6.fasta")
+
+
+def prot_record(record, options: Options):
+    protein = translate_DNA_record(record, options.code)
     return SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
 
 
 # special function for mode all
-def prot_record_solo(record):
+def prot_record_solo(record, options: Options):
+    alloutput = options.output_file
     proteinall = ""
     for zae in range(1, 7):
-        protein = translate_DNA_record_solo(record, code, zae)
+        protein = translate_DNA_record_solo(record, options.code, zae)
         proteinall = proteinall + protein + "\n"
     # records = SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
     alloutput.write(">" + record.id + "\n")
@@ -51,7 +69,14 @@ def prot_record_solo(record):
     return SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
 
 
-def translate_DNA_record(record, table_nr):
+def translate_DNA_record(record, options: Options):
+    table_nr = options.code
+    input_type = options.input_type
+    frame = options.frame
+    stop = options.stop
+    loggi = options.log_file
+    nucli = options.nucleotide_file
+
     if len(record) % 3 == 0:
         orf1 = record.seq.translate(table=table_nr)
         orf2 = record.seq[1:-3].translate(table=table_nr)
@@ -393,10 +418,26 @@ def translate_DNA_record_solo(record, table_nr, nr):
     return orf_wanted
 
 
-if input_type == "all":
-    alloutput = open(output_name, "w")
-    records = map(prot_record_solo, SeqIO.parse(input_name, "fasta"))
-    SeqIO.write(records, "translation_6.fasta", "fasta")
-else:
-    records = map(prot_record, SeqIO.parse(input_name, "fasta"))
-    SeqIO.write(records, output_name, "fasta")
+def translate(options: Options):
+    if options.input_type == "all":
+        prot_record_solo_partial = partial(prot_record_solo, options=options)
+        records = map(prot_record_solo_partial, SeqIO.parse(options.input_file, "fasta"))
+        SeqIO.write(records, options.translation_6, "fasta")
+    else:
+        prot_record_partial = partial(prot_record, options=options)
+        records = map(prot_record_partial, SeqIO.parse(options.input_file, "fasta"))
+        SeqIO.write(records, options.output_file, "fasta")
+
+
+if __name__ == "__main__":
+    options = Options(
+        input_path=Path(sys.argv[2]),
+        output_path=Path(sys.argv[14]) if len(sys.argv > 14) else None,
+        log_path=Path("translator.log"),
+        nucleotide_path=Path("nucleotids"),
+        input_type=sys.argv[4],
+        stop=sys.argv[6],
+        frame=sys.argv[8],
+        code=sys.argv[10],
+    )
+    translate(options)
