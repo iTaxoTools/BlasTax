@@ -20,6 +20,7 @@ class Options:
     output_path: Path | None
     log_path: Path | None
     nucleotide_path: Path | None
+
     input_type: Literal["cds", "cds_stop", "transscript", "all"]
     stop: Literal["yes", "no"]
     frame: Literal["autodetect", "1", "2", "3", "4", "5", "6"]

@@ -189,7 +189,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.input = PathFileSelector("\u25C0  Input file", self)
-        self.cards.output = PathDirectorySelector("\u25C0  Output file", self)
+        self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
         self.cards.template = TemplateSelector("Filename template", self)
         self.cards.format = FileFormatSelector("Output format", self)
         self.cards.compress = OptionCard("Compress output", "", self)

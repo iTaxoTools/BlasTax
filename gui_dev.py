@@ -12,9 +12,9 @@ def run():
     import config
     from itaxotools.taxi_gui.app import Application, skin
     from itaxotools.taxi_gui.main import Main
-    from tasks import scafos
+    from tasks import translator
 
-    config.tasks = [scafos]
+    config.tasks = [translator]
 
     app = Application()
     app.set_config(config)
