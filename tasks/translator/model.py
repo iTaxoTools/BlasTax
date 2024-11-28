@@ -56,12 +56,12 @@ class Model(BlastTaskModel):
         return True
 
     @staticmethod
-    def get_template_from_path(path: Path):
+    def get_template_from_path(path: Path) -> str:
         if path == Path():
             return ""
         path = path.with_stem(path.stem + "_aa")
         path = path.with_suffix(".fasta")
-        return path
+        return path.name
 
     def start(self):
         super().start()
