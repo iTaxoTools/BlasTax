@@ -104,7 +104,9 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
         self.cards.output_filename = FilenameSelector("Output filename", self)
         self.cards.mode = ModeSelector("Translation mode", self)
-        self.cards.compress = OptionCard("Compress output", "", self)
+        self.cards.log = OptionCard(
+            "Write logfile:", "Generate a logfile with warnings and information about special cases.", self
+        )
 
         self.cards.input.set_placeholder_text("Sequence file that will be translated")
         self.cards.output.set_placeholder_text("Folder that will contain all output files")
@@ -142,6 +144,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.option_mode, self.cards.mode.set_mode)
         self.binder.bind(self.cards.mode.mode_changed, object.properties.option_mode)
+
+        self.binder.bind(object.properties.option_log, self.cards.log.setChecked)
+        self.binder.bind(self.cards.log.toggled, object.properties.option_log)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

@@ -22,7 +22,7 @@ class Model(BlastTaskModel):
     option_frame = Property(ReadingFrame, None)
     option_code = Property(int, None)
     option_stop = Property(bool, False)
-    option_log = Property(bool, False)
+    option_log = Property(bool, True)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -32,6 +32,11 @@ class Model(BlastTaskModel):
         self.binder.bind(self.properties.input_path, self.properties.output_path, lambda p: p.parent)
         self.binder.bind(
             self.properties.input_path, self.properties.output_filename, lambda p: self.get_template_from_path(p)
+        )
+        self.binder.bind(
+            self.properties.output_filename,
+            self.properties.log_filename,
+            lambda f: Path(f).with_suffix(".log").name if f else "",
         )
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
@@ -71,7 +76,9 @@ class Model(BlastTaskModel):
             input_path=self.input_path,
             output_path=self.output_path / self.output_filename,
             log_path=self.output_path / self.log_filename if self.option_log else None,
-            nucleotide_path=self.output_path / self.log_filename if self.option_log else None,
+            nucleotide_path=self.output_path / self.nucleotide_filename
+            if self.option_mode == TranslationMode.transscript
+            else None,
             input_type=str(self.option_mode),
             stop=str(self.option_stop),
             frame=str(self.option_frame),
