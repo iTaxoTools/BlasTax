@@ -7,19 +7,31 @@ from codons import get_codon_tables
 CODON_TABLE_VERSION, CODON_TABLES = get_codon_tables()
 
 
-class InputType(Enum):
-    cds = "Searching for the translation without any stop or minimal number of stops", "cds"
+class TranslationMode(Enum):
+    cds = (
+        "Coding sequence",
+        "search for the translation without any stop or minimal number of stops.",
+        "cds",
+    )
     cds_stop = (
-        "Searching for the translation without any stop or minimal number of stops; terminal stops preferred",
+        "Coding sequence with stop",
+        "search for the translation without any stop or minimal number of stops; terminal stops preferred.",
         "cds_stop",
     )
     transscript = (
-        "Searching for the longest open reading frame (the longest sequence part without stops), writing orf into FASTA-File. Additionally writes nucleotide sequences of the ORF in separate file",
+        "Transcript",
+        "search for the longest open reading frame (the longest sequence part without stops).",
+        # "Additionally writes nucleotide sequences of the ORF in separate file",
         "transscript",
     )
-    all = "All six possible translations", "all"
+    all = (
+        "All",
+        "get all six possible translations.",
+        "all",
+    )
 
-    def __init__(self, description: str, key: str):
+    def __init__(self, label: str, description: str, key: str):
+        self.label = label
         self.description = description
         self.key = key
 

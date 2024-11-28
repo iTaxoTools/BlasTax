@@ -5,7 +5,7 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
 from ..common.model import BlastTaskModel
 from . import process, title
-from .types import InputType, ReadingFrame
+from .types import ReadingFrame, TranslationMode
 
 
 class Model(BlastTaskModel):
@@ -18,7 +18,7 @@ class Model(BlastTaskModel):
     nucleotide_filename = Property(str, "nucleotids")
     log_filename = Property(str, "translator.log")
 
-    option_type = Property(InputType, False)
+    option_mode = Property(TranslationMode, TranslationMode.cds)
     option_frame = Property(ReadingFrame, None)
     option_code = Property(int, None)
     option_stop = Property(bool, False)
@@ -72,7 +72,7 @@ class Model(BlastTaskModel):
             output_path=self.output_path / self.output_filename,
             log_path=self.output_path / self.log_filename if self.option_log else None,
             nucleotide_path=self.output_path / self.log_filename if self.option_log else None,
-            input_type=str(self.option_type),
+            input_type=str(self.option_mode),
             stop=str(self.option_stop),
             frame=str(self.option_frame),
             code=str(self.option_code),
