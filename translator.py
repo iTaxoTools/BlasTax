@@ -49,7 +49,7 @@ class Options:
         self.input_file = open(self.input_path, "r")
         self.output_file = open(self.output_path, "w")
         self.log_file = open(self.log_path, "w")
-        self.nucleotide_file = open(self.log_path, "w")
+        self.nucleotide_file = open(self.nucleotide_path, "w")
         if self.input_type == "all":
             self.translation_6 = self.output_path.with_name("translation_6.fasta")
 

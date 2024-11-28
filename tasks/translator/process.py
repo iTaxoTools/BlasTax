@@ -20,6 +20,8 @@ def execute(
     frame: str,
     code: int,
 ) -> Results:
+    from translator import Options, translate
+
     print(f"{input_path=}")
     print(f"{output_path=}")
     print(f"{log_path=}")
@@ -30,7 +32,16 @@ def execute(
 
     ts = perf_counter()
 
-    pass
+    options = Options(
+        input_path=input_path,
+        output_path=output_path,
+        log_path=log_path,
+        nucleotide_path=nucleotide_path,
+        input_type=input_type,
+        frame=frame,
+        code=code,
+    )
+    translate(options)
 
     tf = perf_counter()
 
