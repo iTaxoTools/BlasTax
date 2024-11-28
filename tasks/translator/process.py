@@ -17,7 +17,6 @@ def execute(
     log_path: Path,
     nucleotide_path: Path,
     input_type: str,
-    stop: str,
     frame: str,
     code: int,
 ) -> Results:
@@ -26,7 +25,6 @@ def execute(
     print(f"{log_path=}")
     print(f"{nucleotide_path=}")
     print(f"{input_type=}")
-    print(f"{stop=}")
     print(f"{frame=}")
     print(f"{code=}")
 

@@ -5,6 +5,7 @@ from enum import Enum
 from codons import get_codon_tables
 
 CODON_TABLE_VERSION, CODON_TABLES = get_codon_tables()
+READING_FRAMES = {"autodetect": "Autodetect"} | {str(i): str(i) for i in range(1, 7)}
 
 
 class TranslationMode(Enum):
@@ -21,7 +22,6 @@ class TranslationMode(Enum):
     transscript = (
         "Transcript",
         "search for the longest Open Reading Drame (the longest sequence part without stops).",
-        # "Additionally writes nucleotide sequences of the ORF in separate file",
         "transscript",
     )
     all = (
@@ -37,7 +37,3 @@ class TranslationMode(Enum):
 
     def __str__(self):
         return self.key
-
-
-class ReadingFrame(Enum):
-    pass

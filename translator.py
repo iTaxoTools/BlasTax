@@ -22,10 +22,10 @@ class Options:
     nucleotide_path: Path | None
 
     input_type: Literal["cds", "cds_stop", "transscript", "all"]
-    stop: Literal["yes", "no"]
     frame: Literal["autodetect", "1", "2", "3", "4", "5", "6"]
     code: str | int  # codon table
 
+    stop: Literal["yes", "no"] = field(init=False, default=None)
     input_file: TextIO = field(init=False, default=None)
     output_file: TextIO = field(init=False, default=None)
     log_file: TextIO = field(init=False, default=None)
@@ -42,8 +42,10 @@ class Options:
             self.nucleotide_path = Path(devnull)
         if self.input_type == "cds":
             self.stop = "no"
-        if self.input_type == "cds_stop":
+        elif self.input_type == "cds_stop":
             self.stop = "no"
+        else:
+            self.stop = "yes"
         self.input_file = open(self.input_path, "r")
         self.output_file = open(self.output_path, "w")
         self.log_file = open(self.log_path, "w")
@@ -445,7 +447,6 @@ if __name__ == "__main__":
         log_path=Path("translator.log"),
         nucleotide_path=Path("nucleotids"),
         input_type=sys.argv[4],
-        stop=sys.argv[6],
         frame=sys.argv[8],
         code=sys.argv[10],
     )

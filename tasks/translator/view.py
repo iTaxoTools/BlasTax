@@ -7,7 +7,7 @@ from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup, RichRadioButton
+from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox, RadioButtonGroup, RichRadioButton
 
 from ..common.view import (
     BlastTaskView,
@@ -17,7 +17,7 @@ from ..common.view import (
     PathFileSelector,
 )
 from . import long_description, pixmap_medium, title
-from .types import TranslationMode
+from .types import CODON_TABLES, READING_FRAMES, TranslationMode
 
 
 class FilenameSelector(Card):
@@ -105,6 +105,79 @@ class ModeSelector(Card):
         self.controls.options.roll.setAnimatedVisible(value)
 
 
+class CodonTableSelector(Card):
+    code_changed = QtCore.Signal(int)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.draw_main(text)
+
+    def draw_main(self, text):
+        title = QtWidgets.QLabel(text + ":")
+        title.setStyleSheet("""font-size: 16px;""")
+        title.setMinimumWidth(150)
+
+        combo = NoWheelComboBox()
+        for id, name in CODON_TABLES.items():
+            label = f"{(str(id) + ':').rjust(3)}  {name}"
+            combo.addItem(label, id)
+        combo.currentIndexChanged.connect(self._handle_index_changed)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(16)
+        layout.addWidget(title)
+        layout.addWidget(combo, 1)
+
+        self.controls.combo = combo
+
+        self.addLayout(layout)
+
+    def _handle_index_changed(self, index: int):
+        code = self.controls.combo.itemData(index)
+        self.code_changed.emit(code)
+
+    def set_code(self, code: int):
+        index = self.controls.combo.findData(code)
+        index = self.controls.combo.setCurrentIndex(index)
+
+
+class ReadingFrameSelector(Card):
+    frame_changed = QtCore.Signal(str)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.draw_main(text)
+
+    def draw_main(self, text):
+        title = QtWidgets.QLabel(text + ":")
+        title.setStyleSheet("""font-size: 16px;""")
+        title.setMinimumWidth(150)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(16)
+        layout.addWidget(title)
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_frame_changed)
+        for key, label in READING_FRAMES.items():
+            button = QtWidgets.QRadioButton(label)
+            layout.addWidget(button)
+            layout.addSpacing(8)
+            group.add(button, key)
+
+        layout.addStretch(1)
+
+        self.controls.group = group
+
+        self.addLayout(layout)
+
+    def _handle_frame_changed(self, frame: str):
+        self.frame_changed.emit(frame)
+
+    def set_frame(self, frame: str):
+        self.controls.group.setValue(frame)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -118,6 +191,8 @@ class View(BlastTaskView):
         self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
         self.cards.output_filename = FilenameSelector("Output filename", self)
         self.cards.mode = ModeSelector("Translation mode", self)
+        self.cards.code = CodonTableSelector("Codon table", self)
+        self.cards.frame = ReadingFrameSelector("Reading frame", self)
         self.cards.log = OptionCard(
             "Write logfile:", "Generate a logfile with warnings and information about special cases.", self
         )
@@ -158,6 +233,12 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.option_mode, self.cards.mode.set_mode)
         self.binder.bind(self.cards.mode.mode_changed, object.properties.option_mode)
+
+        self.binder.bind(object.properties.option_code, self.cards.code.set_code)
+        self.binder.bind(self.cards.code.code_changed, object.properties.option_code)
+
+        self.binder.bind(object.properties.option_frame, self.cards.frame.set_frame)
+        self.binder.bind(self.cards.frame.frame_changed, object.properties.option_frame)
 
         self.binder.bind(object.properties.option_log, self.cards.log.setChecked)
         self.binder.bind(self.cards.log.toggled, object.properties.option_log)
