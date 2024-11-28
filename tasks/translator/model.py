@@ -15,7 +15,7 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
 
     output_filename = Property(str, "")
-    nucleotide_filename = Property(str, "nucleotids")
+    nucleotides_filename = Property(str, "nucleotids")
     log_filename = Property(str, "translator.log")
 
     option_mode = Property(TranslationMode, TranslationMode.cds)
@@ -23,6 +23,7 @@ class Model(BlastTaskModel):
     option_code = Property(int, None)
     option_stop = Property(bool, False)
     option_log = Property(bool, True)
+    option_nucleotides = Property(bool, True)
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -37,6 +38,11 @@ class Model(BlastTaskModel):
             self.properties.output_filename,
             self.properties.log_filename,
             lambda f: Path(f).with_suffix(".log").name if f else "",
+        )
+        self.binder.bind(
+            self.properties.output_filename,
+            self.properties.nucleotides_filename,
+            lambda f: Path(f).with_stem(Path(f).stem + "_nucleotides").name if f else "",
         )
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
@@ -76,8 +82,8 @@ class Model(BlastTaskModel):
             input_path=self.input_path,
             output_path=self.output_path / self.output_filename,
             log_path=self.output_path / self.log_filename if self.option_log else None,
-            nucleotide_path=self.output_path / self.nucleotide_filename
-            if self.option_mode == TranslationMode.transscript
+            nucleotide_path=self.output_path / self.nucleotides_filename
+            if self.option_mode == TranslationMode.transscript and self.option_nucleotides
             else None,
             input_type=str(self.option_mode),
             stop=str(self.option_stop),

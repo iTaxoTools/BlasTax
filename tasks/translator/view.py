@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup, RichRadioButton
 
@@ -79,16 +80,29 @@ class ModeSelector(Card):
             group.add(button, mode)
             mode_layout.addWidget(button)
 
+        options_widget = QtWidgets.QWidget()
+        options_widget.roll = VerticalRollAnimation(options_widget)
+        options_layout = QtWidgets.QVBoxLayout(options_widget)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        nucleotides = QtWidgets.QCheckBox("Additionally write nucleotide sequences of the ORF in separate file.")
+        options_layout.addWidget(nucleotides)
+
         self.controls.mode = group
+        self.controls.nucleotides = nucleotides
+        self.controls.options = options_widget
 
         self.addWidget(title)
         self.addLayout(mode_layout)
+        self.addWidget(options_widget)
 
-    def _handle_mode_changed(self, value: bool):
-        self.mode_changed.emit(value)
+    def _handle_mode_changed(self, mode: TranslationMode):
+        self.mode_changed.emit(mode)
 
-    def set_mode(self, value: bool):
-        self.controls.mode.setValue(value)
+    def set_mode(self, mode: TranslationMode):
+        self.controls.mode.setValue(mode)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options.roll.setAnimatedVisible(value)
 
 
 class View(BlastTaskView):
@@ -147,6 +161,14 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.option_log, self.cards.log.setChecked)
         self.binder.bind(self.cards.log.toggled, object.properties.option_log)
+
+        self.binder.bind(
+            object.properties.option_mode,
+            self.cards.mode.set_options_visible,
+            proxy=lambda mode: bool(mode == TranslationMode.transscript),
+        )
+        self.binder.bind(object.properties.option_nucleotides, self.cards.mode.controls.nucleotides.setChecked)
+        self.binder.bind(self.cards.mode.controls.nucleotides.toggled, object.properties.option_nucleotides)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

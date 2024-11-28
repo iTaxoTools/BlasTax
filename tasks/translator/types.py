@@ -20,7 +20,7 @@ class TranslationMode(Enum):
     )
     transscript = (
         "Transcript",
-        "search for the longest open reading frame (the longest sequence part without stops).",
+        "search for the longest Open Reading Drame (the longest sequence part without stops).",
         # "Additionally writes nucleotide sequences of the ORF in separate file",
         "transscript",
     )
@@ -36,7 +36,7 @@ class TranslationMode(Enum):
         self.key = key
 
     def __str__(self):
-        return self.description
+        return self.key
 
 
 class ReadingFrame(Enum):
