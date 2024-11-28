@@ -4,8 +4,8 @@
 [ ! "$CODESIGN_IDENTITY" ] && CODESIGN_IDENTITY="UNKNOWN"
 
 # program specifics
-APP_NAME="BlasTax-Scafos"
-APP_IDENTIFIER="org.itaxotools.blastax.scafos"
+APP_NAME="BlasTax-Translator"
+APP_IDENTIFIER="org.itaxotools.blastax.translator"
 APP_SCRIPT="../gui_dev.py"
 APP_ENTITLEMENTS="data/entitlements.plist"
 APP_ICON_ICNS="data/blastax.icns"
