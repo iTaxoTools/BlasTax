@@ -113,7 +113,7 @@ def translate_DNA_record(record, options: Options):
         orf2rc = record.seq[1:-2].reverse_complement().translate(table=table_nr)
         orf3rc = record.seq[2:-1].reverse_complement().translate(table=table_nr)
 
-    orf_dict = {"orf1": orf1, "orf2": orf2, "orf3": orf3, "orf1_rc": orf1rc, "orf2_rc": orf2rc, "orf3_rc": orf3rc}
+    orf_dict = {"orf1": orf1, "orf2": orf2, "orf3": orf3, "orf1rc": orf1rc, "orf2rc": orf2rc, "orf3rc": orf3rc}
     orf_list = []
     for elem in orf_dict:
         orf_list.append(orf_dict[elem])
@@ -353,14 +353,16 @@ def translate_DNA_record(record, options: Options):
                 dna_start = (pos_orf * 3) + 2
                 dna_end = dna_start + (wanted_len * 3) + 2
             elif orf_label == "orf1rc":
-                dna_end = dna_start + wanted_len * 3
                 dna_start = full_orf_len * 3 - ((wanted_len + 1) * 3)
+                dna_end = dna_start + wanted_len * 3
             elif orf_label == "orf2rc":
                 dna_start = (pos_orf * 3) + 2
                 dna_end = dna_start + (wanted_len * 3) + 2
             elif orf_label == "orf3rc":
                 dna_start = (pos_orf * 3) + 2
                 dna_end = dna_start + (wanted_len * 3) + 2
+            else:
+                raise Exception("Unexpected ORF label: " + orf_label)
             orfx = record.seq[dna_start:dna_end].translate(table=table_nr)
 
             loggi.write(
