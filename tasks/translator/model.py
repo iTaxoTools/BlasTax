@@ -82,7 +82,7 @@ class Model(BlastTaskModel):
             output_path=self.output_path / self.output_filename,
             log_path=self.output_path / self.log_filename if self.option_log else None,
             nucleotide_path=self.output_path / self.nucleotides_filename
-            if self.option_mode == TranslationMode.transscript and self.option_nucleotides
+            if self.option_mode == TranslationMode.transcript and self.option_nucleotides
             else None,
             input_type=str(self.option_mode),
             frame=str(self.option_frame),

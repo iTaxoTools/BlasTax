@@ -21,7 +21,7 @@ class Options:
     log_path: Path | None
     nucleotide_path: Path | None
 
-    input_type: Literal["cds", "cds_stop", "transscript", "all"]
+    input_type: Literal["cds", "cds_stop", "transcript ", "all"]
     frame: Literal["autodetect", "1", "2", "3", "4", "5", "6"]
     code: str | int  # codon table
 
@@ -62,7 +62,7 @@ class Options:
 
 def prot_record(record, options: Options):
     protein = translate_DNA_record(record, options)
-    return SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
+    return SeqRecord(seq=protein, id=record.id + "_translated_sequence", description="")
 
 
 # special function for mode all
@@ -72,10 +72,10 @@ def prot_record_solo(record, options: Options):
     for zae in range(1, 7):
         protein = translate_DNA_record_solo(record, options.code, zae)
         proteinall = proteinall + protein + "\n"
-    # records = SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
+    # records = SeqRecord(seq=protein, id=">" + record.id, description="_translated_sequence")
     alloutput.write(">" + record.id + "\n")
     alloutput.write(str(proteinall))
-    return SeqRecord(seq=protein, id=">" + record.id, description="translated sequenz")
+    return SeqRecord(seq=protein, id=record.id + "_translated_sequence", description="")
 
 
 def translate_DNA_record(record, options: Options):
@@ -284,7 +284,7 @@ def translate_DNA_record(record, options: Options):
                     pos = nr_stops_list.index(min_stops)
                     orf_wanted = orf_list[pos]
 
-    if input_type == "transscript":
+    if input_type == "transcript":
         orf_label = "none"
         if "*" not in orf1:
             orf_wanted = orf1

@@ -19,10 +19,10 @@ class TranslationMode(Enum):
         "search for the translation without any stop or minimal number of stops; terminal stops preferred.",
         "cds_stop",
     )
-    transscript = (
+    transcript = (
         "Transcript",
-        "search for the longest Open Reading Drame (the longest sequence part without stops).",
-        "transscript",
+        "search for the longest Open Reading Frame (the longest sequence part without stops).",
+        "transcript",
     )
     all = (
         "All",

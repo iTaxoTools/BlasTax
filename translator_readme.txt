@@ -6,7 +6,7 @@ Generates translation of each sequence in the input file using different modi (i
     -all
     All six possible translations
 
-    -transscript
+    -transcript
     Searching for the longest open reading frame (the longest sequence part without stops), writing orf into FASTA-File
     Additionally writes nucleotide sequences of the ORF in separate file
 

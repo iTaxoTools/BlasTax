@@ -246,7 +246,7 @@ class View(BlastTaskView):
         self.binder.bind(
             object.properties.option_mode,
             self.cards.mode.set_options_visible,
-            proxy=lambda mode: bool(mode == TranslationMode.transscript),
+            proxy=lambda mode: bool(mode == TranslationMode.transcript),
         )
         self.binder.bind(object.properties.option_nucleotides, self.cards.mode.controls.nucleotides.setChecked)
         self.binder.bind(self.cards.mode.controls.nucleotides.toggled, object.properties.option_nucleotides)
