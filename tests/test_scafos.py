@@ -53,9 +53,10 @@ class AmalgamationTest(NamedTuple):
     method: AmalgamationMethod
     input: Sequences
     expected: Sequences
+    kwargs: dict = {}
 
     def validate(self):
-        output = get_amalgamation_method_callable(self.method)(self.input)
+        output = get_amalgamation_method_callable(self.method)(self.input, **self.kwargs)
         assert_sequences_equal(output, self.expected)
 
 
@@ -163,12 +164,29 @@ amalgamation_tests = [
             Sequence("id1", "AC--", {"species": "X"}),
             Sequence("id2", "--GT", {"species": "X"}),
             Sequence("id3", "---A", {"species": "Y"}),
-            Sequence("id4", "T---", {"species": "Y"}),
+            Sequence("id4", "T-?-", {"species": "Y"}),
         ]),
         Sequences([
             Sequence("X_chimera", "ACGT", {"species": "X"}),
             Sequence("Y_chimera", "T--A", {"species": "Y"}),
         ]),
+        dict(ambiguous=False),
+    ),
+    AmalgamationTest(
+        AmalgamationMethod.ByFillingGaps,
+        Sequences([
+            Sequence("id1", "AC--", {"species": "X"}),
+            Sequence("id2", "--GT", {"species": "X"}),
+            Sequence("id3", "AAAA-", {"species": "Y"}),
+            Sequence("id4", "CCC--", {"species": "Y"}),
+            Sequence("id5", "GG---", {"species": "Y"}),
+            Sequence("id6", "T----", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("X_chimera", "ACGT", {"species": "X"}),
+            Sequence("Y_chimera", "NVMA-", {"species": "Y"}),
+        ]),
+        dict(ambiguous=True),
     ),
     # AmalgamationTest(
     #     AmalgamationMethod.ByTrimmingParalogs,

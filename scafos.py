@@ -15,6 +15,26 @@ from itaxotools.taxi2.sequences import Sequence, Sequences
 
 GAP_CHARACTERS = "-?* "
 
+AMBIGUITY_CODES = defaultdict(
+    lambda: "N",
+    {
+        "A": "A",
+        "C": "C",
+        "G": "G",
+        "T": "T",
+        "AG": "R",
+        "GT": "K",
+        "CG": "S",
+        "CT": "Y",
+        "AC": "M",
+        "AT": "W",
+        "CGT": "B",
+        "ACT": "H",
+        "AGT": "D",
+        "ACG": "V",
+    },
+)
+
 
 class TagMethod(Enum):
     SpeciesAfterPipe = auto()
@@ -218,27 +238,41 @@ def _get_most_common_character(characters: Iterator[str]) -> str:
     return common[0][0]
 
 
-def _assemble_sequence_from_most_common_characters(seqs: list[str]) -> str:
+def _get_ambiguity_character(characters: Iterator[str]) -> str:
+    nucleotides = set(characters)
+    if len(nucleotides) == 1:
+        return nucleotides.pop()
+    for gap in GAP_CHARACTERS:
+        nucleotides.discard(gap)
+    if not nucleotides:
+        return GAP_CHARACTERS[0]
+    key = "".join(sorted(nucleotides))
+    return AMBIGUITY_CODES[key.upper()]
+
+
+def _assemble_sequence_from_most_common_characters(seqs: list[str], ambiguous: bool = False) -> str:
     if not all(len(s) == len(seqs[0]) for s in seqs):
         return None
-    sequence = "".join(_get_most_common_character(characters) for characters in zip(*seqs))
+    func = _get_ambiguity_character if ambiguous else _get_most_common_character
+    sequence = "".join(func(characters) for characters in zip(*seqs))
     return sequence
 
 
-def _aggregate_sequence_groups_by_filling_gaps(groups: Iterator[tuple[str, list[Sequence]]]) -> Iterator[Sequences]:
+def _aggregate_sequence_groups_by_filling_gaps(
+    groups: Iterator[tuple[str, list[Sequence]]], ambiguous: bool = False
+) -> Iterator[Sequences]:
     for species, group in groups:
-        # ids = [sequence.id for sequence in group]
         seqs = [sequence.seq for sequence in group]
         id = species + "_chimera"
-        seq = _assemble_sequence_from_most_common_characters(seqs)
+        seq = _assemble_sequence_from_most_common_characters(seqs, ambiguous)
         if seq is None:
             raise Exception(f"Not all sequences are of the same length for species: {repr(species)}")
         yield Sequence(id, seq, extras=dict(species=species))
 
 
-def fuse_by_filling_gaps(sequences: Sequences) -> Sequences:
+def fuse_by_filling_gaps(sequences: Sequences, ambiguous: bool = False) -> Sequences:
     groups = _group_sequences_by_species(sequences)
-    sequences = _aggregate_sequence_groups_by_filling_gaps(groups)
+    sequences = _aggregate_sequence_groups_by_filling_gaps(groups, ambiguous)
     return Sequences(list(sequences))
 
 
