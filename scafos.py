@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum, auto
 from itertools import groupby
 from pathlib import Path
+from statistics import median
 from typing import Callable, Iterator, NamedTuple
 
 from core import get_info_suffix, get_timestamp_suffix
@@ -52,7 +53,7 @@ class AmalgamationMethod(Enum):
     ByMaxLength = auto()
     ByMinimumDistance = auto()
     ByFillingGaps = auto()
-    ByTrimmingParalogs = auto()
+    ByDiscardingOutliers = auto()
 
 
 class DistanceGroups(NamedTuple):
@@ -189,7 +190,7 @@ def _report_means(means: Iterator[AggregatedMean], path: Path) -> Iterator[Aggre
             yield item
 
 
-def _group_means_by_species(data: Iterator[AggregatedMean]) -> Iterator[DistanceGroups]:
+def _group_means_by_species(data: Iterator[AggregatedMean]) -> Iterator[MeanGroups]:
     keyfunc = lambda item: item.sequence.extras["species"]
     data = sorted(data, key=keyfunc)
     for key, group in groupby(data, keyfunc):
@@ -283,12 +284,61 @@ def fuse_by_filling_gaps(sequences: Sequences, ambiguous: bool = False) -> Seque
     return Sequences(list(sequences))
 
 
+def _discard_outliers_by_mean_and_factor(
+    groups: Iterator[MeanGroups], factor: float, debug: bool = True
+) -> Iterator[MeanGroups]:
+    for group in groups:
+        if len(group.items) <= 2:
+            base = min(item.mean for item in group.items)
+        else:
+            base = median(item.mean for item in group.items)
+        items = [item for item in group.items if item.mean <= base * factor]
+        if debug:
+            print("---")
+            print("SPECIES:", group.key)
+            print("MEANS:", ", ".join(f"{item.sequence.id}:{item.mean}" for item in group.items))
+            print("BASE:", base)
+            print("THRESHOLD:", base * factor)
+            print("ITEMS:", ", ".join([item.sequence.id for item in items]))
+        yield MeanGroups(group.key, items)
+
+
+def fuse_after_discarding_outliers(
+    sequences: Sequences,
+    distance_report: Path = None,
+    mean_report: Path = None,
+    outlier_factor: float = 2.0,
+    ambiguous: bool = False,
+) -> Sequences:
+    pairs = SequencePairs.fromProduct(sequences, sequences)
+    pairs = _drop_identical_pairs(pairs)
+    distances = _calculate_distances(pairs)
+
+    if distance_report is not None:
+        distances = _report_distances(distances, distance_report)
+
+    groups = _group_distances_by_left_id(distances)
+    aggregated = _aggregate_distance_groups(groups)
+    means = _calculate_means(aggregated)
+
+    if mean_report is not None:
+        means = _report_means(means, mean_report)
+
+    groups = _group_means_by_species(means)
+    groups = _discard_outliers_by_mean_and_factor(groups, outlier_factor)
+
+    groups = ((group.key, [item.sequence for item in group.items]) for group in groups)
+    sequences = _aggregate_sequence_groups_by_filling_gaps(groups, ambiguous)
+
+    return Sequences(list(sequences))
+
+
 def get_amalgamation_method_callable(method: AmalgamationMethod) -> Callable:
     return {
         AmalgamationMethod.ByMaxLength: select_by_max_length,
         AmalgamationMethod.ByMinimumDistance: select_by_minimum_distance,
         AmalgamationMethod.ByFillingGaps: fuse_by_filling_gaps,
-        AmalgamationMethod.ByTrimmingParalogs: select_by_excluding_paralogs,
+        AmalgamationMethod.ByDiscardingOutliers: fuse_after_discarding_outliers,
     }[method]
 
 
@@ -317,23 +367,3 @@ def get_overlapping_positions(a: str, b: str, exclude: str = GAP_CHARACTERS) -> 
 
 def get_characters_in_positions(s: str, positions: list[int]) -> str:
     return "".join(s[i] for i in positions)
-
-
-def select_by_excluding_paralogs(sequences: Sequences):
-    #     groups = _group_sequences_by_species(sequences)
-    #     groups = list(groups)
-
-    #     for species, group in groups:
-    #         for a, b in combinations(group, 2):
-    #             if a.seq == b.seq:
-    #                 print(species, a.id, b.id, "IDENTICAL")
-    #                 continue
-    #             positions = get_overlapping_positions(a.seq, b.seq)
-    #             print(">", species, a.id, b.id, positions)
-    #             for other_species, other_group in groups:
-    #                 if other_species == species:
-    #                     continue
-
-    #     assert False
-
-    return Sequences([])

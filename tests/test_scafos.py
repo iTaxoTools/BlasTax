@@ -154,6 +154,19 @@ amalgamation_tests = [
         ]),
     ),
     AmalgamationTest(
+        AmalgamationMethod.ByMinimumDistance,
+        Sequences([
+            Sequence("id1", "ACGT----", {"species": "X"}),
+            Sequence("id2", "ACGT----", {"species": "X"}),
+            Sequence("id3", "----TGCA", {"species": "Y"}),
+            Sequence("id4", "----TGGT", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id4", "TGGT", {"species": "Y"}),
+        ]),
+    ),
+    AmalgamationTest(
         AmalgamationMethod.ByFillingGaps,
         Sequences([]),
         Sequences([]),
@@ -188,22 +201,50 @@ amalgamation_tests = [
         ]),
         dict(ambiguous=True),
     ),
-    # AmalgamationTest(
-    #     AmalgamationMethod.ByTrimmingParalogs,
-    #     Sequences([]),
-    #     Sequences([]),
-    # ),
-    # AmalgamationTest(
-    #     AmalgamationMethod.ByTrimmingParalogs,
-    #     Sequences([
-    #         Sequence("id1", "ACGT", {"species": "X"}),
-    #         Sequence("id2", "ACGA", {"species": "X"}),
-    #         Sequence("id3", "TGCA", {"species": "Y"}),
-    #         Sequence("id4", "TGGT", {"species": "Y"}),
-    #         Sequence("id5", "ACCA", {"species": "Y"}),
-    #     ]),
-    #     Sequences([]),
-    # ),
+    AmalgamationTest(
+        AmalgamationMethod.ByDiscardingOutliers,
+        Sequences([]),
+        Sequences([]),
+    ),
+    AmalgamationTest(
+        AmalgamationMethod.ByDiscardingOutliers,
+        Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id2", "ACGA", {"species": "X"}),
+            Sequence("id3", "ACTT", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("X_chimera", "ACGT", {"species": "X"}),
+            Sequence("Y_chimera", "ACTT", {"species": "Y"}),
+        ]),
+        dict(outlier_factor=1.5)
+    ),
+    AmalgamationTest(
+        AmalgamationMethod.ByDiscardingOutliers,
+        Sequences([
+            Sequence("id1", "ACGT", {"species": "X"}),
+            Sequence("id2", "ACGA", {"species": "X"}),
+            Sequence("id3", "ACTT", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("X_chimera", "ACGW", {"species": "X"}),
+            Sequence("Y_chimera", "ACTT", {"species": "Y"}),
+        ]),
+        dict(outlier_factor=2.0, ambiguous=True)
+    ),
+    AmalgamationTest(
+        AmalgamationMethod.ByDiscardingOutliers,
+        Sequences([
+            Sequence("id1", "AC--", {"species": "X"}),
+            Sequence("id2", "AC--", {"species": "X"}),
+            Sequence("id3", "--AT", {"species": "Y"}),
+        ]),
+        Sequences([
+            Sequence("X_chimera", "ACGW", {"species": "X"}),
+            Sequence("Y_chimera", "ACTT", {"species": "Y"}),
+        ]),
+        dict(outlier_factor=1.5, ambiguous=True)
+    ),
 ]
 
 overlap_tests = [
