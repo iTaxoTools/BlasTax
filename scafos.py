@@ -63,12 +63,12 @@ class DistanceGroups(NamedTuple):
 
 class AggregatedDistances(NamedTuple):
     sequence: Sequence
-    species_distances: dict[str, list[float]]
+    species_distances: dict[str, list[float | None]]
 
 
 class AggregatedMean(NamedTuple):
     sequence: Sequence
-    mean: float
+    mean: float | None
 
 
 class MeanGroups(NamedTuple):
@@ -158,11 +158,13 @@ def _group_distances_by_left_id(distances: Iterator[Distance]) -> Iterator[Dista
         yield DistanceGroups(left, list(group))
 
 
-def _aggregate_distance_groups(groups: Iterator[DistanceGroups]) -> Iterator[AggregatedDistances]:
+def _aggregate_distance_groups(
+    groups: Iterator[DistanceGroups], drop_infinite: bool = True
+) -> Iterator[AggregatedDistances]:
     for group in groups:
         distance_dict: dict[str, list[float]] = defaultdict(list)
         for distance in group.others:
-            if distance.d is None:
+            if drop_infinite and distance.d is None:
                 continue
             distance_dict[distance.y.extras["species"]].append(distance.d)
         sequence = group.others[0].x
@@ -176,10 +178,15 @@ def _calculate_means(data: Iterator[AggregatedDistances]) -> Iterator[Aggregated
         if species in item.species_distances:
             del item.species_distances[species]
         means: list[float] = []
+        if not item.species_distances:
+            raise Exception(f"No overlapping segments for species {repr(species)}, aborting.")
         for distances in item.species_distances.values():
-            mean = sum(distances) / len(distances)
+            clean_distances = [d for d in distances if d is not None]
+            if not clean_distances:
+                continue
+            mean = sum(clean_distances) / len(clean_distances)
             means.append(mean)
-        mean_of_means = sum(means) / len(means)
+        mean_of_means = sum(means) / len(means) if len(means) else None
         yield AggregatedMean(item.sequence, mean_of_means)
 
 
@@ -288,11 +295,12 @@ def _discard_outliers_by_mean_and_factor(
     groups: Iterator[MeanGroups], factor: float, debug: bool = True
 ) -> Iterator[MeanGroups]:
     for group in groups:
-        if len(group.items) <= 2:
-            base = min(item.mean for item in group.items)
-        else:
-            base = median(item.mean for item in group.items)
-        items = [item for item in group.items if item.mean <= base * factor]
+        clean_means = [item.mean for item in group.items if item.mean is not None]
+        if not clean_means:
+            yield MeanGroups(group.key, group.items)
+            continue
+        base = min(clean_means) if len(group.items) <= 2 else median(clean_means)
+        items = [item for item in group.items if item.mean <= base * factor or item.mean is None]
         if debug:
             print("---")
             print("SPECIES:", group.key)
@@ -318,7 +326,7 @@ def fuse_after_discarding_outliers(
         distances = _report_distances(distances, distance_report)
 
     groups = _group_distances_by_left_id(distances)
-    aggregated = _aggregate_distance_groups(groups)
+    aggregated = _aggregate_distance_groups(groups, drop_infinite=False)
     means = _calculate_means(aggregated)
 
     if mean_report is not None:

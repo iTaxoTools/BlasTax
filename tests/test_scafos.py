@@ -154,19 +154,6 @@ amalgamation_tests = [
         ]),
     ),
     AmalgamationTest(
-        AmalgamationMethod.ByMinimumDistance,
-        Sequences([
-            Sequence("id1", "ACGT----", {"species": "X"}),
-            Sequence("id2", "ACGT----", {"species": "X"}),
-            Sequence("id3", "----TGCA", {"species": "Y"}),
-            Sequence("id4", "----TGGT", {"species": "Y"}),
-        ]),
-        Sequences([
-            Sequence("id1", "ACGT", {"species": "X"}),
-            Sequence("id4", "TGGT", {"species": "Y"}),
-        ]),
-    ),
-    AmalgamationTest(
         AmalgamationMethod.ByFillingGaps,
         Sequences([]),
         Sequences([]),
@@ -236,12 +223,12 @@ amalgamation_tests = [
         AmalgamationMethod.ByDiscardingOutliers,
         Sequences([
             Sequence("id1", "AC--", {"species": "X"}),
-            Sequence("id2", "AC--", {"species": "X"}),
+            Sequence("id2", "AG--", {"species": "X"}),
             Sequence("id3", "--AT", {"species": "Y"}),
         ]),
         Sequences([
-            Sequence("X_chimera", "ACGW", {"species": "X"}),
-            Sequence("Y_chimera", "ACTT", {"species": "Y"}),
+            Sequence("X_chimera", "AS--", {"species": "X"}),
+            Sequence("Y_chimera", "--AT", {"species": "Y"}),
         ]),
         dict(outlier_factor=1.5, ambiguous=True)
     ),
@@ -325,8 +312,19 @@ def test_fuse_by_min_reports(tmp_path: Path):
     assert_file_equals(mean_report_output, mean_report_expected)
 
 
+def test_fuse_by_min_reports_no_overlap():
+    with pytest.raises(Exception, match="No overlapping segments.*'X'"):
+        sequences = Sequences([
+            Sequence("id1", "ACGT----", {"species": "X"}),
+            Sequence("id2", "ACGT----", {"species": "X"}),
+            Sequence("id3", "----TGCA", {"species": "Y"}),
+            Sequence("id4", "----TGGT", {"species": "Y"}),
+        ])
+        select_by_minimum_distance(sequences)
+
+
 def test_fuse_by_filling_gaps_uneven_lengths():
-    with pytest.raises(Exception, match="'Y'"):
+    with pytest.raises(Exception, match="same length.*'Y'"):
         sequences = Sequences([
             Sequence("id1", "ACGT", {"species": "X"}),
             Sequence("id2", "ACGT", {"species": "X"}),
