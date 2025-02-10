@@ -18,7 +18,8 @@ class Model(BlastTaskModel):
     tag_method = Property(TagMethodTexts, TagMethodTexts.SpeciesBeforeFirstUnderscore)
     amalgamation_method = Property(AmalgamationMethodTexts, AmalgamationMethodTexts.ByMaxLength)
     save_reports = Property(bool, False)
-    fuse_ambiguous = Property(bool, False)
+    fuse_ambiguous = Property(bool, True)
+    outlier_factor = Property(float, 1.5)
 
     append_timestamp = Property(bool, False)
     append_configuration = Property(bool, True)
@@ -64,6 +65,7 @@ class Model(BlastTaskModel):
             amalgamation_method=self.amalgamation_method,
             save_reports=self.save_reports,
             fuse_ambiguous=self.fuse_ambiguous,
+            outlier_factor=self.outlier_factor,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

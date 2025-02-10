@@ -292,7 +292,7 @@ def fuse_by_filling_gaps(sequences: Sequences, ambiguous: bool = False) -> Seque
 
 
 def _discard_outliers_by_mean_and_factor(
-    groups: Iterator[MeanGroups], factor: float, debug: bool = True
+    groups: Iterator[MeanGroups], factor: float, debug: bool = False
 ) -> Iterator[MeanGroups]:
     for group in groups:
         clean_means = [item.mean for item in group.items if item.mean is not None]

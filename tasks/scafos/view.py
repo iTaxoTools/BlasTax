@@ -16,6 +16,7 @@ from ..common.view import (
     OptionCard,
     OutputDirectorySelector,
 )
+from ..common.widgets import GDoubleSpinBox
 from . import long_description, pixmap_medium, title
 from .types import AmalgamationMethodTexts, TagMethodTexts
 
@@ -137,6 +138,40 @@ class AmbiguitySelector(Card):
         self.controls.ambiguous.setValue(value)
 
 
+class OutlierFactorSpinBox(GDoubleSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setFixedWidth(120)
+        self.setMinimum(1.001)
+        self.setMaximum(100.0)
+        self.setSingleStep(0.1)
+        self.setDecimals(3)
+        self.setSuffix("")
+        self.setValue(1.5)
+
+
+class OutlierFactorSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        title = QtWidgets.QLabel("Outlier factor:")
+        title.setStyleSheet("""font-size: 16px;""")
+        title.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Discard sequences with intra-species distance larger than the median.")
+        field = OutlierFactorSpinBox()
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 4, 0, 4)
+        layout.addWidget(title)
+        layout.addWidget(description, 1)
+        layout.addWidget(field)
+        layout.setSpacing(16)
+
+        self.controls.field = field
+
+        self.addLayout(layout)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -150,14 +185,16 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.tag_method = TagMethodSelector(self)
         self.cards.amalgamation_method = AmalgamationMethodSelector(self)
-        self.cards.ambiguous = AmbiguitySelector(self)
+        self.cards.outlier_factor = OutlierFactorSelector(self)
         self.cards.report = OptionCard(
             "Save reports:", "Report p-distance pairs and mean species distance for each input file.", self
         )
+        self.cards.ambiguous = AmbiguitySelector(self)
 
         self.cards.query.set_placeholder_text("Input sequences for amalgamation (FASTA, FASTQ or ALI)")
-        self.cards.ambiguous.roll = VerticalRollAnimation(self.cards.ambiguous)
+        self.cards.outlier_factor.roll = VerticalRollAnimation(self.cards.outlier_factor)
         self.cards.report.roll = VerticalRollAnimation(self.cards.report)
+        self.cards.ambiguous.roll = VerticalRollAnimation(self.cards.ambiguous)
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -203,8 +240,18 @@ class View(BlastTaskView):
 
         self.binder.bind(
             object.properties.amalgamation_method,
+            self.cards.outlier_factor.roll.setAnimatedVisible,
+            proxy=lambda x: x == AmalgamationMethodTexts.ByDiscardingOutliers,
+        )
+
+        self.binder.bind(object.properties.outlier_factor, self.cards.outlier_factor.controls.field.setValue)
+        self.binder.bind(self.cards.outlier_factor.controls.field.valueChangedSafe, object.properties.outlier_factor)
+
+        self.binder.bind(
+            object.properties.amalgamation_method,
             self.cards.report.roll.setAnimatedVisible,
-            proxy=lambda x: x == AmalgamationMethodTexts.ByMinimumDistance,
+            proxy=lambda x: x
+            in [AmalgamationMethodTexts.ByMinimumDistance, AmalgamationMethodTexts.ByDiscardingOutliers],
         )
 
         self.binder.bind(object.properties.save_reports, self.cards.report.setChecked)
@@ -213,7 +260,7 @@ class View(BlastTaskView):
         self.binder.bind(
             object.properties.amalgamation_method,
             self.cards.ambiguous.roll.setAnimatedVisible,
-            proxy=lambda x: x == AmalgamationMethodTexts.ByFillingGaps,
+            proxy=lambda x: x in [AmalgamationMethodTexts.ByFillingGaps, AmalgamationMethodTexts.ByDiscardingOutliers],
         )
 
         self.binder.bind(object.properties.fuse_ambiguous, self.cards.ambiguous.set_ambiguous)

@@ -22,6 +22,7 @@ def execute(
     amalgamation_method: AmalgamationMethodTexts,
     save_reports: bool,
     fuse_ambiguous: bool,
+    outlier_factor: float,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
@@ -33,6 +34,7 @@ def execute(
     print(f"{amalgamation_method.key=}")
     print(f"{save_reports=}")
     print(f"{fuse_ambiguous=}")
+    print(f"{outlier_factor=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -43,6 +45,13 @@ def execute(
     if append_configuration:
         configuration[tag_method.key] = None
         configuration[amalgamation_method.key] = None
+        if amalgamation_method in [AmalgamationMethodTexts.ByFillingGaps, AmalgamationMethodTexts.ByDiscardingOutliers]:
+            if fuse_ambiguous:
+                configuration["with_ambiguity_codes"] = None
+            else:
+                configuration["by_most_common_character"] = None
+        if amalgamation_method == AmalgamationMethodTexts.ByDiscardingOutliers:
+            configuration["outlier_factor"] = f"{outlier_factor:.3f}"
 
     target_paths_list = [
         get_target_paths(path, output_path, amalgamation_method, timestamp, configuration) for path in input_paths
@@ -63,6 +72,7 @@ def execute(
             amalgamation_method=amalgamation_method,
             save_reports=save_reports,
             fuse_ambiguous=fuse_ambiguous,
+            outlier_factor=outlier_factor,
         )
     progress_handler(f"{total}/{total}", total, 0, total)
 
@@ -78,6 +88,7 @@ def execute_single(
     amalgamation_method: AmalgamationMethodTexts,
     save_reports: bool,
     fuse_ambiguous: bool,
+    outlier_factor: float,
 ) -> Results:
     from itaxotools.taxi2.file_types import FileFormat
     from itaxotools.taxi2.files import identify_format
@@ -94,17 +105,20 @@ def execute_single(
         AmalgamationMethodTexts.ByMaxLength: AmalgamationMethod.ByMaxLength,
         AmalgamationMethodTexts.ByMinimumDistance: AmalgamationMethod.ByMinimumDistance,
         AmalgamationMethodTexts.ByFillingGaps: AmalgamationMethod.ByFillingGaps,
+        AmalgamationMethodTexts.ByDiscardingOutliers: AmalgamationMethod.ByDiscardingOutliers,
     }[amalgamation_method]
 
     output_path = target_paths.chimeras_path
 
     extra_kwargs = {}
     if save_reports:
-        if amalgamation_method == AmalgamationMethod.ByMinimumDistance:
+        if amalgamation_method in [AmalgamationMethod.ByMinimumDistance, AmalgamationMethod.ByDiscardingOutliers]:
             target_paths = cast(DistanceTargetPaths, target_paths)
             extra_kwargs |= dict(distance_report=target_paths.distances_path, mean_report=target_paths.means_path)
-    if fuse_ambiguous:
-        extra_kwargs |= dict(ambiguous=True)
+    if amalgamation_method in [AmalgamationMethod.ByFillingGaps, AmalgamationMethod.ByDiscardingOutliers]:
+        extra_kwargs |= dict(ambiguous=fuse_ambiguous)
+    if amalgamation_method == AmalgamationMethod.ByDiscardingOutliers:
+        extra_kwargs |= dict(outlier_factor=outlier_factor)
 
     callable = get_amalgamation_method_callable(amalgamation_method)
 
@@ -133,7 +147,7 @@ def get_target_paths(
 
     chimeras_path = output_path / get_scafos_filename(input_path, timestamp=timestamp, **configuration)
 
-    if amalgamation_method == AmalgamationMethodTexts.ByMinimumDistance:
+    if amalgamation_method in [AmalgamationMethodTexts.ByMinimumDistance, AmalgamationMethodTexts.ByDiscardingOutliers]:
         distances_path = chimeras_path.with_stem(chimeras_path.stem + "_distances").with_suffix(".tsv")
         means_path = chimeras_path.with_stem(chimeras_path.stem + "_means").with_suffix(".tsv")
         return DistanceTargetPaths(

@@ -54,9 +54,14 @@ class AmalgamationMethodTexts(Enum):
         "keep the sequence that is closest to other species in average",
     )
     ByFillingGaps = (
-        "fuse_by_filling_gaps",
+        "fuse_by_merging_positions",
         "Fuse by merging positions",
         "merge information from all specimens for each sequence position",
+    )
+    ByDiscardingOutliers = (
+        "fuse_after_discarding_outliers",
+        "Fuse after discarding outliers",
+        "discard outlier sequences before merging all species positions",
     )
 
     def __init__(self, key: str, title: str, description: str):
