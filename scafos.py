@@ -16,23 +16,29 @@ from itaxotools.taxi2.sequences import Sequence, Sequences
 GAP_CHARACTERS = "-?* "
 
 AMBIGUITY_CODES = defaultdict(
-    lambda: "N",
+    list,
     {
         "A": "A",
         "C": "C",
         "G": "G",
         "T": "T",
-        "AG": "R",
-        "GT": "K",
-        "CG": "S",
-        "CT": "Y",
-        "AC": "M",
-        "AT": "W",
-        "CGT": "B",
-        "ACT": "H",
-        "AGT": "D",
-        "ACG": "V",
+        "R": "AG",
+        "K": "GT",
+        "S": "CG",
+        "Y": "CT",
+        "M": "AC",
+        "W": "AT",
+        "B": "CGT",
+        "H": "ACT",
+        "D": "AGT",
+        "V": "ACG",
+        "N": "ACGT",
     },
+)
+
+AMBIGUITY_REVERSE_CODES = defaultdict(
+    lambda: "N",
+    {v: k for k, v in AMBIGUITY_CODES.items()},
 )
 
 
@@ -239,15 +245,16 @@ def _get_most_common_character(characters: Iterator[str]) -> str:
 
 
 def _get_ambiguity_character(characters: Iterator[str]) -> str:
-    nucleotides = set(characters)
-    if len(nucleotides) == 1:
-        return nucleotides.pop()
+    codes = set(char.upper() for char in characters)
+    if len(codes) == 1:
+        return codes.pop()
     for gap in GAP_CHARACTERS:
-        nucleotides.discard(gap)
-    if not nucleotides:
+        codes.discard(gap)
+    codes = set(nucl for code in codes for nucl in AMBIGUITY_CODES[code])
+    if not codes:
         return GAP_CHARACTERS[0]
-    key = "".join(sorted(nucleotides))
-    return AMBIGUITY_CODES[key.upper()]
+    key = "".join(sorted(codes))
+    return AMBIGUITY_REVERSE_CODES[key.upper()]
 
 
 def _assemble_sequence_from_most_common_characters(seqs: list[str], ambiguous: bool = False) -> str:
