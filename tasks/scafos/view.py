@@ -98,6 +98,45 @@ class AmalgamationMethodSelector(Card):
         self.controls.method.setValue(value)
 
 
+class AmbiguitySelector(Card):
+    ambiguous_changed = QtCore.Signal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        title = QtWidgets.QLabel("When merging a position with conflicting nucleotide codes:")
+        title.setStyleSheet("""font-size: 16px;""")
+
+        radio_layout = QtWidgets.QVBoxLayout()
+        radio_layout.setContentsMargins(12, 0, 0, 0)
+        radio_layout.setSpacing(8)
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_ambiguous_changed)
+        self.controls.ambiguous = group
+
+        button = QtWidgets.QRadioButton("Keep the most common code that is not a gap.")
+        group.add(button, False)
+        radio_layout.addWidget(button)
+
+        button = QtWidgets.QRadioButton("Use IUPAC ambiguity codes for the output.")
+        group.add(button, True)
+        radio_layout.addWidget(button)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 4, 0, 0)
+        layout.addWidget(title)
+        layout.addLayout(radio_layout)
+        layout.setSpacing(12)
+
+        self.addLayout(layout)
+
+    def _handle_ambiguous_changed(self, value: AmalgamationMethodTexts):
+        self.ambiguous_changed.emit(value)
+
+    def set_ambiguous(self, value: bool):
+        self.controls.ambiguous.setValue(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -111,11 +150,13 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.tag_method = TagMethodSelector(self)
         self.cards.amalgamation_method = AmalgamationMethodSelector(self)
+        self.cards.ambiguous = AmbiguitySelector(self)
         self.cards.report = OptionCard(
             "Save reports:", "Report p-distance pairs and mean species distance for each input file.", self
         )
 
         self.cards.query.set_placeholder_text("Input sequences for amalgamation (FASTA, FASTQ or ALI)")
+        self.cards.ambiguous.roll = VerticalRollAnimation(self.cards.ambiguous)
         self.cards.report.roll = VerticalRollAnimation(self.cards.report)
 
         layout = QtWidgets.QVBoxLayout()
@@ -168,6 +209,15 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.save_reports, self.cards.report.setChecked)
         self.binder.bind(self.cards.report.toggled, object.properties.save_reports)
+
+        self.binder.bind(
+            object.properties.amalgamation_method,
+            self.cards.ambiguous.roll.setAnimatedVisible,
+            proxy=lambda x: x == AmalgamationMethodTexts.ByFillingGaps,
+        )
+
+        self.binder.bind(object.properties.fuse_ambiguous, self.cards.ambiguous.set_ambiguous)
+        self.binder.bind(self.cards.ambiguous.ambiguous_changed, object.properties.fuse_ambiguous)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

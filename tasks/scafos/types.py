@@ -55,8 +55,8 @@ class AmalgamationMethodTexts(Enum):
     )
     ByFillingGaps = (
         "fuse_by_filling_gaps",
-        "Fuse by filling gaps",
-        "keep the most common character of each position",
+        "Fuse by merging positions",
+        "merge information from all specimens for each sequence position",
     )
 
     def __init__(self, key: str, title: str, description: str):

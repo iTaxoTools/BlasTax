@@ -21,6 +21,7 @@ def execute(
     tag_method: TagMethodTexts,
     amalgamation_method: AmalgamationMethodTexts,
     save_reports: bool,
+    fuse_ambiguous: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
@@ -31,6 +32,7 @@ def execute(
     print(f"{tag_method.key=}")
     print(f"{amalgamation_method.key=}")
     print(f"{save_reports=}")
+    print(f"{fuse_ambiguous=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -60,6 +62,7 @@ def execute(
             tag_method=tag_method,
             amalgamation_method=amalgamation_method,
             save_reports=save_reports,
+            fuse_ambiguous=fuse_ambiguous,
         )
     progress_handler(f"{total}/{total}", total, 0, total)
 
@@ -74,6 +77,7 @@ def execute_single(
     tag_method: TagMethodTexts,
     amalgamation_method: AmalgamationMethodTexts,
     save_reports: bool,
+    fuse_ambiguous: bool,
 ) -> Results:
     from itaxotools.taxi2.file_types import FileFormat
     from itaxotools.taxi2.files import identify_format
@@ -98,7 +102,9 @@ def execute_single(
     if save_reports:
         if amalgamation_method == AmalgamationMethod.ByMinimumDistance:
             target_paths = cast(DistanceTargetPaths, target_paths)
-            extra_kwargs = dict(distance_report=target_paths.distances_path, mean_report=target_paths.means_path)
+            extra_kwargs |= dict(distance_report=target_paths.distances_path, mean_report=target_paths.means_path)
+    if fuse_ambiguous:
+        extra_kwargs |= dict(ambiguous=True)
 
     callable = get_amalgamation_method_callable(amalgamation_method)
 
