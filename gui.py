@@ -20,6 +20,7 @@ def run():
     main = Main()
     main.widgets.header.toolLogo.setFixedWidth(188)
     main.resize(820, 580)
+    main.setMinimumWidth(820)
     main.show()
 
     app.exec()
