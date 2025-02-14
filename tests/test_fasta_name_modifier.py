@@ -23,6 +23,9 @@ class FastaNameModifierTest(NamedTuple):
     renameauto: bool
     direc: str | None
     addstring: str | None
+    fixaliseparator: bool
+    fixseqspaces: bool
+    fixseqasterisks: bool
 
     def validate(self, tmp_path: Path) -> None:
         input_name = TEST_DATA_DIR / self.input_name
@@ -40,7 +43,10 @@ class FastaNameModifierTest(NamedTuple):
             self.trimmaxchar,
             self.renameauto,
             self.direc,
-            self.addstring
+            self.addstring,
+            self.fixaliseparator,
+            self.fixseqspaces,
+            self.fixseqasterisks,
         )
 
         assert output_name.exists()
@@ -71,6 +77,9 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc=None,
         addstring=None,
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
     ),
     FastaNameModifierTest(  # test complex case
         "FastaExample_complex_utf8.fas",
@@ -85,6 +94,9 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc=None,
         addstring=None,
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
     ),
     FastaNameModifierTest(  # test special characters
         "FastaExample_special_characters.fas",
@@ -99,6 +111,9 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc=None,
         addstring=None,
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
     ),
     FastaNameModifierTest(  # test trim and add
         "FastaExample_simple.fas",
@@ -113,6 +128,9 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc="end",
         addstring="end",
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
     ),
     FastaNameModifierTest(  # autoincreament without trimming
         "FastaExample_complex3.fas",
@@ -127,6 +145,9 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc=None,
         addstring=None,
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
     ),
     FastaNameModifierTest(  # sanitizing, trimming, auto, add (_) at the beginning
         "FastaExample_complex3.fas",
@@ -141,6 +162,26 @@ fasta_name_modifier_tests = [
         renameauto=True,
         direc="beginning",
         addstring="_",
+        fixaliseparator=False,
+        fixseqspaces=False,
+        fixseqasterisks=False,
+    ),
+    FastaNameModifierTest(  # ali parsing
+        "ali_simple.ali",
+        "ali_simple_out.fas",
+        "ali_simple_expected.fas",
+        trim=False,
+        add=False,
+        sanitize=True,
+        preserve_separators=True,
+        trimposition="",
+        trimmaxchar=0,
+        renameauto=False,
+        direc=None,
+        addstring=None,
+        fixaliseparator=True,
+        fixseqspaces=True,
+        fixseqasterisks=True,
     ),
 ]
 

@@ -668,10 +668,22 @@ def fasta_name_modifier(
     renameauto: bool,
     direc: str = None,
     addstring: str = None,
-) -> None:
+    fixseqspaces: bool = False,
+    fixseqasterisks: bool = False,
+    fixaliseparator: bool = False,
+):
     letters_and_numbers = string.ascii_letters + string.digits + ">_"
     if preserve_separators:
         letters_and_numbers += "@|"
+
+    seqtrans = {}
+    idtrans = {}
+    if fixseqspaces:
+        seqtrans |= str.maketrans(" ", "-")
+    if fixseqasterisks:
+        seqtrans |= str.maketrans("*", "-")
+    if fixaliseparator:
+        idtrans |= str.maketrans("@", "|")
 
     counter = 1
     sequence = ""
@@ -680,11 +692,14 @@ def fasta_name_modifier(
         with open(output_name, "w", encoding="utf-8") as outfile:
             for line in file:
                 line = line.strip("\r\n")
-                if line.startswith(";") or line.startswith("#"):
+                if not line:
+                    continue
+                elif line.startswith(";") or line.startswith("#"):
                     # ignore comment lines and ALI headers
                     continue
                 elif ">" in line:
                     if sequence:
+                        sequence = sequence.translate(seqtrans)
                         outfile.write(sequence + "\n")
                         sequence = ""
                     identifier = string_trimmer(
@@ -700,11 +715,13 @@ def fasta_name_modifier(
                         direc,
                         addstring,
                     )
+                    identifier = identifier.translate(idtrans)
                     outfile.write(identifier + "\n")
                     counter += 1
                 else:
                     sequence += line
             if sequence:
+                sequence = sequence.translate(seqtrans)
                 outfile.write(sequence + "\n")
 
     outfile.close()
