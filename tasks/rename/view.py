@@ -55,7 +55,7 @@ class SanitizeOptionCard(OptionCard):
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
-        field = QtWidgets.QCheckBox(' Preserve any species separators ("@" and/or "|")')
+        field = QtWidgets.QCheckBox(' Preserve any species separators in the identifiers ("@" and/or "|")')
         layout.addWidget(field, 1)
         self.controls.preserve_separators = field
 
@@ -63,6 +63,7 @@ class SanitizeOptionCard(OptionCard):
         widget.setLayout(layout)
         widget.roll = VerticalRollAnimation(widget)
         self.controls.options_widget = widget
+        widget.roll._visible_target = True
 
         self.toggled.connect(self.set_options_visible)
 
@@ -168,6 +169,41 @@ class TrimOptionCard(OptionCard):
         self.controls.options_widget.roll.setAnimatedVisible(value)
 
 
+class AliOptionCard(OptionCard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_options()
+
+    def draw_options(self):
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(24)
+
+        field = QtWidgets.QCheckBox(' Convert species separator from "@" to "|"')
+        layout.addWidget(field)
+        self.controls.fixaliseparator = field
+
+        field = QtWidgets.QCheckBox(' Convert gaps from "*" to "-"')
+        layout.addWidget(field)
+        self.controls.fixseqasterisks = field
+
+        field = QtWidgets.QCheckBox(' Convert padding from " " to "-"')
+        layout.addWidget(field, 1)
+        self.controls.fixseqspaces = field
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
+
+        self.toggled.connect(self.set_options_visible)
+
+        self.addWidget(widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -194,6 +230,10 @@ class View(BlastTaskView):
         self.cards.trim = TrimOptionCard(
             "Trim",
             "Trim each identifier to fit within a specified character length.",
+        )
+        self.cards.ali = AliOptionCard(
+            "ALI processing",
+            "Modify ALI sequence files to conform to FASTA specifications.",
         )
 
         self.cards.query.set_placeholder_text("Sequences for which the identifiers will be renamed")
@@ -231,12 +271,9 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.sanitize, self.cards.sanitize.setChecked)
         self.binder.bind(self.cards.sanitize.toggled, object.properties.sanitize)
 
-        self.binder.bind(
-            self.cards.sanitize.controls.preserve_separators.toggled, object.properties.preserve_separators
-        )
-        self.binder.bind(
-            object.properties.preserve_separators, self.cards.sanitize.controls.preserve_separators.setChecked
-        )
+        controls = self.cards.sanitize.controls
+        self.binder.bind(controls.preserve_separators.toggled, object.properties.preserve_separators)
+        self.binder.bind(object.properties.preserve_separators, controls.preserve_separators.setChecked)
         self.cards.sanitize.set_options_visible(object.sanitize)
 
         self.binder.bind(object.properties.add, self.cards.add.setChecked)
@@ -257,6 +294,18 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.trim_direction, self.cards.trim.controls.direction.setValue)
         self.cards.trim.controls.max_length.bind_property(object.properties.trim_max_length)
         self.cards.trim.set_options_visible(object.trim)
+
+        self.binder.bind(object.properties.ali, self.cards.ali.setChecked)
+        self.binder.bind(self.cards.ali.toggled, object.properties.ali)
+
+        controls = self.cards.ali.controls
+        self.binder.bind(controls.fixseqspaces.toggled, object.properties.fixseqspaces)
+        self.binder.bind(object.properties.fixseqspaces, controls.fixseqspaces.setChecked)
+        self.binder.bind(controls.fixseqasterisks.toggled, object.properties.fixseqasterisks)
+        self.binder.bind(object.properties.fixseqasterisks, controls.fixseqasterisks.setChecked)
+        self.binder.bind(controls.fixaliseparator.toggled, object.properties.fixaliseparator)
+        self.binder.bind(object.properties.fixaliseparator, controls.fixaliseparator.setChecked)
+        self.cards.ali.set_options_visible(object.ali)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

@@ -26,6 +26,11 @@ class Model(BlastTaskModel):
     add_direction = Property(Direction, Direction.End)
     add_text = Property(str, "")
 
+    ali = Property(bool, False)
+    fixseqspaces = Property(bool, True)
+    fixseqasterisks = Property(bool, True)
+    fixaliseparator = Property(bool, True)
+
     append_timestamp = Property(bool, False)
 
     def __init__(self, name=None):
@@ -69,6 +74,9 @@ class Model(BlastTaskModel):
             add=self.add,
             add_direction=str(self.add_direction),
             add_text=self.add_text,
+            fixseqspaces=self.ali and self.fixseqspaces,
+            fixseqasterisks=self.ali and self.fixseqasterisks,
+            fixaliseparator=self.ali and self.fixaliseparator,
             append_timestamp=self.append_timestamp,
         )
 

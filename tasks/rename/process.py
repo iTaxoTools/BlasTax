@@ -25,6 +25,9 @@ def execute(
     add: bool,
     add_direction: str,
     add_text: str,
+    fixseqspaces: bool,
+    fixseqasterisks: bool,
+    fixaliseparator: bool,
     append_timestamp: bool,
 ) -> Results:
     from core import fasta_name_modifier, get_fasta_renamed_filename
@@ -41,6 +44,9 @@ def execute(
     print(f"{add=}")
     print(f"{add_direction=}")
     print(f"{add_text=}")
+    print(f"{fixseqspaces=}")
+    print(f"{fixseqasterisks=}")
+    print(f"{fixaliseparator=}")
     print(f"{append_timestamp=}")
 
     total = len(input_paths)
@@ -69,6 +75,9 @@ def execute(
             renameauto=auto_increment,
             direc=add_direction,
             addstring=add_text,
+            fixseqspaces=fixseqspaces,
+            fixseqasterisks=fixseqasterisks,
+            fixaliseparator=fixaliseparator,
         )
     progress_handler(f"{total}/{total}", total, 0, total)
 
