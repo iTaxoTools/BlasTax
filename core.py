@@ -673,58 +673,38 @@ def fasta_name_modifier(
     if preserve_separators:
         letters_and_numbers += "@|"
 
-    outfile = open(output_name, "w", encoding="utf-8")
-    gene = []
-    sequenzen = []
     counter = 1
+    sequence = ""
 
     with open(input_name, "r", encoding="utf-8", errors="surrogateescape") as file:
-        for z in file:
-            if ">" in z:
-                strippi = z.strip("\n")
-                new_line = string_trimmer(
-                    strippi,
-                    counter,
-                    trim,
-                    add,
-                    sanitize,
-                    trimposition,
-                    trimmaxchar,
-                    renameauto,
-                    letters_and_numbers,
-                    direc,
-                    addstring,
-                )
-                gene.append(new_line)
-                counter = counter + 1
-
-            else:
-                next = z
-                seq = ""
-                while (">" not in next) and (len(next) > 0):
-                    seq += str(next[0:-1])
-                    next = file.readline()
-
-                strippi = next.strip("\n")
-                new_line = string_trimmer(
-                    strippi,
-                    counter,
-                    trim,
-                    add,
-                    sanitize,
-                    trimposition,
-                    trimmaxchar,
-                    renameauto,
-                    letters_and_numbers,
-                    direc,
-                    addstring,
-                )
-                gene.append(new_line)
-                counter = counter + 1
-                sequenzen.append(seq)
-
-    for i in range(0, len(sequenzen)):
-        outfile.write(gene[i] + "\n")
-        outfile.write(sequenzen[i] + "\n")
+        with open(output_name, "w", encoding="utf-8") as outfile:
+            for line in file:
+                line = line.strip("\r\n")
+                if line.startswith(";") or line.startswith("#"):
+                    # ignore comment lines and ALI headers
+                    continue
+                elif ">" in line:
+                    if sequence:
+                        outfile.write(sequence + "\n")
+                        sequence = ""
+                    identifier = string_trimmer(
+                        line,
+                        counter,
+                        trim,
+                        add,
+                        sanitize,
+                        trimposition,
+                        trimmaxchar,
+                        renameauto,
+                        letters_and_numbers,
+                        direc,
+                        addstring,
+                    )
+                    outfile.write(identifier + "\n")
+                    counter += 1
+                else:
+                    sequence += line
+            if sequence:
+                outfile.write(sequence + "\n")
 
     outfile.close()
