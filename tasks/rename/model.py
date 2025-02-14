@@ -15,6 +15,7 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
 
     sanitize = Property(bool, True)
+    preserve_separators = Property(bool, False)
     auto_increment = Property(bool, True)
 
     trim = Property(bool, True)
@@ -60,6 +61,7 @@ class Model(BlastTaskModel):
             input_paths=self.input_sequences.get_all_paths(),
             output_path=self.output_path,
             sanitize=self.sanitize,
+            preserve_separators=self.preserve_separators,
             auto_increment=self.auto_increment,
             trim=self.trim,
             trim_direction=str(self.trim_direction),

@@ -46,6 +46,32 @@ class PositionCombobox(NoWheelComboBox):
         self.setCurrentIndex(index)
 
 
+class SanitizeOptionCard(OptionCard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_options()
+
+    def draw_options(self):
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        field = QtWidgets.QCheckBox(' Preserve any species separators ("@" and/or "|")')
+        layout.addWidget(field, 1)
+        self.controls.preserve_separators = field
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
+
+        self.toggled.connect(self.set_options_visible)
+
+        self.addWidget(widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
+
+
 class AddOptionCard(OptionCard):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,9 +177,9 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = BatchQuerySelector("FASTA sequences", self)
+        self.cards.query = BatchQuerySelector("Sequence files", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
-        self.cards.sanitize = OptionCard(
+        self.cards.sanitize = SanitizeOptionCard(
             "Sanitize",
             "Replace special characters with their ASCII representation, or an underscore if not applicable.",
         )
@@ -204,6 +230,14 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.sanitize, self.cards.sanitize.setChecked)
         self.binder.bind(self.cards.sanitize.toggled, object.properties.sanitize)
+
+        self.binder.bind(
+            self.cards.sanitize.controls.preserve_separators.toggled, object.properties.preserve_separators
+        )
+        self.binder.bind(
+            object.properties.preserve_separators, self.cards.sanitize.controls.preserve_separators.setChecked
+        )
+        self.cards.sanitize.set_options_visible(object.sanitize)
 
         self.binder.bind(object.properties.add, self.cards.add.setChecked)
         self.binder.bind(self.cards.add.toggled, object.properties.add)

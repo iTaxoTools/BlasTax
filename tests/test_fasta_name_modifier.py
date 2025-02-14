@@ -13,40 +13,34 @@ TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 class FastaNameModifierTest(NamedTuple):
     input_name: Path | str
     output_name: Path | str
+    expected_output: str
     trim: bool
     add: bool
     sanitize: bool
+    preserve_separators: bool
     trimposition: str
     trimmaxchar: int
     renameauto: bool
-    expected_output: str
-    direc: str = None
-    addstring: str = None
+    direc: str | None
+    addstring: str | None
 
     def validate(self, tmp_path: Path) -> None:
         input_name = TEST_DATA_DIR / self.input_name
         output_name = tmp_path / self.output_name
-        trim = self.trim
-        add = self.add
-        sanitize = self.sanitize
-        trimposition = self.trimposition
-        trimmaxchar = self.trimmaxchar
-        renameauto = self.renameauto
-        direc = self.direc
-        addstring = self.addstring
         expected_output = TEST_DATA_DIR / self.expected_output
 
         fasta_name_modifier(
             str(input_name),
             str(output_name),
-            trim,
-            add,
-            sanitize,
-            str(trimposition),
-            int(trimmaxchar),
-            renameauto,
-            direc,
-            addstring
+            self.trim,
+            self.add,
+            self.sanitize,
+            self.preserve_separators,
+            self.trimposition,
+            self.trimmaxchar,
+            self.renameauto,
+            self.direc,
+            self.addstring
         )
 
         assert output_name.exists()
@@ -67,82 +61,86 @@ fasta_name_modifier_tests = [
     FastaNameModifierTest(  # test simple case
         "FastaExample_simple.fas",
         "simlpe_output.fas",
-        True,
-        False,
-        True,
-        "end",
-        50,
-        True,
-        #        None,
-        #        None,
         "simlpe_output_expected.fas",
+        trim=True,
+        add=False,
+        sanitize=True,
+        preserve_separators=False,
+        trimposition="end",
+        trimmaxchar=50,
+        renameauto=True,
+        direc=None,
+        addstring=None,
     ),
     FastaNameModifierTest(  # test complex case
         "FastaExample_complex_utf8.fas",
         "complex_output.fas",
-        True,
-        False,
-        True,
-        "end",
-        50,
-        True,
-        #        None,
-        #        None,
         "complex_output_expected.fas",
+        trim=True,
+        add=False,
+        sanitize=True,
+        preserve_separators=False,
+        trimposition="end",
+        trimmaxchar=50,
+        renameauto=True,
+        direc=None,
+        addstring=None,
     ),
     FastaNameModifierTest(  # test special characters
         "FastaExample_special_characters.fas",
         "special_output.fas",
-        True,
-        False,
-        True,
-        "end",
-        50,
-        True,
-#        None,
-#        None,
         "special_output_expected.fas",
+        trim=True,
+        add=False,
+        sanitize=True,
+        preserve_separators=False,
+        trimposition="end",
+        trimmaxchar=50,
+        renameauto=True,
+        direc=None,
+        addstring=None,
     ),
     FastaNameModifierTest(  # test trim and add
         "FastaExample_simple.fas",
         "simlpe_output_trim_add.fas",
-        True,
-        True,
-        True,
-        "end",
-        50,
-        True,
-#        "Beginning",
-#        "Beginning",
         "simlpe_output_trim_add_expected.fas",
-         "end",
-        "end",
+        trim=True,
+        add=True,
+        sanitize=True,
+        preserve_separators=False,
+        trimposition="end",
+        trimmaxchar=50,
+        renameauto=True,
+        direc="end",
+        addstring="end",
     ),
     FastaNameModifierTest(  # autoincreament without trimming
         "FastaExample_complex3.fas",
         "complex_output_auto_notrim.fas",
-        False,
-        False,
-        False,
-        "",
-        0,
-        True,
-#        "Beginning",
-#        "Beginning",
         "complex_output_auto_notrim_expected.fas",
+        trim=False,
+        add=False,
+        sanitize=False,
+        preserve_separators=False,
+        trimposition="",
+        trimmaxchar=0,
+        renameauto=True,
+        direc=None,
+        addstring=None,
     ),
     FastaNameModifierTest(  # sanitizing, trimming, auto, add (_) at the beginning
         "FastaExample_complex3.fas",
         "complex_output_auto_trim_san_add_beginning.fas",
-        True,
-        True,
-        True,
-        "end",
-        50,
-        True,
         "complex_output_auto_trim_san_add_beginning_expected.fas",
-        "beginning",
-        "_",
+        trim=True,
+        add=True,
+        sanitize=True,
+        preserve_separators=False,
+        trimposition="end",
+        trimmaxchar=50,
+        renameauto=True,
+        direc="beginning",
+        addstring="_",
     ),
 ]
 

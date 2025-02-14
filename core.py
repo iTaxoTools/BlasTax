@@ -662,6 +662,7 @@ def fasta_name_modifier(
     trim: bool,
     add: bool,
     sanitize: bool,
+    preserve_separators: bool,
     trimposition: str,
     trimmaxchar: int,
     renameauto: bool,
@@ -669,6 +670,8 @@ def fasta_name_modifier(
     addstring: str = None,
 ) -> None:
     letters_and_numbers = string.ascii_letters + string.digits + ">_"
+    if preserve_separators:
+        letters_and_numbers += "@|"
 
     outfile = open(output_name, "w", encoding="utf-8")
     gene = []
@@ -719,10 +722,6 @@ def fasta_name_modifier(
                 gene.append(new_line)
                 counter = counter + 1
                 sequenzen.append(seq)
-
-    # print(len(gene))
-    # print(gene[0:5])
-    # print(len(sequenzen))
 
     for i in range(0, len(sequenzen)):
         outfile.write(gene[i] + "\n")
