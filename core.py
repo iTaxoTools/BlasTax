@@ -79,7 +79,8 @@ def execute_blast_command(args: list[str]):
     p.wait()
     _, stderr = p.communicate()
     if p.returncode != 0:
-        raise Exception(f"makeblastdb failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+        binary = Path(args[0]).stem
+        raise Exception(f"{binary} failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
 
 
 def make_database(
