@@ -10,6 +10,12 @@ class Results(NamedTuple):
     seconds_taken: float
 
 
+class BatchResults(NamedTuple):
+    output_path: Path
+    failed: list[Path]
+    seconds_taken: float
+
+
 class BlastMethod(Enum):
     blastn = ("blastn", "Nucleotide-Nucleotide")
     blastp = ("blastp", "Protein-Protein")

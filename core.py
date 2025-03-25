@@ -658,6 +658,18 @@ def get_fasta_renamed_filename(
     return path.name
 
 
+def get_error_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+) -> str:
+    path = input_path.with_suffix(".log")
+    path = path.with_stem(path.stem + "_errors")
+    if timestamp is not None:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
 # Fasta sequence name modifier
 def fasta_name_modifier(
     input_name: Path | str,
