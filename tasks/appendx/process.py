@@ -26,6 +26,7 @@ def execute(
     match_multiple: bool,
     match_pident: float,
     match_length: int,
+    specified_identifier: str | None,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -43,6 +44,7 @@ def execute(
     print(f"{match_multiple=}")
     print(f"{match_pident=}")
     print(f"{match_length=}")
+    print(f"{specified_identifier=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -92,6 +94,7 @@ def execute(
                 match_multiple=match_multiple,
                 match_pident=match_pident,
                 match_length=match_length,
+                specified_identifier=specified_identifier,
             )
         except Exception as e:
             if total == 1:
@@ -121,6 +124,7 @@ def execute_single(
     match_multiple: bool,
     match_pident: float,
     match_length: int,
+    specified_identifier: str | None,
 ):
     from core import blastx_parse, run_blast
     from utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -153,6 +157,7 @@ def execute_single(
         all_matches=match_multiple,
         pident_arg=match_pident,
         length_arg=match_length,
+        user_spec_name=specified_identifier,
     )
 
 

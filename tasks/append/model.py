@@ -27,6 +27,9 @@ class Model(BlastTaskModel):
     match_pident = Property(float, 97.000)
     match_length = Property(int, 0)
 
+    specify_identifier = Property(bool, False)
+    specify_identifier_str = Property(str, "")
+
     append_timestamp = Property(bool, False)
     append_configuration = Property(bool, True)
 
@@ -46,6 +49,8 @@ class Model(BlastTaskModel):
             self.properties.input_database_path,
             self.properties.output_path,
             self.properties.blast_method,
+            self.properties.specify_identifier,
+            self.properties.specify_identifier_str,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -59,6 +64,9 @@ class Model(BlastTaskModel):
             return False
         if self.output_path == Path():
             return False
+        if self.specify_identifier:
+            if not self.specify_identifier_str:
+                return False
         return True
 
     def start(self):
@@ -79,6 +87,7 @@ class Model(BlastTaskModel):
             match_multiple=self.match_multiple,
             match_pident=self.match_pident,
             match_length=self.match_length,
+            specified_identifier=self.specify_identifier_str if self.specify_identifier else None,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

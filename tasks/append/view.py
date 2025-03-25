@@ -7,13 +7,14 @@ from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
-from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
+from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup, RichRadioButton
 
 from ..common.types import BlastMethod
 from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
+    OptionCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
 )
@@ -192,6 +193,44 @@ class MatchOptionSelector(Card):
         self.controls.options_widget.roll.setAnimatedVisible(value)
 
 
+class SpecifyIdentifierCard(OptionCard):
+    identifierChanged = QtCore.Signal(str)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_config()
+
+    def draw_config(self):
+        label = QtWidgets.QLabel("Identifier: ")
+        label.setMinimumWidth(70)
+
+        field = GLineEdit()
+        field.textEditedSafe.connect(self._handle_identifier_changed)
+        field.setPlaceholderText("---")
+        field.setTextMargins(4, 0, 12, 0)
+
+        widget = QtWidgets.QWidget()
+        widget.roll = VerticalRollAnimation(widget)
+
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setSpacing(16)
+        layout.setContentsMargins(16, 0, 0, 0)
+        layout.addWidget(label)
+        layout.addWidget(field)
+
+        self.controls.field = field
+        self.controls.options = widget
+
+        self.addWidget(widget)
+
+    def _handle_identifier_changed(self, name: str):
+        self.identifierChanged.emit(str(name))
+
+    def set_identifier(self, identifier: str):
+        text = identifier or ""
+        self.controls.field.setText(text)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -206,6 +245,9 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.match_options = MatchOptionSelector(self)
+        self.cards.specify_identifier = SpecifyIdentifierCard(
+            "Specify identifier", "Append all hits using the same custom identifier."
+        )
 
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
 
@@ -261,6 +303,14 @@ class View(BlastTaskView):
         self.binder.bind(self.cards.match_options.controls.pident.valueChangedSafe, object.properties.match_pident)
         self.cards.match_options.controls.length.bind_property(object.properties.match_length)
         self.cards.match_options.set_options_visible(object.match_multiple)
+
+        self.binder.bind(
+            object.properties.specify_identifier, self.cards.specify_identifier.controls.options.roll.setAnimatedVisible
+        )
+        self.binder.bind(object.properties.specify_identifier, self.cards.specify_identifier.setChecked)
+        self.binder.bind(self.cards.specify_identifier.toggled, object.properties.specify_identifier)
+        self.binder.bind(object.properties.specify_identifier_str, self.cards.specify_identifier.set_identifier)
+        self.binder.bind(self.cards.specify_identifier.identifierChanged, object.properties.specify_identifier_str)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
