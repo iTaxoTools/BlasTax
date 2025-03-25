@@ -375,7 +375,7 @@ def blast_parse(
         dict_head_seq = {}
         for line in blastfile:
             splitti = line.split("\t")
-            pident = splitti[1]
+            pident = float(splitti[1])
             sequence = f"{splitti[4]}\n"
             short_header = f">{database_name}_{splitti[3]}"
             # keep track for the seqid to keep only unique seqid
@@ -383,10 +383,10 @@ def blast_parse(
                 old_seqlen = len(dict_head_seq[short_header])
                 old_pident = dict_head_pident[short_header]
                 if len(sequence) > old_seqlen:
-                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_pident[short_header] = pident
                     dict_head_seq[short_header] = sequence
-                elif pident[:-2] > old_pident:
-                    dict_head_pident[short_header] = pident[:-2]
+                elif pident > old_pident:
+                    dict_head_pident[short_header] = pident
                     dict_head_seq[short_header] = sequence
                 else:
                     continue
@@ -394,43 +394,44 @@ def blast_parse(
             else:
                 if pident_arg is not None and length_arg is not None:
                     if pident >= pident_arg and len(sequence) - 1 >= length_arg:
-                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_pident[short_header] = pident
                         dict_head_seq[short_header] = sequence
                 elif pident_arg is not None:
                     if pident > pident_arg:
-                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_pident[short_header] = pident
                         dict_head_seq[short_header] = sequence
                 elif length_arg is not None:
                     if len(sequence) - 1 >= length_arg:
-                        dict_head_pident[short_header] = pident[:-2]
+                        dict_head_pident[short_header] = pident
                         dict_head_seq[short_header] = sequence
                 else:
-                    dict_head_pident[short_header] = pident[:-2]
+                    dict_head_pident[short_header] = pident
                     dict_head_seq[short_header] = sequence
 
         for header, sequence in zip(dict_head_pident.keys(), dict_head_seq.values()):
             if user_spec_name is not None:
                 outfile.write(f"{user_spec_name}\n{sequence}")
             else:
-                outfile.write(f"{header}_pident_{dict_head_pident[header]}\n{sequence}")
+                outfile.write(f"{header}_pident_{dict_head_pident[header]:.1f}\n{sequence}")
     # to keep just one hit per query file
     else:
         max_seq_len = 0
         for line in blastfile:
             splitti = line.split("\t")
-            pident = splitti[1]
+            pident = float(splitti[1])
             sequence_line = f"{splitti[4]}\n"
             header = f">{database_name}_{splitti[3]}"
-            if (len(sequence_line) - 1) > max_seq_len:
-                max_seq_len = len(sequence_line) - 1
+            if len(sequence_line) > max_seq_len:
+                max_seq_len = len(sequence_line)
                 final_header = header
                 final_sequence_line = sequence_line
                 final_pident = pident
 
-        if user_spec_name is not None:
-            outfile.write(f"{user_spec_name}\n{final_sequence_line}")
-        else:
-            outfile.write(f"{final_header}_pident_{final_pident}\n{final_sequence_line}")
+        if max_seq_len:
+            if user_spec_name is not None:
+                outfile.write(f"{user_spec_name}\n{final_sequence_line}")
+            else:
+                outfile.write(f"{final_header}_pident_{final_pident:.1f}\n{final_sequence_line}")
 
     outfile.close()
     blastfile.close()
