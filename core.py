@@ -412,7 +412,8 @@ def blast_parse(
             if user_spec_name is not None:
                 outfile.write(f"{user_spec_name}\n{sequence}")
             else:
-                outfile.write(f"{header}_pident_{dict_head_pident[header]:.1f}\n{sequence}")
+                pident_str = f"{dict_head_pident[header]:.4f}"[:-1]
+                outfile.write(f"{header}_pident_{pident_str}\n{sequence}")
     # to keep just one hit per query file
     else:
         max_seq_len = 0
@@ -431,7 +432,8 @@ def blast_parse(
             if user_spec_name is not None:
                 outfile.write(f"{user_spec_name}\n{final_sequence_line}")
             else:
-                outfile.write(f"{final_header}_pident_{final_pident:.1f}\n{final_sequence_line}")
+                pident_str = f"{final_pident:.4f}"[:-1]
+                outfile.write(f"{final_header}_pident_{pident_str}\n{final_sequence_line}")
 
     outfile.close()
     blastfile.close()

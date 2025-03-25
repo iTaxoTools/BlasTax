@@ -10,7 +10,7 @@ from core import blast_parse
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 
 
-class BlastnParseTest(NamedTuple):
+class BlastParseTest(NamedTuple):
     input_path: Path | str
     blast_result_path: Path | str
     output_path: Path | str
@@ -50,7 +50,7 @@ class BlastnParseTest(NamedTuple):
 
 # New blast tests
 blastn_parse_tests = [
-    BlastnParseTest(  # test blastn
+    BlastParseTest(  # test blastn
         "blastn/Salamandra_testqueryfile.fas",
         "blastn/Salamandra_testqueryfile.out",
         "Salamandra_blastmatchesadded.out",
@@ -61,7 +61,7 @@ blastn_parse_tests = [
         None,
         "blastn/Salamandra_testqueryfile_expected.fas",
     ),
-    BlastnParseTest(  # test blastp
+    BlastParseTest(  # test blastp
         "blastp/proteins.fasta",
         "blastp/blastp_expected.out",
         "proteins_blastmatchesadded.out",
@@ -72,7 +72,7 @@ blastn_parse_tests = [
         None,
         "blastp/proteins_blastmatchesadded_expected.out",
     ),
-BlastnParseTest(  # test tblastx
+    BlastParseTest(  # test tblastx
         "tblastx/malamini.fas",
         "tblastx/tblastx_expected.out",
         "tblastx_blastmatchesadded.out",
@@ -83,7 +83,7 @@ BlastnParseTest(  # test tblastx
         None,
         "tblastx/tblastx_blastmatchesadded_expected.out",
     ),
-    BlastnParseTest(  # Include all matches
+    BlastParseTest(  # Include all matches
         "blastn/Salamandra_testqueryfile.fas",
         "blastn/Salamandra_testqueryfile.out",
         "Salamandra_blastmatchesadded_all_matches.out",
@@ -94,7 +94,7 @@ BlastnParseTest(  # test tblastx
         None,
         "blastn/Salamandra_blastmatchesadded_expected_all_matches.out",
     ),
-    BlastnParseTest(  # test trinity name fixing
+    BlastParseTest(  # test trinity name fixing
         "trinity_fix/6458_Query.fasta",
         "trinity_fix/blastn_Chlorococcum_output.txt",
         "6458_blastmatchesadded_fixed.out",
@@ -110,5 +110,5 @@ BlastnParseTest(  # test tblastx
 
 
 @pytest.mark.parametrize("test", blastn_parse_tests)
-def test_blast_parse(test: BlastnParseTest, tmp_path: Path) -> None:
+def test_blast_parse(test: BlastParseTest, tmp_path: Path) -> None:
     test.validate(tmp_path)
