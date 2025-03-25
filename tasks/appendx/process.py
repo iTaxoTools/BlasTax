@@ -1,8 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
+from traceback import print_exc
 
-from ..common.types import Results
+from ..common.types import BatchResults
 from .types import TargetPaths
 
 
@@ -27,7 +28,7 @@ def execute(
     match_length: int,
     append_timestamp: bool,
     append_configuration: bool,
-) -> Results:
+) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
 
     blast_outfmt = 6
@@ -46,6 +47,7 @@ def execute(
     print(f"{append_configuration=}")
 
     total = len(input_query_paths)
+    failed: list[Path] = []
 
     timestamp = datetime.now() if append_timestamp else None
     blast_options: dict[str, str] = {}
@@ -75,26 +77,34 @@ def execute(
 
     for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
         progress_handler(f"{i}/{total}", i, 0, total)
-        execute_single(
-            work_dir=work_dir,
-            input_query_path=path,
-            input_database_path=input_database_path,
-            input_nucleotides_path=input_nucleotides_path,
-            blast_output_path=target.blast_output_path,
-            appended_output_path=target.appended_output_path,
-            blast_outfmt=blast_outfmt,
-            blast_outfmt_options=blast_outfmt_options,
-            blast_evalue=blast_evalue,
-            blast_num_threads=blast_num_threads,
-            match_multiple=match_multiple,
-            match_pident=match_pident,
-            match_length=match_length,
-        )
+        try:
+            execute_single(
+                work_dir=work_dir,
+                input_query_path=path,
+                input_database_path=input_database_path,
+                input_nucleotides_path=input_nucleotides_path,
+                blast_output_path=target.blast_output_path,
+                appended_output_path=target.appended_output_path,
+                blast_outfmt=blast_outfmt,
+                blast_outfmt_options=blast_outfmt_options,
+                blast_evalue=blast_evalue,
+                blast_num_threads=blast_num_threads,
+                match_multiple=match_multiple,
+                match_pident=match_pident,
+                match_length=match_length,
+            )
+        except Exception as e:
+            if total == 1:
+                raise e
+            with open(target.error_log_path, "w") as f:
+                print_exc(file=f)
+            failed.append(path)
+
     progress_handler(f"{total}/{total}", total, 0, total)
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return BatchResults(output_path, failed, tf - ts)
 
 
 def execute_single(
@@ -153,11 +163,13 @@ def get_target_paths(
     blast_options: dict[str, str],
     match_options: dict[str, str],
 ) -> TargetPaths:
-    from core import get_append_filename, get_blast_filename
+    from core import get_append_filename, get_blast_filename, get_error_filename
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
     appended_output_path = output_path / get_append_filename(query_path, timestamp=timestamp, **match_options)
+    error_log_path = output_path / get_error_filename(query_path, timestamp=timestamp)
     return TargetPaths(
         blast_output_path=blast_output_path,
         appended_output_path=appended_output_path,
+        error_log_path=error_log_path,
     )

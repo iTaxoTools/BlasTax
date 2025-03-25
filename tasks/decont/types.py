@@ -28,6 +28,7 @@ class TargetPaths:
     ingroup_sequences_path: Path
     blasted_outgroup_path: Path
     outgroup_sequences_path: Path
+    error_log_path: Path
 
     def __iter__(self):
         return iter(vars(self).values())

@@ -1,9 +1,10 @@
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
+from traceback import print_exc
 from typing import cast
 
-from ..common.types import Results
+from ..common.types import BatchResults
 from .types import AmalgamationMethodTexts, DistanceTargetPaths, TagMethodTexts, TargetPaths
 
 
@@ -25,7 +26,7 @@ def execute(
     outlier_factor: float,
     append_timestamp: bool,
     append_configuration: bool,
-) -> Results:
+) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
 
     print(f"{input_paths=}")
@@ -39,8 +40,9 @@ def execute(
     print(f"{append_configuration=}")
 
     total = len(input_paths)
-    timestamp = datetime.now() if append_timestamp else None
+    failed: list[Path] = []
 
+    timestamp = datetime.now() if append_timestamp else None
     configuration: dict[str, str] = {}
     if append_configuration:
         configuration[tag_method.key] = None
@@ -65,20 +67,28 @@ def execute(
 
     for i, (path, target_paths) in enumerate(zip(input_paths, target_paths_list)):
         progress_handler(f"{i}/{total}", i, 0, total)
-        execute_single(
-            input_path=path,
-            target_paths=target_paths,
-            tag_method=tag_method,
-            amalgamation_method=amalgamation_method,
-            save_reports=save_reports,
-            fuse_ambiguous=fuse_ambiguous,
-            outlier_factor=outlier_factor,
-        )
+        try:
+            execute_single(
+                input_path=path,
+                target_paths=target_paths,
+                tag_method=tag_method,
+                amalgamation_method=amalgamation_method,
+                save_reports=save_reports,
+                fuse_ambiguous=fuse_ambiguous,
+                outlier_factor=outlier_factor,
+            )
+        except Exception as e:
+            if total == 1:
+                raise e
+            with open(target_paths.error_log_path, "w") as f:
+                print_exc(file=f)
+            failed.append(path)
+
     progress_handler(f"{total}/{total}", total, 0, total)
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return BatchResults(output_path, failed, tf - ts)
 
 
 def execute_single(
@@ -89,7 +99,7 @@ def execute_single(
     save_reports: bool,
     fuse_ambiguous: bool,
     outlier_factor: float,
-) -> Results:
+):
     from itaxotools.taxi2.file_types import FileFormat
     from itaxotools.taxi2.files import identify_format
     from itaxotools.taxi2.sequences import SequenceHandler, Sequences
@@ -143,7 +153,10 @@ def get_target_paths(
     timestamp: datetime | None,
     configuration: dict[str, str],
 ) -> TargetPaths:
+    from core import get_error_filename
     from scafos import get_scafos_filename
+
+    error_log_path = output_path / get_error_filename(input_path, timestamp=timestamp)
 
     chimeras_path = output_path / get_scafos_filename(input_path, timestamp=timestamp, **configuration)
 
@@ -154,8 +167,10 @@ def get_target_paths(
             chimeras_path=chimeras_path,
             distances_path=distances_path,
             means_path=means_path,
+            error_log_path=error_log_path,
         )
 
     return TargetPaths(
         chimeras_path=chimeras_path,
+        error_log_path=error_log_path,
     )

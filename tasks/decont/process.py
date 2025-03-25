@@ -1,8 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
+from traceback import print_exc
 
-from ..common.types import Results
+from ..common.types import BatchResults
 from .types import TargetPaths
 
 
@@ -26,7 +27,7 @@ def execute(
     blast_num_threads: int,
     append_timestamp: bool,
     append_configuration: bool,
-) -> Results:
+) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
 
     from .types import DecontVariable
@@ -45,6 +46,7 @@ def execute(
     print(f"{append_configuration=}")
 
     total = len(input_query_paths)
+    failed: list[Path] = []
 
     timestamp = datetime.now() if append_timestamp else None
 
@@ -69,25 +71,33 @@ def execute(
 
     for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
         progress_handler(f"{i}/{total}", i, 0, total)
-        execute_single(
-            work_dir=work_dir,
-            input_query_path=path,
-            ingroup_database_path=ingroup_database_path,
-            outgroup_database_path=outgroup_database_path,
-            blasted_ingroup_path=target.blasted_ingroup_path,
-            ingroup_sequences_path=target.ingroup_sequences_path,
-            blasted_outgroup_path=target.blasted_outgroup_path,
-            outgroup_sequences_path=target.outgroup_sequences_path,
-            decont_column=decont_column,
-            blast_method=blast_method,
-            blast_evalue=blast_evalue,
-            blast_num_threads=blast_num_threads,
-        )
+        try:
+            execute_single(
+                work_dir=work_dir,
+                input_query_path=path,
+                ingroup_database_path=ingroup_database_path,
+                outgroup_database_path=outgroup_database_path,
+                blasted_ingroup_path=target.blasted_ingroup_path,
+                ingroup_sequences_path=target.ingroup_sequences_path,
+                blasted_outgroup_path=target.blasted_outgroup_path,
+                outgroup_sequences_path=target.outgroup_sequences_path,
+                decont_column=decont_column,
+                blast_method=blast_method,
+                blast_evalue=blast_evalue,
+                blast_num_threads=blast_num_threads,
+            )
+        except Exception as e:
+            if total == 1:
+                raise e
+            with open(target.error_log_path, "w") as f:
+                print_exc(file=f)
+            failed.append(path)
+
     progress_handler(f"{total}/{total}", total, 0, total)
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return BatchResults(output_path, failed, tf - ts)
 
 
 def execute_single(
@@ -150,7 +160,7 @@ def get_target_paths(
     blast_options: dict[str, str],
     decont_options: dict[str, str],
 ) -> TargetPaths:
-    from core import get_decont_blast_filename, get_decont_sequences_filename
+    from core import get_decont_blast_filename, get_decont_sequences_filename, get_error_filename
 
     blasted_ingroup_path = output_path / get_decont_blast_filename(
         query_path,
@@ -178,9 +188,11 @@ def get_target_paths(
         **decont_options,
         **blast_options,
     )
+    error_log_path = output_path / get_error_filename(query_path, timestamp=timestamp)
     return TargetPaths(
         blasted_ingroup_path=blasted_ingroup_path,
         ingroup_sequences_path=ingroup_sequences_path,
         blasted_outgroup_path=blasted_outgroup_path,
         outgroup_sequences_path=outgroup_sequences_path,
+        error_log_path=error_log_path,
     )

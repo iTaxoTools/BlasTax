@@ -8,6 +8,7 @@ from pathlib import Path
 @dataclass
 class TargetPaths:
     chimeras_path: Path
+    error_log_path: Path
 
     def __iter__(self):
         return iter(vars(self).values())
@@ -17,6 +18,7 @@ class TargetPaths:
 class DistanceTargetPaths(TargetPaths):
     distances_path: Path
     means_path: Path
+    error_log_path: Path
 
 
 class TagMethodTexts(Enum):
