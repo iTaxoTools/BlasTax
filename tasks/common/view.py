@@ -228,7 +228,7 @@ class PathDirectorySelector(PathSelector):
 class PathDatabaseSelector(PathSelector):
     def _handle_browse(self, *args):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-            parent=self.window(), caption=f"{app.config.title} - Browse file", filter="BLAST databases (*.nin *pin)"
+            parent=self.window(), caption=f"{app.config.title} - Browse file", filter="BLAST databases (*.nin *.pin)"
         )
         if not filename:
             return
@@ -457,6 +457,9 @@ class BatchQuerySelector(Card):
 
     def set_placeholder_text(self, text: str):
         self.controls.single_field.setPlaceholderText(text)
+        self.controls.batch_help.setPlaceholderText(text)
+
+    def set_batch_placeholder_text(self, text: str):
         self.controls.batch_help.setPlaceholderText(text)
 
     def bind_batch_model(self, binder: Binder, object: BatchQueryModel):

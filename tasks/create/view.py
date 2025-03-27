@@ -7,10 +7,11 @@ from itaxotools.common.bindings import Binder
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, LongLabel, RadioButtonGroup
 
-from ..common.view import BlastTaskView, GraphicTitleCard, PathDirectorySelector, PathFileSelector
+from ..common.view import BatchQuerySelector, BlastTaskView, GraphicTitleCard, PathDirectorySelector
 from . import long_description, pixmap_medium, title
 
 
@@ -22,6 +23,7 @@ class NameSelector(Card):
         self.binder = Binder()
         self.draw_main(text)
         self.draw_warning()
+        self.roll = VerticalRollAnimation(self)
 
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
@@ -108,12 +110,13 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.input_path = PathFileSelector("\u25B6  Input FASTA file")
+        self.cards.input = BatchQuerySelector("Input sequences")
         self.cards.output_path = PathDirectorySelector("\u25C0  Output folder")
         self.cards.database_name = NameSelector("Database name")
         self.cards.database_type = TypeSelector("Database type")
 
-        self.cards.input_path.set_placeholder_text("Sequences to go into the new database")
+        self.cards.input.set_placeholder_text("Sequences to go into the new database")
+        self.cards.input.set_batch_placeholder_text("Sequences that each go into a new database")
         self.cards.database_name.set_placeholder_text("Determines filenames and title")
         self.cards.output_path.set_placeholder_text("Database files will be saved here")
 
@@ -132,19 +135,22 @@ class View(BlastTaskView):
 
         self.binder.bind(object.notification, self.showNotification)
         self.binder.bind(object.report_results, self.report_results)
+        self.binder.bind(object.request_confirmation, self.request_confirmation)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
-        self.binder.bind(object.properties.input_path, self.cards.input_path.set_path)
-        self.binder.bind(self.cards.input_path.selectedPath, object.open)
+        self.cards.input.bind_batch_model(self.binder, object.input)
 
         self.binder.bind(object.properties.output_path, self.cards.output_path.set_path)
         self.binder.bind(self.cards.output_path.selectedPath, object.properties.output_path)
 
         self.binder.bind(object.properties.database_name, self.cards.database_name.set_name)
         self.binder.bind(self.cards.database_name.nameChanged, object.properties.database_name)
+        self.binder.bind(
+            object.input.properties.batch_mode, self.cards.database_name.roll.setAnimatedVisible, lambda x: not x
+        )
 
         self.binder.bind(object.properties.database_type, self.cards.database_type.set_type)
         self.binder.bind(self.cards.database_type.typeChanged, object.properties.database_type)

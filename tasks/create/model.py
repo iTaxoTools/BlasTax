@@ -1,16 +1,16 @@
 from pathlib import Path
 
-from itaxotools.common.bindings import Property
+from itaxotools.common.bindings import Instance, Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
-from ..common.model import BlastTaskModel
+from ..common.model import BatchQueryModel, BlastTaskModel
 from . import process, title
 
 
 class Model(BlastTaskModel):
     task_name = title
 
-    input_path = Property(Path, Path())
+    input = Property(BatchQueryModel, Instance)
     output_path = Property(Path, Path())
     database_type = Property(str, "nucl")
     database_name = Property(str, "")
@@ -20,10 +20,16 @@ class Model(BlastTaskModel):
         self.can_open = True
         self.can_save = False
 
+        self.input.set_globs(["fa", "fas", "fasta"])
+
+        self.binder.bind(self.input.properties.parent_path, self.properties.output_path)
+        self.binder.bind(self.input.properties.query_path, self.properties.database_name, lambda x: x.stem)
+
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
         for handle in [
-            self.properties.input_path,
+            self.input.properties.ready,
+            self.input.properties.batch_mode,
             self.properties.output_path,
             self.properties.database_name,
         ]:
@@ -33,11 +39,11 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def isReady(self):
-        if self.input_path == Path():
+        if not self.input.ready:
             return False
         if self.output_path == Path():
             return False
-        if not self.database_name:
+        if not self.input.batch_mode and not self.database_name:
             return False
         return True
 
@@ -46,13 +52,11 @@ class Model(BlastTaskModel):
 
         self.exec(
             process.execute,
-            input_path=self.input_path,
+            input_paths=self.input.get_all_paths(),
             output_path=self.output_path,
             type=self.database_type,
             name=self.database_name,
         )
 
     def open(self, path: Path):
-        self.input_path = path
-        self.output_path = path.parent
-        self.database_name = path.stem
+        self.input.open(path)
