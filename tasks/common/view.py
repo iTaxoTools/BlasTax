@@ -12,7 +12,7 @@ from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchQueryModel
 from .types import BatchResults, Results
-from .widgets import BatchQueryHelp, ElidedLineEdit, GrowingListView
+from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
 
 
 class BlastTaskView(ScrollTaskView):
@@ -535,3 +535,31 @@ class OptionCard(Card):
 
     def setChecked(self, checked: bool):
         self.controls.title.setChecked(checked)
+
+
+class BatchProgressCard(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        label = ElidedLongLabel()
+
+        bar = QtWidgets.QProgressBar()
+        bar.setMaximum(0)
+        bar.setMinimum(0)
+        bar.setValue(0)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setSpacing(8)
+        layout.addWidget(label)
+        layout.addWidget(bar)
+
+        self.controls.label = label
+        self.controls.bar = bar
+
+        self.addLayout(layout)
+
+    def showProgress(self, report):
+        self.controls.label.setText(report.text)
+        self.controls.bar.setMaximum(report.maximum)
+        self.controls.bar.setMinimum(report.minimum)
+        self.controls.bar.setValue(report.value)

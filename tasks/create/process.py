@@ -40,7 +40,7 @@ def execute(
     ts = perf_counter()
 
     for i, (path, target) in enumerate(zip(input_paths, target_paths)):
-        progress_handler(f"{i}/{total}", i, 0, total)
+        progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
         try:
             execute_single(
                 input_path=path,
@@ -56,7 +56,7 @@ def execute(
                 print_exc(file=f)
             failed.append(path)
 
-    progress_handler(f"{total}/{total}", total, 0, total)
+    progress_handler("Done processing files.", total, 0, total)
 
     tf = perf_counter()
 

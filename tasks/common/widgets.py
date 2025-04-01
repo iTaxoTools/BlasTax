@@ -55,6 +55,35 @@ class ElidedLineEdit(GLineEdit):
         QtWidgets.QLineEdit.setText(self, elided_text)
 
 
+class ElidedLongLabel(QtWidgets.QLabel):
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.setWordWrap(True)
+        self._full_text = text
+
+        action = QtGui.QAction("&Copy", self)
+        action.triggered.connect(self.copy)
+        self.addAction(action)
+
+    def setText(self, text):
+        self._full_text = text
+        self.updateText()
+
+    def resizeEvent(self, event):
+        self.updateText()
+        super().resizeEvent(event)
+
+    def updateText(self):
+        metrics = self.fontMetrics()
+        elided_text = metrics.elidedText(self._full_text, QtCore.Qt.ElideRight, self.width())
+        super().setText(elided_text)
+
+    def copy(self):
+        QtWidgets.QApplication.clipboard().setText(self._full_text)
+
+
 class FrontEllipsisDelegate(QtWidgets.QStyledItemDelegate):
     rowHeight = 20
 

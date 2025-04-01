@@ -4,13 +4,13 @@ from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
-from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup, RichRadioButton
 
 from ..common.types import BlastMethod
 from ..common.view import (
+    BatchProgressCard,
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
@@ -238,7 +238,7 @@ class View(BlastTaskView):
     def draw_cards(self):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
-        self.cards.progress = ProgressCard(self)
+        self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.extra = PathFileSelector("\u25B6  Nucleotide file", self)
