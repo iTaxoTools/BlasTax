@@ -121,6 +121,54 @@ class AddOptionCard(OptionCard):
         self.controls.options_widget.roll.setAnimatedVisible(value)
 
 
+class ReplaceOptionCard(OptionCard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.draw_options()
+
+    def draw_options(self):
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setColumnMinimumWidth(0, 8)
+        layout.setColumnMinimumWidth(1, 72)
+        layout.setColumnStretch(3, 1)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Find text:")
+        field = PropertyLineEdit()
+        description = QtWidgets.QLabel("Search for this text in sequence identifiers")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.source = field
+        row += 1
+
+        name = QtWidgets.QLabel("Replace with:")
+        field = PropertyLineEdit()
+        description = QtWidgets.QLabel("This will replace all found matches")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.target = field
+        row += 1
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
+
+        self.toggled.connect(self.set_options_visible)
+
+        self.addWidget(widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
+
+
 class TrimOptionCard(OptionCard):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -223,6 +271,10 @@ class View(BlastTaskView):
             "Add text",
             "Add the specified text to each identifier.",
         )
+        self.cards.replace = ReplaceOptionCard(
+            "Replace text",
+            "Find and replace the specified text for each identifier.",
+        )
         self.cards.auto_increment = OptionCard(
             "Auto increment",
             "Append a unique number at the end of each identifier, reflecting its position in the dataset.",
@@ -278,11 +330,18 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.add, self.cards.add.setChecked)
         self.binder.bind(self.cards.add.toggled, object.properties.add)
+        self.cards.add.set_options_visible(object.add)
 
         self.binder.bind(self.cards.add.controls.direction.valueChanged, object.properties.add_direction)
         self.binder.bind(object.properties.add_direction, self.cards.add.controls.direction.setValue)
         self.cards.add.controls.text.bind_property(object.properties.add_text)
-        self.cards.add.set_options_visible(object.add)
+
+        self.binder.bind(object.properties.replace, self.cards.replace.setChecked)
+        self.binder.bind(self.cards.replace.toggled, object.properties.replace)
+        self.cards.replace.set_options_visible(object.replace)
+
+        self.cards.replace.controls.source.bind_property(object.properties.replace_source)
+        self.cards.replace.controls.target.bind_property(object.properties.replace_target)
 
         self.binder.bind(object.properties.auto_increment, self.cards.auto_increment.setChecked)
         self.binder.bind(self.cards.auto_increment.toggled, object.properties.auto_increment)

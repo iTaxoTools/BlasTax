@@ -677,6 +677,7 @@ def fasta_name_modifier(
     output_name: Path | str,
     trim: bool,
     add: bool,
+    replace: bool,
     sanitize: bool,
     preserve_separators: bool,
     trimposition: str,
@@ -684,6 +685,8 @@ def fasta_name_modifier(
     renameauto: bool,
     direc: str = None,
     addstring: str = None,
+    findstring: str = None,
+    replacestring: str = None,
     fixseqspaces: bool = False,
     fixseqasterisks: bool = False,
     fixaliseparator: bool = False,
@@ -719,17 +722,20 @@ def fasta_name_modifier(
                         outfile.write(sequence + "\n")
                         sequence = ""
                     identifier = string_trimmer(
-                        line,
-                        counter,
-                        trim,
-                        add,
-                        sanitize,
-                        trimposition,
-                        trimmaxchar,
-                        renameauto,
-                        letters_and_numbers,
-                        direc,
-                        addstring,
+                        komm_zeile=line,
+                        counter=counter,
+                        trim=trim,
+                        add=add,
+                        replace=replace,
+                        sanitize=sanitize,
+                        trimpos=trimposition,
+                        trimmaxchar=trimmaxchar,
+                        auto=renameauto,
+                        letters_and_numbers=letters_and_numbers,
+                        direc=direc,
+                        addstring=addstring,
+                        findstring=findstring,
+                        replacestring=replacestring,
                     )
                     identifier = identifier.translate(idtrans)
                     outfile.write(identifier + "\n")

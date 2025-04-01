@@ -220,6 +220,7 @@ def string_trimmer(
     counter: int,
     trim: bool,
     add: bool,
+    replace: bool,
     sanitize: bool,
     trimpos: str,
     trimmaxchar: int,
@@ -227,6 +228,8 @@ def string_trimmer(
     letters_and_numbers: str,
     direc: str = None,
     addstring: str = None,
+    findstring: str = None,
+    replacestring: str = None,
 ) -> str:
     # The dictionary used to translate extended ASCII into ASCII representation by lib.utils.sanitize
     ext_ascii_trans = {
@@ -313,6 +316,7 @@ def string_trimmer(
     nk = ""
 
     new_komm = komm_zeile.replace("﻿>", ">")  # Replace look-alike characters
+
     # Adding string at the beginning or end
     if add:
         if direc == "beginning":
@@ -320,6 +324,10 @@ def string_trimmer(
             new_komm = ">" + addstring + strippi
         elif direc == "end":
             new_komm = new_komm + addstring
+
+    # Replacing strings
+    if replace:
+        new_komm = ">" + new_komm[1:].replace(findstring, replacestring)
 
     # Trimming
     if trim:

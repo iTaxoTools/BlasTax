@@ -25,6 +25,9 @@ def execute(
     add: bool,
     add_direction: str,
     add_text: str,
+    replace: bool,
+    replace_source: str,
+    replace_target: str,
     fixseqspaces: bool,
     fixseqasterisks: bool,
     fixaliseparator: bool,
@@ -44,6 +47,9 @@ def execute(
     print(f"{add=}")
     print(f"{add_direction=}")
     print(f"{add_text=}")
+    print(f"{replace=}")
+    print(f"{replace_source=}")
+    print(f"{replace_target=}")
     print(f"{fixseqspaces=}")
     print(f"{fixseqasterisks=}")
     print(f"{fixaliseparator=}")
@@ -68,6 +74,7 @@ def execute(
             output_name=target,
             trim=trim,
             add=add,
+            replace=replace,
             sanitize=sanitize,
             preserve_separators=preserve_separators,
             trimposition=trim_direction,
@@ -75,6 +82,8 @@ def execute(
             renameauto=auto_increment,
             direc=add_direction,
             addstring=add_text,
+            findstring=replace_source,
+            replacestring=replace_target,
             fixseqspaces=fixseqspaces,
             fixseqasterisks=fixseqasterisks,
             fixaliseparator=fixaliseparator,

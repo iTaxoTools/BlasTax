@@ -26,6 +26,10 @@ class Model(BlastTaskModel):
     add_direction = Property(Direction, Direction.End)
     add_text = Property(str, "")
 
+    replace = Property(bool, False)
+    replace_source = Property(str, "")
+    replace_target = Property(str, "")
+
     ali = Property(bool, False)
     fixseqspaces = Property(bool, True)
     fixseqasterisks = Property(bool, True)
@@ -46,6 +50,10 @@ class Model(BlastTaskModel):
         for handle in [
             self.input_sequences.properties.ready,
             self.properties.output_path,
+            self.properties.add,
+            self.properties.add_text,
+            self.properties.replace,
+            self.properties.replace_source,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -56,6 +64,10 @@ class Model(BlastTaskModel):
         if not self.input_sequences.ready:
             return False
         if self.output_path == Path():
+            return False
+        if self.add and not self.add_text:
+            return False
+        if self.replace and not self.replace_source:
             return False
         return True
 
@@ -74,6 +86,9 @@ class Model(BlastTaskModel):
             add=self.add,
             add_direction=str(self.add_direction),
             add_text=self.add_text,
+            replace=self.replace,
+            replace_source=self.replace_source,
+            replace_target=self.replace_target,
             fixseqspaces=self.ali and self.fixseqspaces,
             fixseqasterisks=self.ali and self.fixseqasterisks,
             fixaliseparator=self.ali and self.fixaliseparator,
