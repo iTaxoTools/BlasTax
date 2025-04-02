@@ -3,8 +3,8 @@ from resources import task_pixmaps_large, task_pixmaps_medium
 title = "FastPrepare"
 description = "Rename sequence identifiers"
 
-pixmap = task_pixmaps_large.rename
-pixmap_medium = task_pixmaps_medium.rename
+pixmap = task_pixmaps_large.prepare
+pixmap_medium = task_pixmaps_medium.prepare
 
 long_description = (
     "Given one or more FASTA or ALI files, rename all sequence identifiers "

@@ -10,7 +10,7 @@ from tasks import (
     fastsplit,
     groupmerge,
     museo,
-    rename,
+    prepare,
     scafos,
     translator,
 )
@@ -31,7 +31,7 @@ tasks = [
     [decont, museo],
     ["FASTA tools", 2],
     [fastmerge, fastsplit],
-    [groupmerge, rename],
+    [groupmerge, prepare],
     ["Extras", 2],
     [scafos, translator],
     [about],

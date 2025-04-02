@@ -51,7 +51,7 @@ def execute(
         except Exception as e:
             if total == 1:
                 raise e
-            error_log_path = output_path / get_error_filename(target)
+            error_log_path = output_path / get_error_filename(path)
             with open(error_log_path, "w") as f:
                 print_exc(file=f)
             failed.append(path)

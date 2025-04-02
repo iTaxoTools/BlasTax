@@ -647,12 +647,12 @@ def get_decont_sequences_filename(
     return path.name
 
 
-def get_fasta_renamed_filename(
+def get_fasta_prepared_filename(
     input_path: Path,
     timestamp: datetime | None = None,
 ) -> str:
     path = input_path.with_suffix(".fasta")
-    path = path.with_stem(path.stem + "_renamed")
+    path = path.with_stem(path.stem + "_prepared")
     if timestamp is not None:
         strftime = get_timestamp_suffix(timestamp)
         path = path.with_stem(path.stem + strftime)
