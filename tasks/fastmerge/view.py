@@ -4,12 +4,12 @@ from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
-from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from ..common.view import (
+    BatchProgressCard,
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
@@ -113,7 +113,7 @@ class View(BlastTaskView):
     def draw_cards(self):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
-        self.cards.progress = ProgressCard(self)
+        self.cards.progress = BatchProgressCard(self)
         self.cards.input = BatchQuerySelector("Input sequences", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.group = FormatGroupSelector("File types", self)
