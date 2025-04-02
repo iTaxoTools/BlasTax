@@ -1,7 +1,7 @@
 from pathlib import Path
 from time import perf_counter
 
-from ..common.types import Results
+from ..common.types import WarnResults
 from .types import FormatGroup
 
 
@@ -19,11 +19,12 @@ def execute(
     pattern_identifier: str,
     pattern_sequence: str,
     compress: bool,
-) -> Results:
+) -> WarnResults:
     import gzip
     import warnings
 
     from fastmerge import fastmerge
+    from itaxotools import progress_handler
 
     print(f"{input_paths=}")
     print(f"{output_path=}")
@@ -37,17 +38,31 @@ def execute(
     file_list = [str(path.resolve()) for path in input_paths]
     file_types = format_group.types
     output_file = str(output_path.resolve())
+    total = len(file_list)
 
     if compress:
         output = gzip.open(output_file + ".gz", mode="wt", errors="replace")
     else:
         output = open(output_file, mode="w", errors="replace")
 
+    def progress_callback(file: str, index: int, total: int):
+        path = Path(file)
+        progress_handler(f"Processing file {index+1}/{total}: {path.name}", index, 0, total)
+
     with warnings.catch_warnings(record=True) as warns:
-        fastmerge(file_list, file_types, pattern_identifier, pattern_sequence, output)
-    for w in warns:
-        print("Warning", str(w.message))
+        fastmerge(
+            file_list=file_list,
+            file_types=file_types,
+            seqid_pattern=pattern_identifier,
+            sequence_pattern=pattern_sequence,
+            output=output,
+            progress_callback=progress_callback,
+        )
+
+    warn_messages = [warn.message for warn in warns]
+
+    progress_handler("Done processing files.", total, 0, total)
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return WarnResults(output_path, warn_messages, tf - ts)

@@ -10,6 +10,12 @@ class Results(NamedTuple):
     seconds_taken: float
 
 
+class WarnResults(NamedTuple):
+    output_path: Path
+    warnings: list[str]
+    seconds_taken: float
+
+
 class BatchResults(NamedTuple):
     output_path: Path
     failed: list[Path]

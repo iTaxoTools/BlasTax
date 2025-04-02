@@ -11,16 +11,18 @@ from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchQueryModel
-from .types import BatchResults, Results
+from .types import BatchResults, Results, WarnResults
 from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
 
 
 class BlastTaskView(ScrollTaskView):
-    def report_results(self, task_name: str, results: Results | BatchResults):
+    def report_results(self, task_name: str, results: Results | BatchResults | WarnResults):
         if isinstance(results, Results):
             self.report_results_single(task_name, results)
         elif isinstance(results, BatchResults):
             self.report_results_batch(task_name, results)
+        elif isinstance(results, WarnResults):
+            self.report_results_warn(task_name, results)
 
     def report_results_single(self, task_name: str, results: Results):
         msgBox = QtWidgets.QMessageBox(self.window())
@@ -36,16 +38,7 @@ class BlastTaskView(ScrollTaskView):
 
     def report_results_batch(self, task_name: str, results: BatchResults):
         if not results.failed:
-            msgBox = QtWidgets.QMessageBox(self.window())
-            msgBox.setWindowTitle(app.config.title)
-            msgBox.setIcon(QtWidgets.QMessageBox.Information)
-            msgBox.setText(f"{task_name} completed successfully!")
-            msgBox.setInformativeText(f"Time taken: {human_readable_seconds(results.seconds_taken)}.")
-            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
-            button = self.window().msgShow(msgBox)
-            if button == QtWidgets.QMessageBox.Open:
-                url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
-                QtGui.QDesktopServices.openUrl(url)
+            self.report_results_single(task_name, results)
         else:
             msgBox = QtWidgets.QMessageBox(self.window())
             msgBox.setWindowTitle(app.config.title)
@@ -59,6 +52,25 @@ class BlastTaskView(ScrollTaskView):
                 + "\n".join(f"- {path.name}" for path in results.failed)
                 + "\n"
             )
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
+            msgBox.setStyleSheet("QMessageBox { min-width: 400px; }")
+            button = self.window().msgShow(msgBox)
+            if button == QtWidgets.QMessageBox.Open:
+                url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
+                QtGui.QDesktopServices.openUrl(url)
+
+    def report_results_warn(self, task_name: str, results: WarnResults):
+        if not results.warnings:
+            self.report_results_single(task_name, results)
+        else:
+            msgBox = QtWidgets.QMessageBox(self.window())
+            msgBox.setWindowTitle(app.config.title)
+            msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+            msgBox.setText(f"{task_name} completed with warnings!")
+            msgBox.setInformativeText(
+                f"Time taken: {human_readable_seconds(results.seconds_taken)}.\nSee below for details."
+            )
+            msgBox.setDetailedText("\n".join(f"- {warn}" for warn in results.warnings) + "\n")
             msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
             msgBox.setStyleSheet("QMessageBox { min-width: 400px; }")
             button = self.window().msgShow(msgBox)

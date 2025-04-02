@@ -1,7 +1,7 @@
 from pathlib import Path
 from time import perf_counter
 
-from ..common.types import Results
+from ..common.types import WarnResults
 
 
 def initialize():
@@ -21,7 +21,7 @@ def execute(
     pattern_identifier: str,
     pattern_sequence: str,
     compress: bool,
-) -> Results:
+) -> WarnResults:
     import warnings
 
     from fastsplit import fastsplit
@@ -50,9 +50,9 @@ def execute(
             compressed=compress,
             outfile_template=str(template.resolve()),
         )
-    for w in warns:
-        print("Warning", str(w.message))
+
+    warn_messages = [warn.message for warn in warns]
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return WarnResults(output_path, warn_messages, tf - ts)

@@ -5,7 +5,7 @@ import gzip
 import os
 import sys
 import warnings
-from typing import Iterable, Iterator, Optional, Set, TextIO, Union, cast
+from typing import Callable, Iterable, Iterator, Optional, Set, TextIO, Union, cast
 
 from fastutils import (
     Pattern,
@@ -22,13 +22,18 @@ fastq_exts = {".fq", ".fastq"}
 
 
 def fastmerge(
-    file_list: Iterable[str], file_types: Optional[Set[str]], seqid_pattern: str, sequence_pattern: str, output: TextIO
+    file_list: Iterable[str],
+    file_types: Optional[Set[str]],
+    seqid_pattern: str,
+    sequence_pattern: str,
+    output: TextIO,
+    progress_callback: Callable[[str, int, int], None] = None,
 ) -> None:
     """
     Main merging function
     """
     if not file_types:
-        fastmerge_pure(file_list, output)
+        fastmerge_pure(file_list, output, progress_callback)
     else:
         if seqid_pattern or sequence_pattern:
             if ".fas" in file_types:
@@ -57,11 +62,15 @@ def list_files(file_list: Iterable[str]) -> Iterator[Union[str, os.DirEntry]]:
             yield filename
 
 
-def fastmerge_pure(file_list: Iterable[str], output: TextIO) -> None:
+def fastmerge_pure(
+    file_list: Iterable[str], output: TextIO, progress_callback: Callable[[str, int, int], None] = None
+) -> None:
     """
     Merge the files, extracting all gzip archives
     """
-    for entry in list_files(file_list):
+    for i, entry in enumerate(list_files(file_list)):
+        if progress_callback:
+            progress_callback(entry, i, len(file_list))
         # open the file as archive or text file
         if os.path.splitext(entry)[1] == ".gz":
             file = cast(TextIO, gzip.open(entry, mode="rt", errors="replace"))
@@ -73,11 +82,18 @@ def fastmerge_pure(file_list: Iterable[str], output: TextIO) -> None:
                 print(line.rstrip(), file=output)
 
 
-def fastmerge_type(file_list: Iterable[str], file_types: Set[str], output: TextIO) -> None:
+def fastmerge_type(
+    file_list: Iterable[str],
+    file_types: Set[str],
+    output: TextIO,
+    progress_callback: Callable[[str, int, int], None] = None,
+) -> None:
     """
     Merge the file only of the given 'file_types', extracting all gzip archives
     """
-    for entry in list_files(file_list):
+    for i, entry in enumerate(list_files(file_list)):
+        if progress_callback:
+            progress_callback(entry, i, len(file_list))
         # skip the files of the wrong type
         if ext_gz(entry) not in file_types:
             continue
@@ -93,13 +109,19 @@ def fastmerge_type(file_list: Iterable[str], file_types: Set[str], output: TextI
 
 
 def fastmerge_fasta_filter(
-    file_list: Iterable[str], seqid_pattern: Optional[Pattern], sequence_pattern: Optional[Pattern], output: TextIO
+    file_list: Iterable[str],
+    seqid_pattern: Optional[Pattern],
+    sequence_pattern: Optional[Pattern],
+    output: TextIO,
+    progress_callback: Callable[[str, int, int], None] = None,
 ) -> None:
     """
     Merge the fasta files, extraction all gzip archives.
     Filter records with the given patterns
     """
-    for entry in list_files(file_list):
+    for i, entry in enumerate(list_files(file_list)):
+        if progress_callback:
+            progress_callback(entry, i, len(file_list))
         # skip the files of the wrong type
         if ext_gz(entry) not in fasta_exts:
             continue
@@ -132,13 +154,19 @@ def fastmerge_fasta_filter(
 
 
 def fastmerge_fastq_filter(
-    file_list: Iterable[str], seqid_pattern: Optional[Pattern], sequence_pattern: Optional[Pattern], output: TextIO
+    file_list: Iterable[str],
+    seqid_pattern: Optional[Pattern],
+    sequence_pattern: Optional[Pattern],
+    output: TextIO,
+    progress_callback: Callable[[str, int, int], None] = None,
 ) -> None:
     """
     Merge the fastq files, extraction all gzip archives.
     Filter records with the given patterns
     """
-    for entry in list_files(file_list):
+    for i, entry in enumerate(list_files(file_list)):
+        if progress_callback:
+            progress_callback(entry, i, len(file_list))
         # skip the files of the wrong type
         if ext_gz(entry) not in fastq_exts:
             continue
