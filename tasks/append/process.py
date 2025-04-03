@@ -3,7 +3,7 @@ from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 
-from ..common.types import BatchResults
+from ..common.types import BatchResults, DoubleBatchResults
 from .types import TargetPaths
 
 
@@ -30,11 +30,6 @@ def execute(
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
-    from itaxotools import abort, get_feedback, progress_handler
-
-    blast_outfmt = 6
-    blast_outfmt_options = "length pident qseqid sseqid sseq qframe sframe"
-
     print(f"{input_query_paths=}")
     print(f"{input_database_paths=}")
     print(f"{output_path=}")
@@ -48,10 +43,167 @@ def execute(
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
-    if len(input_database_paths) > 1:
+    if len(input_database_paths) == 1:
+        input_database_path = input_database_paths[0]
+        return execute_single_database_batch_queries(
+            work_dir=work_dir,
+            input_query_paths=input_query_paths,
+            input_database_path=input_database_path,
+            output_path=output_path,
+            blast_method=blast_method,
+            blast_evalue=blast_evalue,
+            blast_num_threads=blast_num_threads,
+            match_multiple=match_multiple,
+            match_pident=match_pident,
+            match_length=match_length,
+            specified_identifier=specified_identifier,
+            append_timestamp=append_timestamp,
+            append_configuration=append_configuration,
+        )
+
+    if len(input_query_paths) == 1:
         raise NotImplementedError()
 
-    input_database_path = input_database_paths[0]
+    return execute_batch_database_batch_queries(
+        work_dir=work_dir,
+        input_query_paths=input_query_paths,
+        input_database_paths=input_database_paths,
+        output_path=output_path,
+        blast_method=blast_method,
+        blast_evalue=blast_evalue,
+        blast_num_threads=blast_num_threads,
+        match_multiple=match_multiple,
+        match_pident=match_pident,
+        match_length=match_length,
+        specified_identifier=specified_identifier,
+        append_timestamp=append_timestamp,
+        append_configuration=append_configuration,
+    )
+
+
+def execute_batch_database_batch_queries(
+    work_dir: Path,
+    input_query_paths: list[Path],
+    input_database_paths: list[Path],
+    output_path: Path,
+    blast_method: str,
+    blast_evalue: float,
+    blast_num_threads: int,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
+    specified_identifier: str | None,
+    append_timestamp: bool,
+    append_configuration: bool,
+) -> BatchResults:
+    from itaxotools import abort, get_feedback, progress_handler
+
+    blast_outfmt = 6
+    blast_outfmt_options = "length pident qseqid sseqid sseq qframe sframe"
+
+    total = len(input_query_paths) * len(input_database_paths)
+    failed: dict[Path, BatchResults] = {}
+
+    timestamp = datetime.now() if append_timestamp else None
+    blast_options: dict[str, str] = {}
+    match_options: dict[str, str] = {}
+    if append_configuration:
+        blast_options[blast_method] = None
+        blast_options["evalue"] = blast_evalue
+        parts = blast_outfmt_options.split(" ")
+        blast_options["columns"] = "_".join(parts)
+        match_options[blast_method] = None
+        if match_multiple:
+            match_options["multiple"] = None
+            match_options["pident"] = match_pident
+            match_options["length"] = match_length
+        else:
+            match_options["single"] = None
+
+    target_paths_dict = {
+        input_database_path: [
+            get_target_paths(
+                input_query_path, output_path / input_database_path.name, timestamp, blast_options, match_options
+            )
+            for input_query_path in input_query_paths
+        ]
+        for input_database_path in input_database_paths
+    }
+
+    if any(
+        (
+            path.exists()
+            for target_paths_list in target_paths_dict.values()
+            for target_paths in target_paths_list
+            for path in target_paths
+        )
+    ):
+        if not get_feedback(None):
+            abort()
+
+    ts = perf_counter()
+
+    for i, input_database_path in enumerate(input_database_paths):
+        database_output_path = output_path / input_database_path.name
+        database_output_path.mkdir(exist_ok=True)
+
+        for j, (input_query_path, target) in enumerate(zip(input_query_paths, target_paths_dict[input_database_path])):
+            progress_handler(
+                f"Processing {repr(input_database_path.name)} for file: {input_query_path.name}",
+                len(input_query_paths) * i + j,
+                0,
+                total,
+            )
+            try:
+                execute_single_database_single_query(
+                    work_dir=work_dir,
+                    input_query_path=input_query_path,
+                    input_database_path=input_database_path,
+                    blast_output_path=target.blast_output_path,
+                    appended_output_path=target.appended_output_path,
+                    blast_method=blast_method,
+                    blast_outfmt=blast_outfmt,
+                    blast_outfmt_options=blast_outfmt_options,
+                    blast_evalue=blast_evalue,
+                    blast_num_threads=blast_num_threads,
+                    match_multiple=match_multiple,
+                    match_pident=match_pident,
+                    match_length=match_length,
+                    specified_identifier=specified_identifier,
+                )
+            except Exception as e:
+                if total == 1:
+                    raise e
+                with open(target.error_log_path, "w") as f:
+                    print_exc(file=f)
+                failed[input_database_path] = input_query_path
+
+    progress_handler("Done processing files.", total, 0, total)
+
+    tf = perf_counter()
+
+    return DoubleBatchResults(output_path, failed, tf - ts)
+
+
+def execute_single_database_batch_queries(
+    work_dir: Path,
+    input_query_paths: list[Path],
+    input_database_path: Path,
+    output_path: Path,
+    blast_method: str,
+    blast_evalue: float,
+    blast_num_threads: int,
+    match_multiple: bool,
+    match_pident: float,
+    match_length: int,
+    specified_identifier: str | None,
+    append_timestamp: bool,
+    append_configuration: bool,
+) -> BatchResults:
+    from itaxotools import abort, get_feedback, progress_handler
+
+    blast_outfmt = 6
+    blast_outfmt_options = "length pident qseqid sseqid sseq qframe sframe"
 
     total = len(input_query_paths)
     failed: list[Path] = []
@@ -85,7 +237,7 @@ def execute(
     for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
         progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
         try:
-            execute_single(
+            execute_single_database_single_query(
                 work_dir=work_dir,
                 input_query_path=path,
                 input_database_path=input_database_path,
@@ -115,7 +267,7 @@ def execute(
     return BatchResults(output_path, failed, tf - ts)
 
 
-def execute_single(
+def execute_single_database_single_query(
     work_dir: Path,
     input_query_path: Path,
     input_database_path: Path,

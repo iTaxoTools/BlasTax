@@ -11,16 +11,18 @@ from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchDatabaseModel, BatchQueryModel
-from .types import BatchResults, Results, WarnResults
+from .types import BatchResults, DoubleBatchResults, Results, WarnResults
 from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
 
 
 class BlastTaskView(ScrollTaskView):
-    def report_results(self, task_name: str, results: Results | BatchResults | WarnResults):
+    def report_results(self, task_name: str, results: Results | BatchResults | DoubleBatchResults | WarnResults):
         if isinstance(results, Results):
             self.report_results_single(task_name, results)
         elif isinstance(results, BatchResults):
             self.report_results_batch(task_name, results)
+        elif isinstance(results, DoubleBatchResults):
+            self.report_results_batch_double(task_name, results)
         elif isinstance(results, WarnResults):
             self.report_results_warn(task_name, results)
 
@@ -50,6 +52,37 @@ class BlastTaskView(ScrollTaskView):
             msgBox.setDetailedText(
                 "Error logs were written for the following files:\n"
                 + "\n".join(f"- {path.name}" for path in results.failed)
+                + "\n"
+            )
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
+            msgBox.setStyleSheet("QMessageBox { min-width: 400px; }")
+            button = self.window().msgShow(msgBox)
+            if button == QtWidgets.QMessageBox.Open:
+                url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
+                QtGui.QDesktopServices.openUrl(url)
+
+    def report_results_batch_double(self, task_name: str, results: DoubleBatchResults):
+        if not results.failed:
+            self.report_results_single(task_name, results)
+        else:
+
+            def log_report_for_database(database: Path, queries: list[Path]) -> str:
+                return f"- For database {database.name}:\n" + "\n".join(f"* {path.name}" for path in queries)
+
+            error_count = sum(len(queries) for queries in results.failed.values())
+
+            msgBox = QtWidgets.QMessageBox(self.window())
+            msgBox.setWindowTitle(app.config.title)
+            msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+            msgBox.setText(f"{task_name} completed with errors!")
+            msgBox.setInformativeText(
+                f"Time taken: {human_readable_seconds(results.seconds_taken)}.\nFiles with errors: {error_count}"
+            )
+            msgBox.setDetailedText(
+                "Error logs were written for the following files:\n\n"
+                + "\n\n".join(
+                    log_report_for_database(database, queries) for database, queries in results.failed.items()
+                )
                 + "\n"
             )
             msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)

@@ -22,6 +22,12 @@ class BatchResults(NamedTuple):
     seconds_taken: float
 
 
+class DoubleBatchResults(NamedTuple):
+    output_path: Path
+    failed: dict[Path, list[Path]]
+    seconds_taken: float
+
+
 class BlastMethod(Enum):
     blastn = ("blastn", "Nucleotide-Nucleotide")
     blastp = ("blastp", "Protein-Protein")
