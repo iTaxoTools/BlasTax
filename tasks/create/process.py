@@ -46,7 +46,7 @@ def execute(
                 input_path=path,
                 output_path=output_path,
                 type=type,
-                name=path.stem,
+                name=name if total == 1 else path.stem,
             )
         except Exception as e:
             if total == 1:
