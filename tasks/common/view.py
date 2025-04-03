@@ -10,7 +10,7 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
-from .model import BatchQueryModel
+from .model import BatchDatabaseModel, BatchQueryModel
 from .types import BatchResults, Results, WarnResults
 from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
 
@@ -494,6 +494,41 @@ class BatchQuerySelector(Card):
         binder.bind(object.query_list.rowsInserted, self.controls.batch_view.updateGeometry)
         binder.bind(object.query_list.rowsRemoved, self.controls.batch_view.updateGeometry)
         binder.bind(object.query_list.modelReset, self.controls.batch_view.updateGeometry)
+
+
+class BatchDatabaseSelector(BatchQuerySelector):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.controls.label.setText("Database mode:")
+        self.controls.single_field.setPlaceholderText("Match all query sequences against this database")
+        self.controls.batch_help.setPlaceholderText("Match all query sequences against these databases")
+        self.controls.single_database = self.controls.single_query
+        self.controls.batch_database = self.controls.batch_query
+
+    def draw_batch(self, symbol, text):
+        super().draw_batch(symbol, text + "s")
+
+    def bind_batch_model(self, binder: Binder, object: BatchDatabaseModel):
+        super().bind_batch_model(binder, object)
+
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+            filter="BLAST databases (*.nin *.pin)",
+        )
+        if not filename:
+            return
+        self.selectedSinglePath.emit(Path(filename))
+
+    def _handle_add_paths(self, *args):
+        filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse files",
+            filter="BLAST databases (*.nin *.pin)",
+        )
+        paths = [Path(filename) for filename in filenames]
+        self.requestedAddPaths.emit(paths)
 
 
 class ClickableWidget(QtWidgets.QWidget):

@@ -18,7 +18,7 @@ def initialize():
 def execute(
     work_dir: Path,
     input_query_paths: list[Path],
-    input_database_path: Path,
+    input_database_paths: list[Path],
     output_path: Path,
     blast_method: str,
     blast_evalue: float,
@@ -36,7 +36,7 @@ def execute(
     blast_outfmt_options = "length pident qseqid sseqid sseq qframe sframe"
 
     print(f"{input_query_paths=}")
-    print(f"{input_database_path=}")
+    print(f"{input_database_paths=}")
     print(f"{output_path=}")
     print(f"{blast_method=}")
     print(f"{blast_evalue=}")
@@ -47,6 +47,11 @@ def execute(
     print(f"{specified_identifier=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
+
+    if len(input_database_paths) > 1:
+        raise NotImplementedError()
+
+    input_database_path = input_database_paths[0]
 
     total = len(input_query_paths)
     failed: list[Path] = []

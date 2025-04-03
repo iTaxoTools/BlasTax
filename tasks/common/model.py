@@ -82,7 +82,7 @@ class PathListModel(QtCore.QAbstractListModel):
         self.paths = []
         self.endResetModel()
 
-    def get_all_paths(self):
+    def get_all_paths(self) -> list[Path]:
         all = set()
         for path in self.paths:
             if path.is_file():
@@ -93,7 +93,7 @@ class PathListModel(QtCore.QAbstractListModel):
                         all.update(path.glob(f"*.{glob}"))
                 else:
                     all.update(x for x in path.iterdir() if x.is_file())
-        return all
+        return list(sorted(all))
 
 
 class BatchQueryModel(PropertyObject):
@@ -143,7 +143,7 @@ class BatchQueryModel(PropertyObject):
                 return False
         return True
 
-    def get_all_paths(self):
+    def get_all_paths(self) -> list[Path]:
         if self.batch_mode:
             return self.query_list.get_all_paths()
         return [self.query_path]
@@ -200,3 +200,12 @@ class BatchQueryModel(PropertyObject):
             self.add_paths([path])
         else:
             self.set_path(path)
+
+
+class BatchDatabaseModel(BatchQueryModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_globs(["nin", "pin"])
+
+    def get_all_paths(self) -> list[Path]:
+        return [path.with_suffix("") for path in super().get_all_paths()]

@@ -10,13 +10,13 @@ from itaxotools.taxi_gui.view.widgets import GLineEdit, RadioButtonGroup, RichRa
 
 from ..common.types import BlastMethod
 from ..common.view import (
+    BatchDatabaseSelector,
     BatchProgressCard,
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
     OptionCard,
     OutputDirectorySelector,
-    PathDatabaseSelector,
 )
 from ..common.widgets import (
     BasePropertyLineEdit,
@@ -241,7 +241,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
-        self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
+        self.cards.database = BatchDatabaseSelector("BLAST database", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.match_options = MatchOptionSelector(self)
@@ -249,7 +249,7 @@ class View(BlastTaskView):
             "Specify identifier", "Append all hits using the same custom identifier."
         )
 
-        self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.query.controls.label.setText("Query mode:")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -273,9 +273,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.cards.query.bind_batch_model(self.binder, object.input_queries)
-
-        self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
-        self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
+        self.cards.database.bind_batch_model(self.binder, object.input_databases)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
