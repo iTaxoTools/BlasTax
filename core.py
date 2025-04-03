@@ -355,6 +355,7 @@ def blast_parse(
     pident_arg: float = None,
     length_arg: int = None,
     user_spec_name: str = None,
+    append_only: bool = False,
 ):
     # modify the user_spec_name
     if user_spec_name is not None:
@@ -362,11 +363,8 @@ def blast_parse(
             user_spec_name = ">" + user_spec_name
     # copy the content of the input file to a new output file
     blastfile = open(blast_result_path, "r")
-    try:
+    if not append_only:
         shutil.copyfile(input_path, output_path)
-        print(f"Content of {input_path} copied to {output_path} successfully.")
-    except IOError as e:
-        print(f"Error: {e}")
     # add upp blast hits to the new output file
     outfile = open(output_path, "a")
     outfile.write("\n")
