@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from itaxotools.common.bindings import Property
+from itaxotools.common.bindings import Instance, Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
-from ..common.model import BlastTaskModel
+from ..common.model import BatchQueryModel, BlastTaskModel
 from . import process, title
 from .types import TranslationMode
 
@@ -11,7 +11,7 @@ from .types import TranslationMode
 class Model(BlastTaskModel):
     task_name = title
 
-    input_path = Property(Path, Path())
+    input_paths = Property(BatchQueryModel, Instance)
     output_path = Property(Path, Path())
 
     output_filename = Property(str, "")
@@ -29,9 +29,11 @@ class Model(BlastTaskModel):
         self.can_open = True
         self.can_save = False
 
-        self.binder.bind(self.properties.input_path, self.properties.output_path, lambda p: p.parent)
+        self.binder.bind(self.input_paths.properties.parent_path, self.properties.output_path)
         self.binder.bind(
-            self.properties.input_path, self.properties.output_filename, lambda p: self.get_template_from_path(p)
+            self.input_paths.properties.query_path,
+            self.properties.output_filename,
+            lambda p: self.get_template_from_path(p),
         )
         self.binder.bind(
             self.properties.output_filename,
@@ -41,13 +43,13 @@ class Model(BlastTaskModel):
         self.binder.bind(
             self.properties.output_filename,
             self.properties.nucleotides_filename,
-            lambda f: Path(f).with_stem(Path(f).stem + "_nucleotides").name if f else "",
+            lambda f: Path(f).with_stem(Path(f).stem + "_orf_nt").name if f else "",
         )
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
         for handle in [
-            self.properties.input_path,
+            self.input_paths.properties.ready,
             self.properties.output_path,
             self.properties.output_filename,
         ]:
@@ -57,11 +59,11 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def isReady(self):
-        if self.input_path == Path():
+        if not self.input_paths.ready:
             return False
         if self.output_path == Path():
             return False
-        if not self.output_filename:
+        if not self.input_paths.batch_mode and not self.output_filename:
             return False
         return True
 
@@ -76,18 +78,30 @@ class Model(BlastTaskModel):
     def start(self):
         super().start()
 
-        self.exec(
-            process.execute,
-            input_path=self.input_path,
-            output_path=self.output_path / self.output_filename,
-            log_path=self.output_path / self.log_filename if self.option_log else None,
-            nucleotide_path=self.output_path / self.nucleotides_filename
-            if self.option_mode == TranslationMode.transcript and self.option_nucleotides
-            else None,
-            input_type=str(self.option_mode),
-            frame=str(self.option_frame),
-            code=str(self.option_code),
-        )
+        if self.input_paths.batch_mode:
+            self.exec(
+                process.execute_batch,
+                input_paths=self.input_paths.get_all_paths(),
+                output_dir=self.output_path,
+                write_logs=self.option_log,
+                write_nucleotides=self.option_nucleotides,
+                input_type=str(self.option_mode),
+                frame=str(self.option_frame),
+                code=str(self.option_code),
+            )
+        else:
+            self.exec(
+                process.execute,
+                input_path=self.input_paths.query_path,
+                output_path=self.output_path / self.output_filename,
+                log_path=self.output_path / self.log_filename if self.option_log else None,
+                nucleotide_path=self.output_path / self.nucleotides_filename
+                if self.option_mode == TranslationMode.transcript and self.option_nucleotides
+                else None,
+                input_type=str(self.option_mode),
+                frame=str(self.option_frame),
+                code=str(self.option_code),
+            )
 
     def open(self, path: Path):
-        self.input_path = path
+        self.input_paths.open(path)

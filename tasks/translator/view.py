@@ -10,11 +10,11 @@ from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox, RadioButtonGroup, RichRadioButton
 
 from ..common.view import (
+    BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
     OptionCard,
     PathDirectorySelector,
-    PathFileSelector,
 )
 from . import long_description, pixmap_medium, title
 from .types import CODON_TABLES, READING_FRAMES, TranslationMode
@@ -187,7 +187,7 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.input = PathFileSelector("\u25C0  Input file", self)
+        self.cards.input = BatchQuerySelector("Input sequences", self)
         self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
         self.cards.output_filename = FilenameSelector("Output filename", self)
         self.cards.mode = ModeSelector("Translation mode", self)
@@ -197,7 +197,7 @@ class View(BlastTaskView):
             "Write logfile:", "Generate a logfile with warnings and information about special cases.", self
         )
 
-        self.cards.input.set_placeholder_text("Sequence file that will be translated")
+        self.cards.input.set_placeholder_text("Sequences that will be translated")
         self.cards.output.set_placeholder_text("Folder that will contain all output files")
         self.cards.output_filename.set_placeholder_text("The resulting protein sequence filename")
 
@@ -222,14 +222,18 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
-        self.binder.bind(object.properties.input_path, self.cards.input.set_path)
-        self.binder.bind(self.cards.input.selectedPath, object.properties.input_path)
+        self.cards.input.bind_batch_model(self.binder, object.input_paths)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
 
         self.binder.bind(object.properties.output_filename, self.cards.output_filename.set_name)
         self.binder.bind(self.cards.output_filename.nameChanged, object.properties.output_filename)
+        self.binder.bind(
+            object.input_paths.properties.batch_mode,
+            self.cards.output_filename.roll_animation.setAnimatedVisible,
+            lambda x: not x,
+        )
 
         self.binder.bind(object.properties.option_mode, self.cards.mode.set_mode)
         self.binder.bind(self.cards.mode.mode_changed, object.properties.option_mode)
