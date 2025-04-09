@@ -1,4 +1,4 @@
-# Translator, AKS, 02.09.24, Anpassungen ab 28.10.24
+# Translator, AKS, 02.09.24, Anpassungen ab 28.10.24, Korrekturen 08.04.25
 
 import sys
 from dataclasses import dataclass, field
@@ -304,6 +304,7 @@ def translate_DNA_record(record, options: Options):
         if "*" not in orf3rc:
             orf_wanted = orf3rc
             orf_label = "orf3rc"
+        loggi.write(record.id + "\n")
         # no sequence without stops
         if orf_label == "none":
             wanted_len = 0
@@ -374,7 +375,46 @@ def translate_DNA_record(record, options: Options):
                 + str(orfx)
                 + "\n"
             )
+            nucli.write(">" + record.id + "\n")
             nucli.write(str(record.seq[dna_start:dna_end]) + "\n")
+
+        else:
+            nucli.write(">" + record.id + "\n")
+            pos_orf = 0
+            wanted_len = len(orf_wanted)
+            if orf_label == "orf1":
+                dna_start = pos_orf * 3
+                dna_end = dna_start + wanted_len * 3
+            elif orf_label == "orf2":
+                dna_start = (pos_orf * 3) + 1
+                dna_end = dna_start + (wanted_len * 3) - 2
+            elif orf_label == "orf3":
+                dna_start = (pos_orf * 3) + 2
+                dna_end = dna_start + (wanted_len * 3) + 2
+            elif orf_label == "orf1rc":
+                dna_start = full_orf_len * 3 - ((wanted_len + 1) * 3)
+                dna_end = dna_start + wanted_len * 3
+            elif orf_label == "orf2rc":
+                dna_start = (pos_orf * 3) + 2
+                dna_end = dna_start + (wanted_len * 3) + 2
+            elif orf_label == "orf3rc":
+                dna_start = (pos_orf * 3) + 2
+                dna_end = dna_start + (wanted_len * 3) + 2
+            else:
+                raise Exception("Unexpected ORF label: " + orf_label)
+            orfx = record.seq[dna_start:dna_end].translate(table=table_nr)
+
+            loggi.write(
+                "dna "
+                + str(record.seq[dna_start + 1 : dna_end + 1])
+                + str(dna_start + 1)
+                + " "
+                + str(dna_end + 1)
+                + str(orfx)
+                + "\n"
+            )
+            nucli.write(str(record.seq[dna_start:dna_end]) + "\n")
+
     return orf_wanted
 
 
