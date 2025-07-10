@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from codons import get_codon_tables
+from itaxotools.blastax.codons import get_codon_tables
 
 CODON_TABLE_VERSION, CODON_TABLES = get_codon_tables()
 READING_FRAMES = {"autodetect": "Autodetect"} | {str(i): str(i) for i in range(1, 7)}

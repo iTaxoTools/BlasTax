@@ -5,7 +5,7 @@ from typing import Literal, NamedTuple
 
 import pytest
 
-from translator import Options, translate
+from itaxotools.blastax.translator import Options, translate
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

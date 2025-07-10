@@ -1,8 +1,7 @@
 from pathlib import Path
 
-from fastutils import make_template
-
-from fastsplit import parse_size
+from itaxotools.blastax.fastsplit import parse_size
+from itaxotools.blastax.fastutils import make_template
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 

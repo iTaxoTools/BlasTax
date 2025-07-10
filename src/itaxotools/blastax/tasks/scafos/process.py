@@ -12,8 +12,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -100,10 +100,15 @@ def execute_single(
     fuse_ambiguous: bool,
     outlier_factor: float,
 ):
+    from itaxotools.blastax.scafos import (
+        AmalgamationMethod,
+        TagMethod,
+        get_amalgamation_method_callable,
+        tag_species_by_method,
+    )
     from itaxotools.taxi2.file_types import FileFormat
     from itaxotools.taxi2.files import identify_format
     from itaxotools.taxi2.sequences import SequenceHandler, Sequences
-    from scafos import AmalgamationMethod, TagMethod, get_amalgamation_method_callable, tag_species_by_method
 
     tag_method = {
         TagMethodTexts.SpeciesBeforeFirstUnderscore: TagMethod.SpeciesBeforeFirstUnderscore,
@@ -153,9 +158,8 @@ def get_target_paths(
     timestamp: datetime | None,
     configuration: dict[str, str],
 ) -> TargetPaths:
-    from core import get_error_filename
-
-    from scafos import get_scafos_filename
+    from itaxotools.blastax.core import get_error_filename
+    from itaxotools.blastax.scafos import get_scafos_filename
 
     error_log_path = output_path / get_error_filename(input_path, timestamp=timestamp)
 

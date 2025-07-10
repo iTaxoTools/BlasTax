@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import pytest
 
-from core import museoscript_parse
+from itaxotools.blastax.core import museoscript_parse
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

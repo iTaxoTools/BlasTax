@@ -8,7 +8,7 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import fastsplit  # noqa
+    import itaxotools.blastax.fastsplit  # noqa
 
 
 def execute(
@@ -24,7 +24,7 @@ def execute(
 ) -> WarnResults:
     import warnings
 
-    from fastsplit import fastsplit
+    from itaxotools.blastax.fastsplit import fastsplit
 
     print(f"{input_path=}")
     print(f"{output_path=}")

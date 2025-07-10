@@ -1,5 +1,5 @@
-from resources import icons, pixmaps
-from tasks import (
+from .resources import icons, pixmaps
+from .tasks import (
     about,
     append,
     appendx,

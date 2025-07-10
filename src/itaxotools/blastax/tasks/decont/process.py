@@ -11,8 +11,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -114,8 +114,8 @@ def execute_single(
     blast_evalue: float,
     blast_num_threads: int,
 ):
-    from core import decontaminate, run_blast_decont
-    from utils import fastq_to_fasta, is_fastq, remove_gaps
+    from itaxotools.blastax.core import decontaminate, run_blast_decont
+    from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
         target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
@@ -160,7 +160,7 @@ def get_target_paths(
     blast_options: dict[str, str],
     decont_options: dict[str, str],
 ) -> TargetPaths:
-    from core import get_decont_blast_filename, get_decont_sequences_filename, get_error_filename
+    from itaxotools.blastax.core import get_decont_blast_filename, get_decont_sequences_filename, get_error_filename
 
     blasted_ingroup_path = output_path / get_decont_blast_filename(
         query_path,

@@ -9,8 +9,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -27,10 +27,9 @@ def execute(
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
-    from core import get_blast_filename, run_blast
-    from utils import fastq_to_fasta, is_fastq, remove_gaps
-
     from itaxotools import abort, get_feedback
+    from itaxotools.blastax.core import get_blast_filename, run_blast
+    from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     from ..common.types import BLAST_OUTFMT_SPECIFIERS_TABLE
 

@@ -5,8 +5,8 @@ from typing import NamedTuple
 
 import pytest
 
-from core import run_blast
-from utils import fastq_to_fasta
+from itaxotools.blastax.core import run_blast
+from itaxotools.blastax.utils import fastq_to_fasta
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

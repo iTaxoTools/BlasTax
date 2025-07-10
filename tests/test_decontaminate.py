@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import pytest
 
-from core import decontaminate, make_database, run_blast_decont
+from itaxotools.blastax.core import decontaminate, make_database, run_blast_decont
 
 from .pytest_utils import assert_file_equals
 

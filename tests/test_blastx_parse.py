@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import pytest
 
-from core import blastx_parse
+from itaxotools.blastax.core import blastx_parse
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

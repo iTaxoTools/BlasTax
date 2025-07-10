@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-import core
+from itaxotools.blastax.core import get_blast_env
 
 binaries = [
     "makeblastdb",
@@ -38,7 +38,7 @@ extra_binaries = [
 
 @pytest.mark.parametrize("binary", binaries)
 def test_binaries_in_path(binary: str):
-    os.environ = core.get_blast_env()
+    os.environ = get_blast_env()
     for binary in binaries:
         assert shutil.which(binary)
 
@@ -46,6 +46,6 @@ def test_binaries_in_path(binary: str):
 @pytest.mark.skip(reason="Not strictly required, might have been trimmed")
 @pytest.mark.parametrize("binary", extra_binaries)
 def test_extra_binaries_in_path(binary: str):
-    os.environ = core.get_blast_env()
+    os.environ = get_blast_env()
     for binary in binaries:
         assert shutil.which(binary)

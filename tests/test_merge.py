@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from merge import get_file_groups, merge_fasta_files
+from itaxotools.blastax.merge import get_file_groups, merge_fasta_files
 
 from .pytest_utils import assert_file_equals
 

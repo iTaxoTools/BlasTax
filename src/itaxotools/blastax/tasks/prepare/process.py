@@ -10,8 +10,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -34,9 +34,8 @@ def execute(
     fixaliseparator: bool,
     append_timestamp: bool,
 ) -> BatchResults:
-    from core import fasta_name_modifier, get_error_filename, get_fasta_prepared_filename
-
     from itaxotools import abort, get_feedback, progress_handler
+    from itaxotools.blastax.core import fasta_name_modifier, get_error_filename, get_fasta_prepared_filename
 
     print(f"{input_paths=}")
     print(f"{output_path=}")

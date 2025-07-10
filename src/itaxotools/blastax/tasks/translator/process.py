@@ -9,7 +9,7 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import translator  # noqa
+    import itaxotools.blastax.translator  # noqa
 
 
 def execute(
@@ -21,7 +21,7 @@ def execute(
     frame: str,
     code: int,
 ) -> Results:
-    from translator import Options, translate
+    from itaxotools.blastax.translator import Options, translate
 
     print(f"{input_path=}")
     print(f"{output_path=}")
@@ -58,10 +58,9 @@ def execute_batch(
     frame: str,
     code: int,
 ) -> Results:
-    from core import get_error_filename
-
     from itaxotools import progress_handler
-    from translator import Options, translate
+    from itaxotools.blastax.core import get_error_filename
+    from itaxotools.blastax.translator import Options, translate
 
     print(f"{input_paths=}")
     print(f"{output_dir=}")

@@ -13,8 +13,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -392,8 +392,8 @@ def execute_single_database_single_query(
     specified_identifier: str | None,
     append_only: bool = False,
 ):
-    from core import blast_parse, run_blast
-    from utils import fastq_to_fasta, is_fastq, remove_gaps
+    from itaxotools.blastax.core import blast_parse, run_blast
+    from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
         target_query_path = work_dir / input_query_path.with_suffix(".fasta").name
@@ -434,7 +434,7 @@ def get_target_paths(
     blast_options: dict[str, str],
     match_options: dict[str, str],
 ) -> TargetPaths:
-    from core import get_append_filename, get_blast_filename, get_error_filename
+    from itaxotools.blastax.core import get_append_filename, get_blast_filename, get_error_filename
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
     appended_output_path = output_path / get_append_filename(query_path, timestamp=timestamp, **match_options)
@@ -453,7 +453,7 @@ def get_target_paths_x_database(
     timestamp: datetime | None,
     blast_options: dict[str, str],
 ) -> TargetXPaths:
-    from core import get_blast_filename, get_error_filename
+    from itaxotools.blastax.core import get_blast_filename, get_error_filename
 
     modified_query_path = query_path.with_stem(f"{query_path.stem}_x_{database_path.name}")
     blast_output_path = output_path / get_blast_filename(

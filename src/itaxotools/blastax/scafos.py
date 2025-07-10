@@ -8,12 +8,12 @@ from pathlib import Path
 from statistics import median
 from typing import Callable, Iterator, NamedTuple
 
-from core import get_info_suffix, get_timestamp_suffix
-
 from itaxotools.taxi2.distances import Distance, DistanceHandler, DistanceMetric
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.pairs import SequencePair, SequencePairs
 from itaxotools.taxi2.sequences import Sequence, Sequences
+
+from .core import get_info_suffix, get_timestamp_suffix
 
 GAP_CHARACTERS = "-?* "
 

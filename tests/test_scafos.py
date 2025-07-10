@@ -3,8 +3,7 @@ from typing import NamedTuple
 
 import pytest
 
-from itaxotools.taxi2.sequences import Sequence, Sequences
-from scafos import (
+from itaxotools.blastax.scafos import (
     GAP_CHARACTERS,
     AmalgamationMethod,
     TagMethod,
@@ -16,6 +15,7 @@ from scafos import (
     select_by_minimum_distance,
     tag_species_by_method,
 )
+from itaxotools.taxi2.sequences import Sequence, Sequences
 
 from .pytest_utils import assert_file_equals
 

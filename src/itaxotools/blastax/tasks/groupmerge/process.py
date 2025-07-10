@@ -8,7 +8,7 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import merge  # noqa
+    import itaxotools.blastax.merge  # noqa
 
 
 def execute(
@@ -19,9 +19,8 @@ def execute(
 ) -> Results:
     import re
 
-    from merge import get_file_groups, merge_fasta_files
-
     from itaxotools import progress_handler
+    from itaxotools.blastax.merge import get_file_groups, merge_fasta_files
 
     print(f"{input_path=}")
     print(f"{output_path=}")

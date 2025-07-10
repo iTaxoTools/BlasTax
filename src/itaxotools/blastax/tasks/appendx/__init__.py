@@ -1,4 +1,4 @@
-from resources import task_pixmaps_large, task_pixmaps_medium
+from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
 title = "BLAST-Append-X"
 description = "Append matching nucleotides"

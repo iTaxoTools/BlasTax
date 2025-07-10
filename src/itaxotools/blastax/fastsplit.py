@@ -7,7 +7,7 @@ import sys
 import warnings
 from typing import BinaryIO, Iterator, List, Optional, TextIO, cast
 
-from fastutils import (
+from .fastutils import (
     Pattern,
     fasta_iter,
     fasta_iter_chunks,

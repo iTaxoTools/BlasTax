@@ -10,8 +10,8 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import core  # noqa
-    import utils  # noqa
+    import itaxotools.blastax.core  # noqa
+    import itaxotools.blastax.utils  # noqa
 
 
 def execute(
@@ -20,9 +20,8 @@ def execute(
     type: Literal["nucl", "prot"],
     name: str,
 ) -> BatchResults:
-    from core import get_error_filename
-
     from itaxotools import abort, get_feedback, progress_handler
+    from itaxotools.blastax.core import get_error_filename
 
     print(f"{input_paths=}")
     print(f"{output_path=}")
@@ -70,8 +69,8 @@ def execute_single(
     type: Literal["nucl", "prot"],
     name: str,
 ):
-    from core import make_database
-    from utils import check_fasta_headers
+    from itaxotools.blastax.core import make_database
+    from itaxotools.blastax.utils import check_fasta_headers
 
     header_check_result = check_fasta_headers(str(input_path))
     if header_check_result == "length":

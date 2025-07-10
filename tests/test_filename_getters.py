@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 import pytest
 
-from core import (
+from itaxotools.blastax.core import (
     get_append_filename,
     get_blast_filename,
     get_decont_blast_filename,
@@ -14,7 +14,7 @@ from core import (
     get_fasta_prepared_filename,
     get_museo_filename,
 )
-from scafos import get_scafos_filename
+from itaxotools.blastax.scafos import get_scafos_filename
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

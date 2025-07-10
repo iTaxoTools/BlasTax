@@ -18,8 +18,7 @@
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-import resources
-
+from itaxotools.blastax import resources
 from itaxotools.common.utility import AttrDict
 from itaxotools.common.widgets import VLineSeparator
 from itaxotools.taxi_gui.view.cards import Card

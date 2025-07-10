@@ -9,10 +9,10 @@ def run():
     Imports are done locally to optimize multiprocessing.
     """
 
-    import config
-
     from itaxotools.taxi_gui.app import Application, skin
     from itaxotools.taxi_gui.main import Main
+
+    from . import config
 
     app = Application()
     app.set_config(config)

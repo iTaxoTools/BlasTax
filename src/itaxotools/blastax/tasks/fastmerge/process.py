@@ -9,7 +9,7 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
-    import fastmerge  # noqa
+    import itaxotools.blastax.fastmerge  # noqa
 
 
 def execute(
@@ -23,8 +23,8 @@ def execute(
     import gzip
     import warnings
 
-    from fastmerge import fastmerge
     from itaxotools import progress_handler
+    from itaxotools.blastax.fastmerge import fastmerge
 
     print(f"{input_paths=}")
     print(f"{output_path=}")

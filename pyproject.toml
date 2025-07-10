@@ -45,7 +45,7 @@ dev = [
 ]
 
 [project.scripts]
-hapsolutely = "itaxotools.blastax:run"
+blastax = "itaxotools.blastax:run"
 
 [project.urls]
 Homepage = "https://itaxotools.org/"

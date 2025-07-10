@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import pytest
 
-from utils import fastq_to_fasta, is_fasta, is_fastq
+from itaxotools.blastax.utils import fastq_to_fasta, is_fasta, is_fastq
 
 TEST_DATA_DIR = Path(__file__).parent / Path(__file__).stem
 

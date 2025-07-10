@@ -7,7 +7,7 @@ import sys
 import warnings
 from typing import Callable, Iterable, Iterator, Optional, Set, TextIO, Union, cast
 
-from fastutils import (
+from .fastutils import (
     Pattern,
     ext_gz,
     fasta_iter,
