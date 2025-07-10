@@ -1,10 +1,5 @@
-import os
-import platform
-import re
-import shlex
 import shutil
 import string
-import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -12,76 +7,8 @@ from typing import Literal
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.sequences import SequenceHandler
 
+from .blast import command_to_args, execute_blast_command, get_blast_binary
 from .utils import complement, string_trimmer, translate
-
-
-def get_blast_binary(name: str) -> str:
-    if platform.system() == "Windows":
-        name += ".exe"
-    here = Path.cwd()
-    bin = here / "bin" / name
-    return str(bin)
-
-
-def get_blast_env() -> dict:
-    here = Path.cwd()
-    bin = here / "bin"
-    env = os.environ.copy()
-    env["PATH"] += f"{os.pathsep}{bin}"
-    return env
-
-
-def remove_single_quotes(text: str) -> str:
-    if len(text) > 1 and text[0] == text[-1] == "'":
-        return text[1:-1]
-    return text
-
-
-def command_to_args(command: str) -> list[str]:
-    if platform.system() == "Windows":
-        args = shlex.split(command, posix=False)
-        args = [remove_single_quotes(arg) for arg in args]
-        return args
-    return shlex.split(command)
-
-
-BLAST_ENV = get_blast_env()
-
-
-def get_blast_version() -> str:
-    try:
-        args = [get_blast_binary("makeblastdb"), "-version"]
-        result = subprocess.run(args, capture_output=True, text=True, check=True, env=BLAST_ENV)
-        output = result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while fetching version: {e}")
-    except FileNotFoundError:
-        raise Exception("Could not find blast executables.")
-
-    version_match = re.search(r"blast (\d+\.\d+\.\d+)", output)
-
-    if version_match:
-        return version_match.group(1)
-    else:
-        raise Exception("Version number not found in output!")
-
-
-def execute_blast_command(args: list[str]):
-    kwargs = {}
-    if platform.system() == "Windows":
-        kwargs = dict(creationflags=subprocess.CREATE_NO_WINDOW)
-    p = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=BLAST_ENV,
-        **kwargs,
-    )
-    p.wait()
-    _, stderr = p.communicate()
-    if p.returncode != 0:
-        binary = Path(args[0]).stem
-        raise Exception(f"{binary} failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
 
 
 def make_database(
