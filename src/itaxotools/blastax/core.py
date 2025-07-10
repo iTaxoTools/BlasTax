@@ -9,9 +9,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
+from utils import complement, string_trimmer, translate
+
 from itaxotools.taxi2.handlers import FileHandler
 from itaxotools.taxi2.sequences import SequenceHandler
-from utils import complement, string_trimmer, translate
 
 
 def get_blast_binary(name: str) -> str:

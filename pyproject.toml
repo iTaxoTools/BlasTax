@@ -1,3 +1,62 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "itaxotools-blastax"
+dynamic = ["version"]
+description = "Run BLAST, parse hits and more"
+readme = "README.md"
+requires-python = ">=3.10.2, <4"
+keywords = []
+authors = [
+    { name = "Stefanos Patmanidis", email = "stefanpatman91@gmail.com" },
+    { name = "Nikita Kulikov" },
+    { name = "Anja Schulz" },
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "itaxotools-common",
+    "itaxotools-spart-parser",
+    "itaxotools-taxi-gui",
+    "itaxotools-taxi2",
+    "pyside6<6.9.0",
+    "biopython",
+]
+
+[project.optional-dependencies]
+dev = [
+    "setuptools-scm",
+    "pre-commit",
+    "ruff",
+    "pytest",
+    "pytest-qt",
+    "pytest-xvfb",
+    "pyinstaller",
+    "pyyaml",
+]
+
+[project.scripts]
+hapsolutely = "itaxotools.blastax:run"
+
+[project.urls]
+Homepage = "https://itaxotools.org/"
+Source = "https://github.com/iTaxoTools/BlasTax"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.setuptools_scm]
+
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = [
@@ -5,6 +64,7 @@ addopts = [
 ]
 
 [tool.ruff]
+ignore-init-module-imports = true
 extend-select = ["I"]
 line-length = 120
 ignore = ["E731"]

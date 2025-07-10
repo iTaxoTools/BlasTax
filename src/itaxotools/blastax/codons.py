@@ -12,7 +12,7 @@ ftp://ftp.ncbi.nih.gov/entrez/misc/data/gc.prt
 
 import re
 
-import resources
+from itaxotools.blastax import resources
 
 
 def line_wrap(text, indent=0, max_len=78, string=False):
@@ -41,9 +41,10 @@ def line_wrap(text, indent=0, max_len=78, string=False):
 
 
 def get_codon_tables() -> tuple[str, dict[int, str]]:
+    genetic_codes = resources.documents.gc.resource
     version = ""
     tables: dict[int, str] = {}
-    for line in resources.documents.gc.resource:
+    for line in genetic_codes:
         if not version and line.startswith("--  Version"):
             version = line.split("Version", 1)[1].strip()
         if line[:2] == " {":

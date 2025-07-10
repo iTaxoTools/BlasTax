@@ -35,6 +35,7 @@ def execute(
     append_timestamp: bool,
 ) -> BatchResults:
     from core import fasta_name_modifier, get_error_filename, get_fasta_prepared_filename
+
     from itaxotools import abort, get_feedback, progress_handler
 
     print(f"{input_paths=}")

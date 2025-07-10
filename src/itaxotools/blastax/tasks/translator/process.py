@@ -59,6 +59,7 @@ def execute_batch(
     code: int,
 ) -> Results:
     from core import get_error_filename
+
     from itaxotools import progress_handler
     from translator import Options, translate
 

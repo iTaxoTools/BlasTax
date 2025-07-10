@@ -10,6 +10,7 @@ def run():
     """
 
     import config
+
     from itaxotools.taxi_gui.app import Application, skin
     from itaxotools.taxi_gui.main import Main
 

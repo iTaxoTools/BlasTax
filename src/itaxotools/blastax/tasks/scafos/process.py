@@ -154,6 +154,7 @@ def get_target_paths(
     configuration: dict[str, str],
 ) -> TargetPaths:
     from core import get_error_filename
+
     from scafos import get_scafos_filename
 
     error_log_path = output_path / get_error_filename(input_path, timestamp=timestamp)

@@ -19,8 +19,9 @@ def execute(
 ) -> Results:
     import re
 
-    from itaxotools import progress_handler
     from merge import get_file_groups, merge_fasta_files
+
+    from itaxotools import progress_handler
 
     print(f"{input_path=}")
     print(f"{output_path=}")

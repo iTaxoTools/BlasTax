@@ -114,6 +114,7 @@ def execute_batch_databases_single_query(
     append_configuration: bool,
 ) -> BatchResults:
     from core import get_append_filename
+
     from itaxotools import abort, get_feedback, progress_handler
 
     blast_outfmt = 6

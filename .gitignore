@@ -1,16 +1,20 @@
-.DS_Store
-
-__pycache__
-Pipfile
-Pipfile.lock
-
 build/
 dist/
 bin/
+*.whl
+*.egg-info/
+*.egg
+*.py[cod]
+__pycache__/
+*.so
+*~
 
+.DS_Store
+.vscode
+.pytest_cache
+.ruff_cache
+.cache
+.tox
 
-# accidentally added large file
-tests/test_museoscript_original_reads/original_query.fasta
-
-# do not trigger setuptools_scm
-documents/version.txt
+Pipfile
+Pipfile.lock
