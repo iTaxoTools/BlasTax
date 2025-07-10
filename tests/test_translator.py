@@ -38,6 +38,9 @@ class TranslatorTest(NamedTuple):
             log_expected = TEST_DATA_DIR / self.log_filename
             log_path = tmp_path / self.log_filename
 
+        if self.input_type == "transcript":
+            nucleotide_path = tmp_path / "nucleotids.fas"
+
         options = Options(
             input_path=input_path,
             output_path=output_path,
@@ -56,6 +59,8 @@ class TranslatorTest(NamedTuple):
             (log_path, log_expected),
         ]:
             if output is None:
+                continue
+            if expected is None:
                 continue
 
             assert output.exists()
@@ -78,7 +83,7 @@ translator_tests = [
     TranslatorTest(
         "translator_testfile.fas",
         "translator_testfile_aa_expected_transcriptmode.fas",
-        "translator_testfile__orf_nt_expected_transcriptmode.fas",
+        "translator_testfile_orf_nt_expected_transcriptmode.fas",
         None, "transcript", "autodetect", 1,
     ),
 ]
