@@ -62,9 +62,10 @@ def get_blast_binary(name: str) -> str | None:
         name += ".exe"
 
     blast_path = load_user_blast_path()
-    bin_path = blast_path / name
-    if bin_path.exists():
-        return str(bin_path)
+    if blast_path is not None:
+        bin_path = blast_path / name
+        if bin_path.exists():
+            return str(bin_path)
 
     blast_env = get_blast_env()
     path = blast_env["PATH"]

@@ -29,6 +29,7 @@ dependencies = [
     "itaxotools-taxi-gui",
     "itaxotools-taxi2",
     "pyside6<6.9.0",
+    "platformdirs",
     "biopython",
     "requests",
 ]
