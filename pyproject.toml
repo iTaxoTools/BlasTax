@@ -30,6 +30,7 @@ dependencies = [
     "itaxotools-taxi2",
     "pyside6<6.9.0",
     "biopython",
+    "requests",
 ]
 
 [project.optional-dependencies]
