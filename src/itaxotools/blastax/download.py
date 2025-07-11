@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from platform import system
 from sys import stdout
-from typing import Literal
+from typing import Callable, Literal
 
 import requests
 
@@ -13,8 +13,19 @@ OS = Literal["win64", "macosx", "linux"]
 
 BLAST_URL = "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/"
 
-HERE = Path(__file__).parent
-BIN = HERE.parent / "bin"
+REQUIRED_BLAST_BINARIES = [
+    "makeblastdb",
+    "blastn",
+    "blastp",
+    "blastx",
+    "tblastn",
+    "tblastx",
+]
+
+KEPT_SUFFIXES = [
+    ".so",
+    ".dll",
+]
 
 
 def human_readable_size(size):
@@ -70,11 +81,24 @@ def get_architecture(os: OS) -> str:
     return "x64"
 
 
-def get_tarball(path: Path, version: str, os: OS = "win64", arch: str = "x64") -> Path:
+def report_progress(downloaded_size: int, total_size: int) -> str:
+    progress = (downloaded_size / total_size) * 100
+    stdout.write(f"\rDownloading... {progress:.2f}%")
+    stdout.flush()
+
+
+def get_tarball(
+    path: Path,
+    version: str,
+    os: OS = "win64",
+    arch: str = "x64",
+    handler: Callable | None = None,
+) -> Path:
     tarball = f"ncbi-blast-{version}+-{arch}-{os}.tar.gz"
     url = BLAST_URL + version + "/" + tarball
 
     target = path / tarball
+    handler = handler or report_progress
 
     try:
         print("Requesting:", tarball)
@@ -91,9 +115,7 @@ def get_tarball(path: Path, version: str, os: OS = "win64", arch: str = "x64") -
             for data in response.iter_content(chunk_size=block_size):
                 file.write(data)
                 downloaded_size += len(data)
-                progress = (downloaded_size / total_size) * 100
-                stdout.write(f"\rDownloading... {progress:.2f}%")
-                stdout.flush()
+                handler(downloaded_size, total_size)
             print()
 
         print(f"Tarball saved as: {target}")
@@ -126,32 +148,55 @@ def copy_binaries(src: Path, dst: Path, extensions: list[str]):
     print(f"Copied {count} binaries to: {dst}")
 
 
-def get_blast(version: str, os: str):
+def get_blast(
+    target: Path | None = None,
+    version: str = "",
+    os: str = "",
+    handler: Callable | None = None,
+):
+    target = target or Path.cwd() / "bin"
     version = version or get_version()
     os = os or get_system_os()
     arch = get_architecture(os)
 
     with tempfile.TemporaryDirectory() as work_dir:
         work_path = Path(work_dir)
-        path = get_tarball(work_path, version, os, arch)
+        path = get_tarball(work_path, version, os, arch, handler)
         bin = extract_tarball(path, work_path)
         extensions = get_os_extensions(os)
 
-        BIN.mkdir(exist_ok=True)
-        copy_binaries(bin, BIN, extensions)
+        target.mkdir(exist_ok=True)
+        copy_binaries(bin, target, extensions)
 
     print("Done!")
+
+
+def trim_blast(target: Path | None = None):
+    target = target or Path.cwd() / "bin"
+    count = 0
+    for binary in target.iterdir():
+        if binary.stem in REQUIRED_BLAST_BINARIES:
+            continue
+        if binary.suffix in KEPT_SUFFIXES:
+            continue
+        binary.unlink()
+        count += 1
+    print(f"Trimmed {count} binaries!")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
 
+    parser.add_argument("-o", "--output", type=Path, default=None, help="Directory to install binaries")
     parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
     parser.add_argument("-s", "--os", type=str, default="", help="Specify target operating system")
+    parser.add_argument("-t", "--trim", action="store_true", help="Trim unrequired binaries")
 
     args = parser.parse_args()
 
-    get_blast(args.version, args.os)
+    get_blast(args.output, args.version, args.os)
+    if args.trim:
+        trim_blast(args.output)
 
 
 if __name__ == "__main__":

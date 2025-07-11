@@ -23,8 +23,4 @@ runs:
     - name: Fetch binaries if cache is not hit
       shell: bash
       if: steps.cache-binaries.outputs.cache-hit != 'true'
-      run: python tools/get-blast-binaries.py
-
-    - name: Discard unrequired binaries
-      shell: bash
-      run: python tools/trim-blast-binaries.py
+      run: python src/itaxotools/blastax/download.py --trim

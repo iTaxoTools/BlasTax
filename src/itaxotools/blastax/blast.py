@@ -10,14 +10,7 @@ from pathlib import Path
 
 from platformdirs import user_config_dir, user_data_dir
 
-REQUIRED_BLAST_BINARIES = [
-    "makeblastdb",
-    "blastn",
-    "blastp",
-    "blastx",
-    "tblastn",
-    "tblastx",
-]
+from .download import REQUIRED_BLAST_BINARIES
 
 
 def get_user_config_path() -> Path:
