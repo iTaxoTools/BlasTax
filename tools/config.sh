@@ -6,7 +6,7 @@
 # program specifics
 APP_NAME="BlasTax"
 APP_IDENTIFIER="org.itaxotools.blastax"
-APP_SCRIPT="../gui.py"
+APP_SCRIPT="run.py"
 APP_ENTITLEMENTS="data/entitlements.plist"
 APP_ICON_ICNS="data/blastax.icns"
 APP_ICON_ICO="data/blastax.ico"

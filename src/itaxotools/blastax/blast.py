@@ -93,7 +93,16 @@ def get_blast_version() -> str | None:
             return None
         args = [binary, "-version"]
         blast_env = get_blast_env()
-        result = subprocess.run(args, capture_output=True, text=True, check=True, env=blast_env)
+        if platform.system() == "Windows":
+            kwargs = dict(creationflags=subprocess.CREATE_NO_WINDOW)
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            check=True,
+            env=blast_env,
+            **kwargs,
+        )
         output = result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while fetching version: {e}")
