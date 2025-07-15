@@ -126,12 +126,17 @@ class DocumentCard(Card):
 
         label_description = HtmlLabel(description)
 
+        self.controls.title = label_title
+
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(8, 12, 64, 12)
         layout.addWidget(label_title)
         layout.addWidget(label_description)
         layout.setSpacing(16)
         self.addLayout(layout)
+
+    def set_title(self, text: str):
+        self.controls.title.setText(text)
 
 
 class View(ScrollTaskView):
@@ -142,9 +147,7 @@ class View(ScrollTaskView):
     def draw_cards(self):
         self.cards = AttrDict()
         self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
-        self.cards.blast = DocumentCard(
-            f"About BLAST+ (v{resources.documents.version.resource})", resources.documents.blast.resource, self
-        )
+        self.cards.blast = DocumentCard("About BLAST+ (???)", resources.documents.blast.resource, self)
         self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -154,3 +157,12 @@ class View(ScrollTaskView):
         layout.setContentsMargins(6, 6, 6, 6)
 
         self.setLayout(layout)
+
+    def setObject(self, object):
+        self.object = object
+        self.binder.unbind_all()
+        self.binder.bind(object.notification, self.showNotification)
+        self.binder.bind(object.properties.blast_version, self._update_blast_version)
+
+    def _update_blast_version(self, version: str):
+        self.cards.blast.set_title(f"About BLAST+ ({version})")

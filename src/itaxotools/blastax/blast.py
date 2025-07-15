@@ -86,9 +86,12 @@ def command_to_args(command: str) -> list[str]:
     return shlex.split(command)
 
 
-def get_blast_version() -> str:
+def get_blast_version() -> str | None:
     try:
-        args = [get_blast_binary("makeblastdb"), "-version"]
+        binary = get_blast_binary("makeblastdb")
+        if binary is None:
+            return None
+        args = [binary, "-version"]
         blast_env = get_blast_env()
         result = subprocess.run(args, capture_output=True, text=True, check=True, env=blast_env)
         output = result.stdout

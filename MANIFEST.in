@@ -1,0 +1,10 @@
+# Include project info
+include README.md
+include LICENSE.txt
+include pyproject.toml
+
+# Include data files
+include src/itaxotools/blastax/documents/*
+include src/itaxotools/blastax/graphics/*
+include src/itaxotools/blastax/images/*
+include src/itaxotools/blastax/logos/*

@@ -16,16 +16,42 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 
-from itaxotools.taxi_gui.model.tasks import TaskModel
+from PySide6 import QtCore
 
-from . import title
+from itaxotools.common.bindings import Property
+from itaxotools.taxi_gui.loop import ReportDone
+from itaxotools.taxi_gui.model.tasks import SubtaskModel, TaskModel
+
+from . import process, title
+
+
+class BlastVersionSubtaskModel(SubtaskModel):
+    task_name = "FileInfoSubtask"
+
+    done = QtCore.Signal(object)
+
+    def onDone(self, version: str | None):
+        self.done.emit(version)
+        self.busy = False
 
 
 class Model(TaskModel):
     task_name = title
+    blast_version = Property(str, "checking version...")
 
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = False
         self.can_save = False
         self.ready = False
+
+        self.subtask_version = BlastVersionSubtaskModel(self, bind_busy=False)
+        self.binder.bind(self.subtask_version.done, self._handle_version_done)
+        self.subtask_version.start(process.get_blast_version)
+
+    def _handle_version_done(self, report: ReportDone):
+        version = report.result
+        if version:
+            self.blast_version = "v" + version
+        else:
+            self.blast_version = "could not find binaries!"
