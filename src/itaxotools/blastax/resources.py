@@ -37,7 +37,6 @@ documents = LazyResourceCollection(
     about=lambda: text_from_path(get_data("documents/about.html")),
     blast=lambda: text_from_path(get_data("documents/blast.html")),
     museo=lambda: text_from_path(get_data("documents/museo.html")),
-    gc=lambda: lines_from_path(get_data("documents/gc.prt")),
 )
 
 
