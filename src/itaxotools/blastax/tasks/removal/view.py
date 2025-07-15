@@ -1,10 +1,11 @@
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
+from itaxotools.taxi_gui.utility import human_readable_seconds
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox, RadioButtonGroup, RichRadioButton
 
@@ -15,7 +16,7 @@ from ..common.view import (
     PathDirectorySelector,
 )
 from . import long_description, pixmap_medium, title
-from .types import CODON_TABLES, READING_FRAMES, RemovalMode
+from .types import CODON_TABLES, READING_FRAMES, RemovalMode, RemovalResults
 
 
 class FilenameSelector(Card):
@@ -130,7 +131,7 @@ class CodonTableSelector(Card):
 
 
 class ReadingFrameSelector(Card):
-    frame_changed = QtCore.Signal(str)
+    frame_changed = QtCore.Signal(int)
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
@@ -159,10 +160,10 @@ class ReadingFrameSelector(Card):
 
         self.addLayout(layout)
 
-    def _handle_frame_changed(self, frame: str):
+    def _handle_frame_changed(self, frame: int):
         self.frame_changed.emit(frame)
 
-    def set_frame(self, frame: str):
+    def set_frame(self, frame: int):
         self.controls.group.setValue(frame)
 
 
@@ -222,6 +223,21 @@ class View(BlastTaskView):
         self.binder.bind(self.cards.frame.frame_changed, object.properties.option_frame)
 
         self.binder.bind(object.properties.editable, self.setEditable)
+
+    def report_results(self, task_name: str, results: RemovalResults):
+        msgBox = QtWidgets.QMessageBox(self.window())
+        msgBox.setWindowTitle(app.config.title)
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+        msgBox.setText(f"{task_name} completed successfully!")
+        lc = "\n" if len(results.description) > 20 else " "
+        msgBox.setInformativeText(
+            f"{results.description}.{lc}Time taken: {human_readable_seconds(results.seconds_taken)}."
+        )
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
+        button = self.window().msgShow(msgBox)
+        if button == QtWidgets.QMessageBox.Open:
+            url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
+            QtGui.QDesktopServices.openUrl(url)
 
     def setEditable(self, editable: bool):
         for card in self.cards:

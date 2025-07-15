@@ -49,10 +49,10 @@ class Model(BlastTaskModel):
         self.exec(
             process.execute,
             input_paths=self.input_paths.get_all_paths(),
-            output_path=self.output_path,
+            output_dir=self.output_path,
             mode=self.option_mode,
-            frame=int(self.option_frame),
-            code=int(self.option_code),
+            frame=self.option_frame,
+            code=self.option_code,
         )
 
     def open(self, path: Path):

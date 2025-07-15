@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from enum import Enum
+from pathlib import Path
+from typing import NamedTuple
 
 from itaxotools.blastax.codons import get_codon_tables
 
@@ -28,3 +30,9 @@ class RemovalMode(Enum):
 
     def __str__(self):
         return self.key
+
+
+class RemovalResults(NamedTuple):
+    output_path: Path
+    description: str
+    seconds_taken: float
