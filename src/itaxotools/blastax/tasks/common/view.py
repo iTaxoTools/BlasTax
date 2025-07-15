@@ -507,6 +507,11 @@ class BatchQuerySelector(Card):
     def set_batch_placeholder_text(self, text: str):
         self.controls.batch_help.setPlaceholderText(text)
 
+    def set_batch_only(self, value: bool):
+        self.controls.header.setVisible(not value)
+        self.controls.single_query.roll._visible_target = not value
+        self.controls.batch_query.roll._visible_target = value
+
     def bind_batch_model(self, binder: Binder, object: BatchQueryModel):
         self.controls.batch_view.setModel(object.query_list)
 

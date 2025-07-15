@@ -11,6 +11,7 @@ from .tasks import (
     groupmerge,
     museo,
     prepare,
+    removal,
     scafos,
     translator,
 )
@@ -32,6 +33,9 @@ tasks = [
     ["FASTA tools", 2],
     [fastmerge, fastsplit],
     [groupmerge, prepare],
+    [
+        removal,
+    ],
     ["Extras", 2],
     [scafos, translator],
     [about],
