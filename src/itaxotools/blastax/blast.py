@@ -92,6 +92,7 @@ def get_blast_version() -> str | None:
         if binary is None:
             return None
         args = [binary, "-version"]
+        kwargs = {}
         blast_env = get_blast_env()
         if platform.system() == "Windows":
             kwargs = dict(creationflags=subprocess.CREATE_NO_WINDOW)

@@ -13,6 +13,7 @@ from itaxotools.blastax.core import (
     get_decont_sequences_filename,
     get_fasta_prepared_filename,
     get_museo_filename,
+    get_output_filename,
 )
 from itaxotools.blastax.scafos import get_scafos_filename
 
@@ -23,7 +24,7 @@ class BlastFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
     outfmt: int
-    timestamp: datetime
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -38,8 +39,8 @@ class BlastFilenameTest(NamedTuple):
 class DecontBlastFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
-    description: str
-    timestamp: datetime
+    description: str | None
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -54,7 +55,7 @@ class DecontBlastFilenameTest(NamedTuple):
 class AppendFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
-    timestamp: datetime
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -68,7 +69,7 @@ class AppendFilenameTest(NamedTuple):
 class MuseoFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
-    timestamp: datetime
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -82,8 +83,8 @@ class MuseoFilenameTest(NamedTuple):
 class DecontSequencesFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
-    description: str
-    timestamp: datetime
+    description: str | None
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -97,7 +98,7 @@ class DecontSequencesFilenameTest(NamedTuple):
 
 class FastaRenameFilenameTest(NamedTuple):
     input_path: Path
-    target_filename: str
+    target_filename: str | None
     timestamp: datetime
 
     def validate(self):
@@ -110,7 +111,7 @@ class FastaRenameFilenameTest(NamedTuple):
 class ScafosFilenameTest(NamedTuple):
     input_path: Path
     target_filename: str
-    timestamp: datetime
+    timestamp: datetime | None
     kwargs: dict[str, str]
 
     def validate(self):
@@ -119,6 +120,25 @@ class ScafosFilenameTest(NamedTuple):
             self.timestamp,
             **self.kwargs)
         assert filename == self.target_filename
+
+
+class OutputFilenameTest(NamedTuple):
+    input_path: Path
+    target_filename: str
+    suffix: str | None
+    description: str | None
+    timestamp: datetime | None
+    kwargs: dict[str, str]
+
+    def validate(self):
+        filename = get_output_filename(
+            self.input_path,
+            self.suffix,
+            self.description,
+            self.timestamp,
+            **self.kwargs)
+        assert filename == self.target_filename
+
 
 
 filename_tests = [
@@ -169,6 +189,12 @@ filename_tests = [
     ScafosFilenameTest(Path("some.fa"), "some_chimeras_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42), {}),
     ScafosFilenameTest(Path("some.fa"), "some_chimeras_fuse_by_filling_gaps.fasta", None, dict(fuse_by_filling_gaps=None)),
     ScafosFilenameTest(Path("some.fa"), "some_chimeras_fuse_by_filling_gaps_17070329T061742.fasta", datetime(1707, 3, 29, 6, 17, 42), dict(fuse_by_filling_gaps=None)),
+
+    OutputFilenameTest(Path("some.fa"), "some.fasta", ".fasta", None, None, {}),
+    OutputFilenameTest(Path("some.fa"), "some_test.fa", None, "test", None, {}),
+    OutputFilenameTest(Path("some.fa"), "some_17070329T061742.fa", None, None, datetime(1707, 3, 29, 6, 17, 42), {}),
+    OutputFilenameTest(Path("some.fa"), "some_foo_42_bar.fa", None, None, None, dict(foo=42, bar=None)),
+    OutputFilenameTest(Path("some.fa"), "some_test_foo_42_bar_17070329T061742.fasta", ".fasta", "test", datetime(1707, 3, 29, 6, 17, 42), dict(foo=42, bar=None)),
 ]
 
 

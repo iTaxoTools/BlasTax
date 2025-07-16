@@ -511,21 +511,40 @@ def get_blast_filename(
     return path.name
 
 
+def get_output_filename(
+    input_path: Path,
+    suffix: str | None = None,
+    description: str | None = None,
+    timestamp: datetime | None = None,
+    **kwargs,
+) -> str:
+    path = input_path
+    if suffix:
+        # provided suffix must include the dot
+        path = path.with_suffix(suffix)
+    if description:
+        path = path.with_stem(path.stem + "_" + description)
+    if kwargs:
+        info = get_info_suffix(**kwargs)
+        path = path.with_stem(path.stem + info)
+    if timestamp:
+        strftime = get_timestamp_suffix(timestamp)
+        path = path.with_stem(path.stem + strftime)
+    return path.name
+
+
 def get_append_filename(
     input_path: Path,
     timestamp: datetime | None = None,
     **kwargs,
 ) -> str:
-    path = input_path.with_suffix(".fasta")
-    path = path.with_stem(path.stem + "_with_blast_matches")
-
-    info = get_info_suffix(**kwargs)
-    path = path.with_stem(path.stem + info)
-
-    if timestamp is not None:
-        strftime = get_timestamp_suffix(timestamp)
-        path = path.with_stem(path.stem + strftime)
-    return path.name
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description="with_blast_matches",
+        timestamp=timestamp,
+        **kwargs,
+    )
 
 
 def get_museo_filename(
@@ -533,16 +552,13 @@ def get_museo_filename(
     timestamp: datetime | None = None,
     **kwargs,
 ) -> str:
-    path = input_path.with_suffix(".fasta")
-    path = path.with_stem(path.stem + "_museo")
-
-    info = get_info_suffix(**kwargs)
-    path = path.with_stem(path.stem + info)
-
-    if timestamp is not None:
-        strftime = get_timestamp_suffix(timestamp)
-        path = path.with_stem(path.stem + strftime)
-    return path.name
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description="museo",
+        timestamp=timestamp,
+        **kwargs,
+    )
 
 
 def get_decont_blast_filename(
@@ -561,40 +577,37 @@ def get_decont_sequences_filename(
     timestamp: datetime | None = None,
     **kwargs,
 ) -> str:
-    path = input_path.with_suffix(".fasta")
-    path = path.with_stem(path.stem + f"_{description}")
-
-    info = get_info_suffix(**kwargs)
-    path = path.with_stem(path.stem + info)
-
-    if timestamp is not None:
-        strftime = get_timestamp_suffix(timestamp)
-        path = path.with_stem(path.stem + strftime)
-    return path.name
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description=description,
+        timestamp=timestamp,
+        **kwargs,
+    )
 
 
 def get_fasta_prepared_filename(
     input_path: Path,
     timestamp: datetime | None = None,
 ) -> str:
-    path = input_path.with_suffix(".fasta")
-    path = path.with_stem(path.stem + "_prepared")
-    if timestamp is not None:
-        strftime = get_timestamp_suffix(timestamp)
-        path = path.with_stem(path.stem + strftime)
-    return path.name
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description="prepared",
+        timestamp=timestamp,
+    )
 
 
 def get_error_filename(
     input_path: Path,
     timestamp: datetime | None = None,
 ) -> str:
-    path = input_path.with_suffix(".log")
-    path = path.with_stem(path.stem + "_errors")
-    if timestamp is not None:
-        strftime = get_timestamp_suffix(timestamp)
-        path = path.with_stem(path.stem + strftime)
-    return path.name
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".log",
+        description="errors",
+        timestamp=timestamp,
+    )
 
 
 # Fasta sequence name modifier
