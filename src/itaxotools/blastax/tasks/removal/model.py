@@ -18,12 +18,17 @@ class Model(BlastTaskModel):
     option_frame = Property(int, 1)
     option_code = Property(int, 1)
 
+    append_timestamp = Property(bool, False)
+    append_configuration = Property(bool, True)
+
     def __init__(self, name=None):
         super().__init__(name)
         self.can_open = True
         self.can_save = False
 
         self.input_paths.batch_mode = True
+
+        self.binder.bind(self.input_paths.properties.parent_path, self.properties.output_path)
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
@@ -53,6 +58,8 @@ class Model(BlastTaskModel):
             mode=self.option_mode,
             frame=self.option_frame,
             code=self.option_code,
+            append_timestamp=self.append_timestamp,
+            append_configuration=self.append_configuration,
         )
 
     def open(self, path: Path):

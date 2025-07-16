@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
@@ -8,6 +9,7 @@ def initialize():
     import itaxotools
 
     itaxotools.progress_handler("Initializing...")
+    import itaxotools.blastax.core  # noqa
     import itaxotools.blastax.codons  # noqa
     import itaxotools.taxi2.sequences  # noqa
 
@@ -18,6 +20,8 @@ def execute(
     mode: RemovalMode,
     frame: str,
     code: int,
+    append_timestamp: bool,
+    append_configuration: bool,
 ) -> RemovalResults:
     import shutil
 
@@ -30,8 +34,17 @@ def execute(
     print(f"{mode=}")
     print(f"{frame=}")
     print(f"{code=}")
+    print(f"{append_timestamp=}")
+    print(f"{append_configuration=}")
 
-    if any(Path(output_dir / path.name).exists() for path in input_paths):
+    timestamp = datetime.now() if append_timestamp else None
+    description: str = ""
+    if append_configuration:
+        description = "stops_removed"
+
+    target_paths = [get_target_path(path, output_dir, description, timestamp) for path in input_paths]
+
+    if any(path.exists() for path in target_paths):
         if not get_feedback(None):
             abort()
 
@@ -51,9 +64,9 @@ def execute(
 
             file_count = 0
 
-            for path in input_paths:
-                if not check_file_contains_stop_codon(path):
-                    shutil.copy(path, output_dir / path.name)
+            for input_path, target_path in zip(input_paths, target_paths):
+                if not check_file_contains_stop_codon(input_path):
+                    shutil.copy(input_path, target_path)
                 else:
                     file_count += 1
 
@@ -64,12 +77,11 @@ def execute(
             file_count = 0
             sequence_count = 0
 
-            for input_path in input_paths:
-                output_path = output_dir / input_path.name
+            for input_path, target_path in zip(input_paths, target_paths):
                 already_encountered = False
                 with (
                     SequenceHandler.Fasta(input_path) as input_file,
-                    SequenceHandler.Fasta(output_path, "w") as output_file,
+                    SequenceHandler.Fasta(target_path, "w") as output_file,
                 ):
                     for sequence in input_file:
                         if find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame) < 0:
@@ -88,12 +100,11 @@ def execute(
             file_count = 0
             sequence_count = 0
 
-            for input_path in input_paths:
-                output_path = output_dir / input_path.name
+            for input_path, target_path in zip(input_paths, target_paths):
                 already_encountered = False
                 with (
                     SequenceHandler.Fasta(input_path) as input_file,
-                    SequenceHandler.Fasta(output_path, "w") as output_file,
+                    SequenceHandler.Fasta(target_path, "w") as output_file,
                 ):
                     for sequence in input_file:
                         pos = find_stop_codon_in_sequence(
@@ -116,3 +127,19 @@ def execute(
     tf = perf_counter()
 
     return RemovalResults(output_dir, description, tf - ts)
+
+
+def get_target_path(
+    input_path: Path,
+    output_dir: Path,
+    description: str | None,
+    timestamp: datetime | None,
+) -> Path:
+    from itaxotools.blastax.core import get_output_filename
+
+    return output_dir / get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description=description,
+        timestamp=timestamp,
+    )

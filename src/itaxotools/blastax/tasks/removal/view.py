@@ -13,7 +13,7 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
-    PathDirectorySelector,
+    OutputDirectorySelector,
 )
 from . import long_description, pixmap_medium, title
 from .types import CODON_TABLES, READING_FRAMES, RemovalMode, RemovalResults
@@ -177,7 +177,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.input = BatchQuerySelector("Input sequences", self)
-        self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.mode = ModeSelector("Removal method", self)
         self.cards.code = CodonTableSelector("Codon table", self)
         self.cards.frame = ReadingFrameSelector("Reading frame", self)
@@ -212,6 +212,16 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
+
+        self.binder.bind(
+            object.properties.append_configuration, self.cards.output.controls.append_configuration.setChecked
+        )
+        self.binder.bind(
+            self.cards.output.controls.append_configuration.toggled, object.properties.append_configuration
+        )
+
+        self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
+        self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
 
         self.binder.bind(object.properties.option_mode, self.cards.mode.set_mode)
         self.binder.bind(self.cards.mode.mode_changed, object.properties.option_mode)
