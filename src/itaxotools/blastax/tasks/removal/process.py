@@ -1,6 +1,8 @@
 from datetime import datetime
+from os import devnull
 from pathlib import Path
 from time import perf_counter
+from typing import TextIO
 
 from .types import RemovalMode, RemovalResults
 
@@ -18,22 +20,20 @@ def execute(
     input_paths: Path,
     output_dir: Path,
     mode: RemovalMode,
-    frame: str,
+    frame: int,
     code: int,
+    log: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> RemovalResults:
-    import shutil
-
     from itaxotools import abort, get_feedback
-    from itaxotools.blastax.codons import find_stop_codon_in_sequence
-    from itaxotools.taxi2.sequences import Sequence, SequenceHandler
 
     print(f"{input_paths=}")
     print(f"{output_dir=}")
     print(f"{mode=}")
     print(f"{frame=}")
     print(f"{code=}")
+    print(f"{log=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -42,9 +42,11 @@ def execute(
     if append_configuration:
         description = "stops_removed"
 
+    log_path = output_dir / "stop_codons.log" if log else devnull
+
     target_paths = [get_target_path(path, output_dir, description, timestamp) for path in input_paths]
 
-    if any(path.exists() for path in target_paths):
+    if any(path.exists() for path in target_paths) or (log and log_path.exists()):
         if not get_feedback(None):
             abort()
 
@@ -52,81 +54,218 @@ def execute(
 
     description: str = ""
 
-    match mode:
-        case RemovalMode.discard_file:
+    with open(log_path, "w") as log_file:
+        match mode:
+            case RemovalMode.discard_file:
+                description = execute_discard_file(
+                    input_paths=input_paths,
+                    target_paths=target_paths,
+                    log_file=log_file,
+                    frame=frame,
+                    code=code,
+                )
 
-            def check_file_contains_stop_codon(path: Path) -> bool:
-                with SequenceHandler.Fasta(path) as file:
-                    for sequence in file:
-                        if find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame) >= 0:
-                            return True
-                return False
+            case RemovalMode.discard_sequence:
+                description = execute_discard_sequences(
+                    input_paths=input_paths,
+                    target_paths=target_paths,
+                    log_file=log_file,
+                    frame=frame,
+                    code=code,
+                )
 
-            file_count = 0
+            case RemovalMode.trim_after_stop:
+                description = execute_trim_after_stop(
+                    input_paths=input_paths,
+                    target_paths=target_paths,
+                    log_file=log_file,
+                    frame=frame,
+                    code=code,
+                )
 
-            for input_path, target_path in zip(input_paths, target_paths):
-                if not check_file_contains_stop_codon(input_path):
-                    shutil.copy(input_path, target_path)
-                else:
-                    file_count += 1
-
-            s = "" if file_count == 1 else "s"
-            description = f"Discarded {file_count} file{s}"
-
-        case RemovalMode.discard_sequence:
-            file_count = 0
-            sequence_count = 0
-
-            for input_path, target_path in zip(input_paths, target_paths):
-                already_encountered = False
-                with (
-                    SequenceHandler.Fasta(input_path) as input_file,
-                    SequenceHandler.Fasta(target_path, "w") as output_file,
-                ):
-                    for sequence in input_file:
-                        if find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame) < 0:
-                            output_file.write(sequence)
-                        else:
-                            sequence_count += 1
-                            if not already_encountered:
-                                already_encountered = True
-                                file_count += 1
-
-            ss = "" if sequence_count == 1 else "s"
-            fs = "" if file_count == 1 else "s"
-            description = f"Discarded {sequence_count} sequence{ss} from {file_count} file{fs}"
-
-        case RemovalMode.trim_after_stop:
-            file_count = 0
-            sequence_count = 0
-
-            for input_path, target_path in zip(input_paths, target_paths):
-                already_encountered = False
-                with (
-                    SequenceHandler.Fasta(input_path) as input_file,
-                    SequenceHandler.Fasta(target_path, "w") as output_file,
-                ):
-                    for sequence in input_file:
-                        pos = find_stop_codon_in_sequence(
-                            sequence=sequence.seq,
-                            table_id=code,
-                            reading_frame=frame,
-                        )
-                        if pos >= 0:
-                            sequence = Sequence(sequence.id, sequence.seq[:pos])
-                            sequence_count += 1
-                            if not already_encountered:
-                                already_encountered = True
-                                file_count += 1
-                        output_file.write(sequence)
-
-            ss = "" if sequence_count == 1 else "s"
-            fs = "" if file_count == 1 else "s"
-            description = f"Trimmed {sequence_count} sequence{ss} from {file_count} file{fs}"
+            case RemovalMode.report_only:
+                description = execute_report_only(
+                    input_paths=input_paths,
+                    log_file=log_file,
+                    frame=frame,
+                    code=code,
+                )
 
     tf = perf_counter()
 
     return RemovalResults(output_dir, description, tf - ts)
+
+
+def log_filename(file: TextIO, filename: str):
+    print(f"- Filename: {filename}", file=file)
+    print(file=file)
+
+
+def log_stop_codon(file: TextIO, seqid: str, pos: int, codon: str):
+    print(f"  * Seqid:    {seqid}", file=file)
+    print(f"    Position: {pos}-{pos+2}", file=file)
+    print(f"    Codon:    {codon}", file=file)
+    print(file=file)
+
+
+def execute_discard_file(
+    input_paths: list[Path],
+    target_paths: list[Path],
+    log_file: TextIO,
+    frame: int,
+    code: int,
+) -> str:
+    import shutil
+
+    from itaxotools.blastax.codons import find_stop_codon_in_sequence
+    from itaxotools.taxi2.sequences import SequenceHandler
+
+    def check_file_contains_stop_codon(path: Path) -> bool:
+        with SequenceHandler.Fasta(path) as file:
+            for sequence in file:
+                pos = find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame)
+                if pos >= 0:
+                    codon = sequence.seq[pos : pos + 3]
+                    log_filename(log_file, path.name)
+                    log_stop_codon(log_file, sequence.id, pos, codon)
+                    return True
+        return False
+
+    file_count = 0
+
+    for input_path, target_path in zip(input_paths, target_paths):
+        if not check_file_contains_stop_codon(input_path):
+            shutil.copy(input_path, target_path)
+        else:
+            file_count += 1
+
+    if not file_count:
+        print("No stop codons detected!", file=log_file)
+
+    s = "" if file_count == 1 else "s"
+    return f"Discarded {file_count} file{s}"
+
+
+def execute_discard_sequences(
+    input_paths: list[Path],
+    target_paths: list[Path],
+    log_file: TextIO,
+    frame: int,
+    code: int,
+) -> str:
+    from itaxotools.blastax.codons import find_stop_codon_in_sequence
+    from itaxotools.taxi2.sequences import SequenceHandler
+
+    file_count = 0
+    sequence_count = 0
+
+    for input_path, target_path in zip(input_paths, target_paths):
+        already_encountered = False
+        with (
+            SequenceHandler.Fasta(input_path) as input_file,
+            SequenceHandler.Fasta(target_path, "w") as output_file,
+        ):
+            for sequence in input_file:
+                pos = find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame)
+                if pos < 0:
+                    output_file.write(sequence)
+                else:
+                    codon = sequence.seq[pos : pos + 3]
+                    sequence_count += 1
+                    if not already_encountered:
+                        log_filename(log_file, input_path.name)
+                        already_encountered = True
+                        file_count += 1
+                    log_stop_codon(log_file, sequence.id, pos, codon)
+
+    if not file_count:
+        print("No stop codons detected!", file=log_file)
+
+    ss = "" if sequence_count == 1 else "s"
+    fs = "" if file_count == 1 else "s"
+    return f"Discarded {sequence_count} sequence{ss} from {file_count} file{fs}"
+
+
+def execute_trim_after_stop(
+    input_paths: list[Path],
+    target_paths: list[Path],
+    log_file: TextIO,
+    frame: int,
+    code: int,
+) -> str:
+    from itaxotools.blastax.codons import find_stop_codon_in_sequence
+    from itaxotools.taxi2.sequences import Sequence, SequenceHandler
+
+    file_count = 0
+    sequence_count = 0
+
+    for input_path, target_path in zip(input_paths, target_paths):
+        already_encountered = False
+        with (
+            SequenceHandler.Fasta(input_path) as input_file,
+            SequenceHandler.Fasta(target_path, "w") as output_file,
+        ):
+            for sequence in input_file:
+                pos = find_stop_codon_in_sequence(
+                    sequence=sequence.seq,
+                    table_id=code,
+                    reading_frame=frame,
+                )
+                if pos >= 0:
+                    codon = sequence.seq[pos : pos + 3]
+                    sequence = Sequence(sequence.id, sequence.seq[:pos])
+                    sequence_count += 1
+                    if not already_encountered:
+                        log_filename(log_file, input_path.name)
+                        already_encountered = True
+                        file_count += 1
+                    log_stop_codon(log_file, sequence.id, pos, codon)
+                output_file.write(sequence)
+
+    if not file_count:
+        print("No stop codons detected!", file=log_file)
+
+    ss = "" if sequence_count == 1 else "s"
+    fs = "" if file_count == 1 else "s"
+    return f"Trimmed {sequence_count} sequence{ss} from {file_count} file{fs}"
+
+
+def execute_report_only(
+    input_paths: list[Path],
+    log_file: TextIO,
+    frame: int,
+    code: int,
+) -> str:
+    from itaxotools.blastax.codons import find_stop_codon_in_sequence
+    from itaxotools.taxi2.sequences import SequenceHandler
+
+    file_count = 0
+    sequence_count = 0
+
+    for input_path in input_paths:
+        already_encountered = False
+        with SequenceHandler.Fasta(input_path) as input_file:
+            for sequence in input_file:
+                pos = find_stop_codon_in_sequence(
+                    sequence=sequence.seq,
+                    table_id=code,
+                    reading_frame=frame,
+                )
+                if pos >= 0:
+                    codon = sequence.seq[pos : pos + 3]
+                    sequence_count += 1
+                    if not already_encountered:
+                        log_filename(log_file, input_path.name)
+                        already_encountered = True
+                        file_count += 1
+                    log_stop_codon(log_file, sequence.id, pos, codon)
+
+    if not file_count:
+        print("No stop codons detected!", file=log_file)
+
+    ss = "" if sequence_count == 1 else "s"
+    fs = "" if file_count == 1 else "s"
+    return f"Detected {sequence_count} codon{ss} in {file_count} file{fs}"
 
 
 def get_target_path(

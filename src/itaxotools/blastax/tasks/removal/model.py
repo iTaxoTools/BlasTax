@@ -17,6 +17,7 @@ class Model(BlastTaskModel):
     option_mode = Property(RemovalMode, RemovalMode.trim_after_stop)
     option_frame = Property(int, 1)
     option_code = Property(int, 1)
+    option_log = Property(bool, True)
 
     append_timestamp = Property(bool, False)
     append_configuration = Property(bool, True)
@@ -58,6 +59,7 @@ class Model(BlastTaskModel):
             mode=self.option_mode,
             frame=self.option_frame,
             code=self.option_code,
+            log=self.option_log,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

@@ -6,6 +6,7 @@ from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
 from itaxotools.taxi_gui.utility import human_readable_seconds
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, NoWheelComboBox, RadioButtonGroup, RichRadioButton
 
@@ -61,13 +62,17 @@ class ModeSelector(Card):
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
-        self.draw_main(text)
+        self.draw_title(text)
+        self.draw_main()
+        self.draw_log()
 
-    def draw_main(self, text):
+    def draw_title(self, text):
         title = QtWidgets.QLabel(text + ":")
         title.setStyleSheet("""font-size: 16px;""")
         title.setMinimumWidth(150)
+        self.addWidget(title)
 
+    def draw_main(self):
         mode_layout = QtWidgets.QVBoxLayout()
         mode_layout.setSpacing(8)
         mode_layout.setContentsMargins(0, 0, 0, 0)
@@ -81,14 +86,30 @@ class ModeSelector(Card):
 
         self.controls.mode = group
 
-        self.addWidget(title)
         self.addLayout(mode_layout)
+
+    def draw_log(self):
+        log = QtWidgets.QCheckBox("Generate a report about encountered stop codons and their positions.")
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(log)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+
+        self.controls.log = log
+        self.controls.options = widget
+
+        self.addWidget(widget)
 
     def _handle_mode_changed(self, mode: RemovalMode):
         self.mode_changed.emit(mode)
 
     def set_mode(self, mode: RemovalMode):
         self.controls.mode.setValue(mode)
+        self.controls.options.roll.setAnimatedVisible(mode != RemovalMode.report_only)
 
     def set_options_visible(self, value: bool):
         self.controls.options.roll.setAnimatedVisible(value)
@@ -225,6 +246,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.option_mode, self.cards.mode.set_mode)
         self.binder.bind(self.cards.mode.mode_changed, object.properties.option_mode)
+
+        self.binder.bind(object.properties.option_log, self.cards.mode.controls.log.setChecked)
+        self.binder.bind(self.cards.mode.controls.log.toggled, object.properties.option_log)
 
         self.binder.bind(object.properties.option_code, self.cards.code.set_code)
         self.binder.bind(self.cards.code.code_changed, object.properties.option_code)

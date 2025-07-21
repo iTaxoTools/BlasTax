@@ -23,6 +23,10 @@ class RemovalMode(Enum):
         "Discard file",
         "remove the entire FASTA file if any sequence contains a stop codon.",
     )
+    report_only = (
+        "Report only",
+        "list detected stop codons without rewriting any of the sequence files.",
+    )
 
     def __init__(self, label: str, description: str):
         self.label = label
