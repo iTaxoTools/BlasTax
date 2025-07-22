@@ -59,6 +59,34 @@ def count_stop_codons_for_all_frames_in_sequence(
     return tuple(counts), tuple(positions)
 
 
+def are_counts_ambiguous(counts: tuple[int, int, int]) -> bool:
+    """Statistically, only one reading frame will lack stop codons."""
+    return sum(x == 0 for x in counts) != 1
+
+
+def smart_trim_sequence(
+    sequence: str,
+    counts: tuple[int, int, int],
+    positions: tuple[int, int, int],
+    trim_stop: bool = True,
+    end_on_third_pos: bool = True,
+) -> str | None:
+    """
+    Autodetect the best reading frame for a sequence by scanning for stop codons
+    in different positions. Then trim the sequence at its beginning to start
+    at the first codon position. Optionally trim at the end based on arguments.
+    """
+    frame = min(enumerate(counts), key=lambda x: x[1])[0]
+    if trim_stop:
+        end_pos = positions[frame]
+        sequence = sequence[:end_pos]
+    sequence = sequence[frame:]
+    if end_on_third_pos:
+        end_pos = len(sequence) - (len(sequence) % 3)
+        sequence = sequence[:end_pos]
+    return sequence
+
+
 if __name__ == "__main__":
     tables = get_codon_tables()
     for id, name in tables.items():

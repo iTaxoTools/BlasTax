@@ -101,8 +101,9 @@ def log_filename(file: TextIO, filename: str):
     print(file=file)
 
 
-def log_stop_codon(file: TextIO, seqid: str, pos: int, codon: str):
-    print(f"  * Seqid:    {seqid}", file=file)
+def log_stop_codon(file: TextIO, id: str, seq: str, pos: int, codon: str):
+    print(f"  * Seqid:    {id}", file=file)
+    print(f"    Sequence: {seq}", file=file)
     print(f"    Position: {pos+1}-{pos+3}", file=file)
     print(f"    Codon:    {codon}", file=file)
     print(file=file)
@@ -127,7 +128,7 @@ def execute_discard_file(
                 if pos >= 0:
                     codon = sequence.seq[pos : pos + 3]
                     log_filename(log_file, path.name)
-                    log_stop_codon(log_file, sequence.id, pos, codon)
+                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
                     return True
         return False
 
@@ -176,7 +177,7 @@ def execute_discard_sequences(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, pos, codon)
+                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
 
     if not file_count:
         print("No stop codons detected!", file=log_file)
@@ -219,7 +220,7 @@ def execute_trim_after_stop(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, pos, codon)
+                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
                 output_file.write(sequence)
 
     if not file_count:
@@ -258,7 +259,7 @@ def execute_report_only(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, pos, codon)
+                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
 
     if not file_count:
         print("No stop codons detected!", file=log_file)
