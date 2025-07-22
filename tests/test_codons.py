@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import pytest
 
-from itaxotools.blastax.codons import find_stop_codon_in_sequence
+from itaxotools.blastax.codons import count_stop_codons_for_all_frames_in_sequence, find_stop_codon_in_sequence
 
 
 class FindStopCodonTest(NamedTuple):
@@ -21,6 +21,22 @@ class FindStopCodonTest(NamedTuple):
         )
 
         assert pos == self.position
+
+
+class CountStopCodonsTest(NamedTuple):
+    sequence: str
+    table_id: int
+    counts: tuple[int, int, int]
+    positions: tuple[int, int, int]
+
+    def validate(self) -> None:
+        counts, positions = count_stop_codons_for_all_frames_in_sequence(
+            self.sequence,
+            self.table_id,
+        )
+
+        assert counts == self.counts
+        assert positions == self.positions
 
 
 find_stop_codon_tests = [
@@ -49,6 +65,27 @@ find_stop_codon_tests = [
 ]
 
 
+count_stop_codons_tests = [
+    CountStopCodonsTest("", 1, (0, 0, 0), (-1, -1, -1)),
+    CountStopCodonsTest("A", 1, (0, 0, 0), (-1, -1, -1)),
+    CountStopCodonsTest("AA", 1, (0, 0, 0), (-1, -1, -1)),
+    CountStopCodonsTest("AAA", 1, (0, 0, 0), (-1, -1, -1)),
+    CountStopCodonsTest("TAG", 1, (1, 0, 0), (0, -1, -1)),
+    CountStopCodonsTest("ATAG", 1, (0, 1, 0), (-1, 1, -1)),
+    CountStopCodonsTest("AATAG", 1, (0, 0, 1), (-1, -1, 2)),
+    CountStopCodonsTest("AAATAG", 1, (1, 0, 0), (3, -1, -1)),
+    CountStopCodonsTest("TGA", 2, (0, 0, 0), (-1, -1, -1)),
+    CountStopCodonsTest("TAATAGTGA", 1, (3, 0, 0), (0, -1, -1)),
+    CountStopCodonsTest("TAACCCTAGCCCAGACCCAGG", 2, (4, 0, 0), (0, -1, -1)),
+    CountStopCodonsTest("TAATAGAGAGG", 2, (3, 1, 1), (0, 4, 8)),
+]
+
+
 @pytest.mark.parametrize("test", find_stop_codon_tests)
-def test_fastq_to_fasta(test: FindStopCodonTest) -> None:
+def test_find_stop_codons(test: FindStopCodonTest) -> None:
+    test.validate()
+
+
+@pytest.mark.parametrize("test", count_stop_codons_tests)
+def test_count_stop_codons(test: CountStopCodonsTest) -> None:
     test.validate()

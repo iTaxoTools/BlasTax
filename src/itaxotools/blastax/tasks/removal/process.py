@@ -103,7 +103,7 @@ def log_filename(file: TextIO, filename: str):
 
 def log_stop_codon(file: TextIO, seqid: str, pos: int, codon: str):
     print(f"  * Seqid:    {seqid}", file=file)
-    print(f"    Position: {pos}-{pos+2}", file=file)
+    print(f"    Position: {pos+1}-{pos+3}", file=file)
     print(f"    Codon:    {codon}", file=file)
     print(file=file)
 

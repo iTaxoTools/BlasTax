@@ -29,12 +29,34 @@ def get_stop_codons_for_table(id: int) -> list[str]:
 
 
 def find_stop_codon_in_sequence(sequence: str, table_id: int, reading_frame: Literal[1, 2, 3] = 1) -> int:
+    """Returns the position of the first encountered stop codon, or -1 if none were found."""
     sequence = sequence[reading_frame - 1 :]
     stop_codons = get_stop_codons_for_table(table_id)
     for pos, batch in enumerate(batched(sequence)):
         if batch in stop_codons:
             return pos * 3 + reading_frame - 1
     return -1
+
+
+def count_stop_codons_for_all_frames_in_sequence(
+    sequence: str, table_id: int
+) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    """
+    Returns the number of stop codons detected for reading frames 1, 2, and 3 respectively,
+    as well as the first encountered stop codon position for each frame.
+    """
+    stop_codons = get_stop_codons_for_table(table_id)
+    triplets = zip(sequence, sequence[1:], sequence[2:])
+    codons = ("".join(nucleotides) for nucleotides in triplets)
+    counts = [0, 0, 0]
+    positions = [-1, -1, -1]
+    for pos, codon in enumerate(codons):
+        if codon in stop_codons:
+            frame = pos % 3
+            counts[frame] += 1
+            if positions[frame] == -1:
+                positions[frame] = pos
+    return tuple(counts), tuple(positions)
 
 
 if __name__ == "__main__":
