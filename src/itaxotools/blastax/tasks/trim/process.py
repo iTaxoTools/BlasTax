@@ -130,16 +130,19 @@ def log_filename(file: TextIO, filename: str):
 
 
 def log_ambiguity(file: TextIO, id: str, counts: tuple, positions: tuple):
+    pos1 = positions[0] + 1 if positions[0] > 0 else "-"
+    pos2 = positions[1] + 1 if positions[1] > 0 else "-"
+    pos3 = positions[2] + 1 if positions[2] > 0 else "-"
     print(f"  * Seqid: {id}", file=file)
     print("    1st frame:  ", file=file)
     print(f"    + Number of stops: {counts[0]}", file=file)
-    print(f"    + First position:  {positions[0] + 1}", file=file)
+    print(f"    + First position:  {pos1}", file=file)
     print("    2nd frame:  ", file=file)
     print(f"    + Number of stops: {counts[1]}", file=file)
-    print(f"    + First position:  {positions[1] + 1}", file=file)
+    print(f"    + First position:  {pos2}", file=file)
     print("    3rd frame:  ", file=file)
     print(f"    + Number of stops: {counts[2]}", file=file)
-    print(f"    + First position:  {positions[2] + 1}", file=file)
+    print(f"    + First position:  {pos3}", file=file)
     print(file=file)
 
 
