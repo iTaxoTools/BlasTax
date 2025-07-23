@@ -48,7 +48,7 @@ class SmartTrimTest(NamedTuple):
     sequence: str
     table_id: int
     trim_stop: bool
-    end_on_third_pos: bool
+    trim_end: bool
     expected: str
 
     def validate(self) -> None:
@@ -61,7 +61,7 @@ class SmartTrimTest(NamedTuple):
             counts,
             positions,
             self.trim_stop,
-            self.end_on_third_pos,
+            self.trim_end,
         )
 
         assert seq == self.expected

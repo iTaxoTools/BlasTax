@@ -69,6 +69,7 @@ task_pixmaps_large = LazyResourceCollection(
     scafos=lambda: VectorPixmap(get_data("graphics/scafos.svg"), Size.Large.size),
     translator=lambda: VectorPixmap(get_data("graphics/translator.svg"), Size.Large.size),
     removal=lambda: VectorPixmap(get_data("graphics/removal.svg"), Size.Large.size),
+    trim=lambda: VectorPixmap(get_data("graphics/trim.svg"), Size.Large.size),
 )
 
 
@@ -87,4 +88,5 @@ task_pixmaps_medium = LazyResourceCollection(
     scafos=lambda: VectorPixmap(get_data("graphics/scafos.svg"), Size.Medium.size),
     translator=lambda: VectorPixmap(get_data("graphics/translator.svg"), Size.Medium.size),
     removal=lambda: VectorPixmap(get_data("graphics/removal.svg"), Size.Medium.size),
+    trim=lambda: VectorPixmap(get_data("graphics/trim.svg"), Size.Medium.size),
 )

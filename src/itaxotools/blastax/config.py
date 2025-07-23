@@ -14,6 +14,7 @@ from .tasks import (
     removal,
     scafos,
     translator,
+    trim,
 )
 
 title = "BlasTax"
@@ -33,9 +34,7 @@ tasks = [
     ["FASTA tools", 2],
     [fastmerge, fastsplit],
     [groupmerge, prepare],
-    [
-        removal,
-    ],
+    [removal, trim],
     ["Extras", 2],
     [scafos, translator],
     [about],

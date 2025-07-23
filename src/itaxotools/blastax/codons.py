@@ -69,7 +69,7 @@ def smart_trim_sequence(
     counts: tuple[int, int, int],
     positions: tuple[int, int, int],
     trim_stop: bool = True,
-    end_on_third_pos: bool = True,
+    trim_end: bool = True,
 ) -> str | None:
     """
     Autodetect the best reading frame for a sequence by scanning for stop codons
@@ -81,7 +81,7 @@ def smart_trim_sequence(
         end_pos = positions[frame]
         sequence = sequence[:end_pos]
     sequence = sequence[frame:]
-    if end_on_third_pos:
+    if trim_end:
         end_pos = len(sequence) - (len(sequence) % 3)
         sequence = sequence[:end_pos]
     return sequence

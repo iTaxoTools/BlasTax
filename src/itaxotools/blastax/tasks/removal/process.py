@@ -55,6 +55,8 @@ def execute(
     description: str = ""
 
     with open(log_path, "w") as log_file:
+        log_options(log_file, code, frame)
+
         match mode:
             case RemovalMode.discard_file:
                 description = execute_discard_file(
@@ -96,14 +98,27 @@ def execute(
     return RemovalResults(output_dir, description, tf - ts)
 
 
+def log_options(file: TextIO, code: int, frame: int):
+    from itaxotools.blastax.codons import get_codon_tables, get_stop_codons_for_table
+
+    table = get_codon_tables()[code]
+    stops = get_stop_codons_for_table(code)
+    stops_str = ", ".join(stops)
+    print("# Stop codon removal", file=file)
+    print(file=file)
+    print(f"Codon table:   {code} - {table}", file=file)
+    print(f"Stop codons:   {stops_str}", file=file)
+    print(f"Reading frame: {frame}", file=file)
+    print(file=file)
+
+
 def log_filename(file: TextIO, filename: str):
     print(f"- Filename: {filename}", file=file)
     print(file=file)
 
 
-def log_stop_codon(file: TextIO, id: str, seq: str, pos: int, codon: str):
+def log_stop_codon(file: TextIO, id: str, pos: int, codon: str):
     print(f"  * Seqid:    {id}", file=file)
-    print(f"    Sequence: {seq}", file=file)
     print(f"    Position: {pos+1}-{pos+3}", file=file)
     print(f"    Codon:    {codon}", file=file)
     print(file=file)
@@ -128,7 +143,7 @@ def execute_discard_file(
                 if pos >= 0:
                     codon = sequence.seq[pos : pos + 3]
                     log_filename(log_file, path.name)
-                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
+                    log_stop_codon(log_file, sequence.id, pos, codon)
                     return True
         return False
 
@@ -177,7 +192,7 @@ def execute_discard_sequences(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
+                    log_stop_codon(log_file, sequence.id, pos, codon)
 
     if not file_count:
         print("No stop codons detected!", file=log_file)
@@ -220,7 +235,7 @@ def execute_trim_after_stop(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
+                    log_stop_codon(log_file, sequence.id, pos, codon)
                 output_file.write(sequence)
 
     if not file_count:
@@ -259,7 +274,7 @@ def execute_report_only(
                         log_filename(log_file, input_path.name)
                         already_encountered = True
                         file_count += 1
-                    log_stop_codon(log_file, sequence.id, sequence.seq, pos, codon)
+                    log_stop_codon(log_file, sequence.id, pos, codon)
 
     if not file_count:
         print("No stop codons detected!", file=log_file)
