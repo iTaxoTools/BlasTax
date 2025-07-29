@@ -28,6 +28,7 @@ class Model(BlastTaskModel):
         self.can_save = False
 
         self.input_paths.batch_mode = True
+        self.input_paths.set_globs(["fa", "fas", "fasta"])
 
         self.binder.bind(self.input_paths.properties.parent_path, self.properties.output_path)
 
