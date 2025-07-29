@@ -1,6 +1,6 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "FastMerge"
+title = "Fast merge"
 description = "Merge FASTA files into one"
 
 pixmap = task_pixmaps_large.fastmerge

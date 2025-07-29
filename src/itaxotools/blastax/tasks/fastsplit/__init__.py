@@ -1,6 +1,6 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "FastSplit"
+title = "Fast split"
 description = "Split sequence files"
 
 pixmap = task_pixmaps_large.fastsplit

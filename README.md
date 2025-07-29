@@ -17,7 +17,18 @@ A graphical user interface to run BLAST and parse hits.
 - **BLAST-Append-X**: Like BLAST-Append, but appends nucleotides c orresponding to the protein database
 - **Decontaminate**: Remove contaminants from query sequences based on two ingroup and outgroup databases
 - **Museoscript**: Create sequence files from BLAST matches
-- **FastaSeqRename**: Rename FASTA sequence identifiers in preparation for BLAST analysis
+
+Also includes a variety of tools for processing FASTA files.
+
+- **Fast prepare**: Rename FASTA sequence identifiers in preparation for BLAST analysis
+- **Fast split**: Split large sequences or text files into smaller files
+- **Fast merge**: Merge multiple sequences or text files into a single large file
+- **Group merge**: Merge FASTA files by filename
+- **Stop codon removal**: Remove stop codons from a dataset
+- **Codon trimming**: Trim coding sequences to start with first codon position
+
+- **SCaFoSpy**: Create chimerical sequences for species
+- **Protein translator**: Generate protein translations for each sequence
 
 Input sequences must be in the FASTA or FASTQ file formats.
 
@@ -27,7 +38,7 @@ Input sequences must be in the FASTA or FASTQ file formats.
 
 Download and run the standalone executables without installing Python or BLAST+.
 
-[![Release](https://img.shields.io/badge/release-BlasTax_0.1.0-red?style=for-the-badge)](
+[![Pre-release](https://img.shields.io/badge/Windows-blue.svg?style=for-the-badge&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBDcmVhdGVkIHdpdGggSW5rc2NhcGUgKGh0dHA6Ly93d3cuaW5rc2NhcGUub3JnLykgLS0+Cjxzdmcgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAxMi43IDEyLjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8ZyBmaWxsPSIjZmZmIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2Utd2lkdGg9IjMuMTc0OSI+CiAgPHJlY3QgeD0iLjc5MzczIiB5PSIuNzkzNzMiIHdpZHRoPSI1LjAyNyIgaGVpZ2h0PSI1LjAyNyIvPgogIDxyZWN0IHg9IjcuMTQzNiIgeT0iLjc5MzczIiB3aWR0aD0iNC43NjI0IiBoZWlnaHQ9IjUuMDI3Ii8+CiAgPHJlY3QgeD0iLjc5MzczIiB5PSI2Ljg3OSIgd2lkdGg9IjUuMDI3IiBoZWlnaHQ9IjUuMDI3Ii8+CiAgPHJlY3QgeD0iNy4xNDM2IiB5PSI2Ljg3OSIgd2lkdGg9IjQuNzYyNCIgaGVpZ2h0PSI1LjAyNyIvPgogPC9nPgo8L3N2Zz4K)](
     https://github.com/iTaxoTools/BlasTax/releases/latest)
 [![Windows](https://img.shields.io/badge/Windows-blue.svg?style=for-the-badge&logo=windows)](
     https://github.com/iTaxoTools/BlasTax/releases/latest)
@@ -36,23 +47,25 @@ Download and run the standalone executables without installing Python or BLAST+.
 
 ## Running from source
 
-First clone the repository and install all dependencies.
+First clone the repository and install the module.
 
 ```
 git clone https://github.com/iTaxoTools/BlasTax.git
-cd BlasTax
-pip install -r requirements.txt
+pip install BlasTax
 ```
 
-Then fetch the BLAST+ binaries if not already installed on the system:
+You need to provide the BLAST+ binaries and add them to the system PATH before running the program.
+You can use the provided submodule for downloading the binaries:
 ```
-python tools/get_blast_binaries.py
+python -m itaxotools.blastax.download --trim
 ```
 
-Finally run BlasTax using:
+Adding them to PATH is OS specific. We are working on a way to bypass this step.
+
+Run BlasTax from the command line using:
 
 ```
-python gui.py
+blastax
 ```
 
 ## Citations

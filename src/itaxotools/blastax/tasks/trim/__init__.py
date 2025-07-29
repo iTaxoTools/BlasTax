@@ -1,7 +1,7 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
 title = "Codon trimming"
-description = "Trim sequences by stop codons"
+description = "Trim coding sequences to start codon"
 
 pixmap = task_pixmaps_large.trim
 pixmap_medium = task_pixmaps_medium.trim
