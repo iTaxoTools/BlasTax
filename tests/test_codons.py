@@ -89,7 +89,14 @@ find_stop_codon_tests = [
     FindStopCodonTest("AGA", 2, 1, 0),
     FindStopCodonTest("TAA", 2, 1, 0),
     FindStopCodonTest("TAG", 2, 1, 0),
-    FindStopCodonTest("TGA", 2, 1, -1),
+    FindStopCodonTest("a", 1, 1, -1),
+    FindStopCodonTest("ac", 1, 1, -1),
+    FindStopCodonTest("acg", 1, 1, -1),
+    FindStopCodonTest("tga", 1, 1, 0),
+    FindStopCodonTest("ctga", 1, 2, 1),
+    FindStopCodonTest("cctga", 1, 3, 2),
+    FindStopCodonTest("cCtGa", 1, 3, 2),
+    FindStopCodonTest("taa", 2, 1, 0),
 ]
 
 
@@ -105,7 +112,11 @@ count_stop_codons_tests = [
     CountStopCodonsTest("TGA", 2, (0, 0, 0), (-1, -1, -1)),
     CountStopCodonsTest("TAATAGTGA", 1, (3, 0, 0), (0, -1, -1)),
     CountStopCodonsTest("TAACCCTAGCCCAGACCCAGG", 2, (4, 0, 0), (0, -1, -1)),
-    CountStopCodonsTest("TAATAGAGAGG", 2, (3, 1, 1), (0, 4, 8)),
+    CountStopCodonsTest("TAATAGTGA", 1, (3, 0, 0), (0, -1, -1)),
+    CountStopCodonsTest("tag", 1, (1, 0, 0), (0, -1, -1)),
+    CountStopCodonsTest("atag", 1, (0, 1, 0), (-1, 1, -1)),
+    CountStopCodonsTest("aatag", 1, (0, 0, 1), (-1, -1, 2)),
+    CountStopCodonsTest("aATAg", 1, (0, 0, 1), (-1, -1, 2)),
 ]
 
 
@@ -126,6 +137,13 @@ smart_trim_tests = [
     SmartTrimTest("TAATAGAGAGG", 2, False, True, "AATAGAGAG"),
     SmartTrimTest("TAATAGAGAGG", 2, True, False, "AAT"),
     SmartTrimTest("TAATAGAGAGG", 2, True, True, "AAT"),
+    SmartTrimTest("a", 1, False, False, "a"),
+    SmartTrimTest("aa", 1, False, False, "aa"),
+    SmartTrimTest("aaa", 1, False, False, "aaa"),
+    SmartTrimTest("tag", 1, False, False, "ag"),
+    SmartTrimTest("ctag", 1, False, False, "ctag"),
+    SmartTrimTest("ctag", 1, False, True, "cta"),
+    SmartTrimTest("Ctag", 1, False, True, "Cta"),
 ]
 
 @pytest.mark.parametrize("test", find_stop_codon_tests)
