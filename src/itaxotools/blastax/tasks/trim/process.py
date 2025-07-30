@@ -71,7 +71,7 @@ def execute(
             already_encountered = False
             with (
                 SequenceHandler.Fasta(input_path) as input_file,
-                SequenceHandler.Fasta(target_path, "w") as output_file,
+                SequenceHandler.Fasta(target_path, "w", line_width=0) as output_file,
             ):
                 for sequence in input_file:
                     counts, positions = count_stop_codons_for_all_frames_in_sequence(

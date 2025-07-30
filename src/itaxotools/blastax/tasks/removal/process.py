@@ -179,7 +179,7 @@ def execute_discard_sequences(
         already_encountered = False
         with (
             SequenceHandler.Fasta(input_path) as input_file,
-            SequenceHandler.Fasta(target_path, "w") as output_file,
+            SequenceHandler.Fasta(target_path, "w", line_width=0) as output_file,
         ):
             for sequence in input_file:
                 pos = find_stop_codon_in_sequence(sequence=sequence.seq, table_id=code, reading_frame=frame)
@@ -219,7 +219,7 @@ def execute_trim_after_stop(
         already_encountered = False
         with (
             SequenceHandler.Fasta(input_path) as input_file,
-            SequenceHandler.Fasta(target_path, "w") as output_file,
+            SequenceHandler.Fasta(target_path, "w", line_width=0) as output_file,
         ):
             for sequence in input_file:
                 pos = find_stop_codon_in_sequence(

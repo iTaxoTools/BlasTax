@@ -447,8 +447,8 @@ def decontaminate(
 
     with (
         SequenceHandler.Fasta(query_path) as query_file,
-        SequenceHandler.Fasta(ingroup_sequences_path, "w") as ingroup_file,
-        SequenceHandler.Fasta(outgroup_sequences_path, "w") as outgroup_file,
+        SequenceHandler.Fasta(ingroup_sequences_path, "w", line_width=0) as ingroup_file,
+        SequenceHandler.Fasta(outgroup_sequences_path, "w", line_width=0) as outgroup_file,
     ):
         for item in query_file:
             ingroup_hit = ingroup_hits.get(item.id, -1)

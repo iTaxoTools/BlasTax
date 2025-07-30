@@ -1,6 +1,6 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "Stop codon removal"
+title = "Removal of stop codons"
 description = "Remove stop codons from a dataset"
 
 pixmap = task_pixmaps_large.removal
