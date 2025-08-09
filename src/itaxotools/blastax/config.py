@@ -9,6 +9,7 @@ from .tasks import (
     fastmerge,
     fastsplit,
     groupmerge,
+    mafft,
     museo,
     prepare,
     removal,
@@ -37,5 +38,5 @@ tasks = [
     [removal, trim],
     ["Extras", 2],
     [scafos, translator],
-    [about],
+    [mafft, about],
 ]

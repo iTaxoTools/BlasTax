@@ -1,3 +1,4 @@
 git+https://github.com/iTaxoTools/itt-common.git
+git+https://github.com/iTaxoTools/MAFFTpy.git
 git+https://github.com/iTaxoTools/TaxI2.git
 git+https://github.com/iTaxoTools/TaxIGui.git
