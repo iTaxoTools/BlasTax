@@ -71,6 +71,7 @@ task_pixmaps_large = LazyResourceCollection(
     removal=lambda: VectorPixmap(get_data("graphics/removal.svg"), Size.Large.size),
     trim=lambda: VectorPixmap(get_data("graphics/trim.svg"), Size.Large.size),
     mafft=lambda: VectorPixmap(get_data("graphics/mafft.svg"), Size.Large.size),
+    codon_align=lambda: VectorPixmap(get_data("graphics/codon_align.svg"), Size.Large.size),
 )
 
 
@@ -91,4 +92,5 @@ task_pixmaps_medium = LazyResourceCollection(
     removal=lambda: VectorPixmap(get_data("graphics/removal.svg"), Size.Medium.size),
     trim=lambda: VectorPixmap(get_data("graphics/trim.svg"), Size.Medium.size),
     mafft=lambda: VectorPixmap(get_data("graphics/mafft.svg"), Size.Medium.size),
+    codon_align=lambda: VectorPixmap(get_data("graphics/codon_align.svg"), Size.Medium.size),
 )
