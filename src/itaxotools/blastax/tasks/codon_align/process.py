@@ -99,13 +99,13 @@ def execute_single(
             codon_sequence = Sequence(id=sequence.id, seq=str(codons), extras=sequence.extras)
             translated_file.write(codon_sequence)
 
-    a = MultipleSequenceAlignment(translated_path)
-    a.vars.set_strategy(strategy.key)
-    a.vars.set_adjust_direction(adjust_direction.key)
-    a.target = work_dir
+    task = MultipleSequenceAlignment(translated_path)
+    task.vars.set_strategy(strategy.key)
+    task.vars.set_adjust_direction(adjust_direction.key)
+    task.target = work_dir
 
-    a.run()
-    aligned_path = a.get_results_path()
+    task.start()
+    aligned_path = task.get_results_path()
 
     with (
         SequenceHandler.Fasta(aligned_path) as aligned_file,

@@ -77,13 +77,13 @@ def execute_single(
 ):
     from itaxotools.mafftpy import MultipleSequenceAlignment
 
-    a = MultipleSequenceAlignment(input_path)
-    a.vars.set_strategy(strategy.key)
-    a.vars.set_adjust_direction(adjust_direction.key)
-    a.target = work_dir
+    task = MultipleSequenceAlignment(input_path)
+    task.vars.set_strategy(strategy.key)
+    task.vars.set_adjust_direction(adjust_direction.key)
+    task.target = work_dir
 
-    a.run()
-    a.fetch(target_path)
+    task.start()
+    task.fetch(target_path)
 
 
 def get_target_path(

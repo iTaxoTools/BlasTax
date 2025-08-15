@@ -23,7 +23,7 @@ class Model(BlastTaskModel):
     append_configuration = Property(bool, True)
 
     def __init__(self, name=None):
-        super().__init__(name)
+        super().__init__(name, daemon=False)
         self.can_open = True
         self.can_save = False
 
