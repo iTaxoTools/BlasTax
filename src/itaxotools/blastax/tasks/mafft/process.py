@@ -1,9 +1,10 @@
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
+from traceback import print_exc
 
-from ..common.types import Results
-from .types import AdjustDirection, AlignmentStrategy
+from ..common.types import BatchResults
+from .types import AdjustDirection, AlignmentStrategy, TargetPaths
 
 
 def initialize():
@@ -22,7 +23,7 @@ def execute(
     adjust_direction: AdjustDirection,
     append_timestamp: bool,
     append_configuration: bool,
-) -> Results:
+) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
 
     print(f"{input_paths=}")
@@ -33,6 +34,7 @@ def execute(
     print(f"{append_configuration=}")
 
     total = len(input_paths)
+    failed: list[Path] = []
 
     timestamp = datetime.now() if append_timestamp else None
     configuration: dict[str, str] = {}
@@ -41,37 +43,46 @@ def execute(
         if adjust_direction.option:
             configuration[adjust_direction.option] = None
 
-    target_paths = [get_target_path(input_path, output_path, timestamp, configuration) for input_path in input_paths]
+    target_paths_list = [
+        get_target_paths(input_path, output_path, timestamp, configuration) for input_path in input_paths
+    ]
 
-    if any((path.exists() for path in target_paths)):
+    if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
 
     ts = perf_counter()
 
-    for i, (input_path, target_path) in enumerate(zip(input_paths, target_paths)):
+    for i, (input_path, target_paths) in enumerate(zip(input_paths, target_paths_list)):
         progress_handler(f"Processing file {i+1}/{total}: {input_path.name}", i, 0, total)
-        single_work_dir = work_dir / input_path.name
-        single_work_dir.mkdir()
-        execute_single(
-            work_dir=single_work_dir,
-            input_path=input_path,
-            target_path=target_path,
-            strategy=strategy,
-            adjust_direction=adjust_direction,
-        )
+        try:
+            single_work_dir = work_dir / input_path.name
+            single_work_dir.mkdir()
+            execute_single(
+                work_dir=single_work_dir,
+                input_path=input_path,
+                output_path=target_paths.output_path,
+                strategy=strategy,
+                adjust_direction=adjust_direction,
+            )
+        except Exception as e:
+            if total == 1:
+                raise e
+            with open(target_paths.error_log_path, "w") as f:
+                print_exc(file=f)
+            failed.append(input_path)
 
     progress_handler("Done processing files.", total, 0, total)
 
     tf = perf_counter()
 
-    return Results(output_path, tf - ts)
+    return BatchResults(output_path, failed, tf - ts)
 
 
 def execute_single(
     work_dir: Path,
     input_path: Path,
-    target_path: Path,
+    output_path: Path,
     strategy: AlignmentStrategy,
     adjust_direction: AdjustDirection,
 ):
@@ -83,21 +94,27 @@ def execute_single(
     task.target = work_dir
 
     task.start()
-    task.fetch(target_path)
+    task.fetch(output_path)
 
 
-def get_target_path(
+def get_target_paths(
     input_path: Path,
     output_dir: Path,
     timestamp: datetime | None,
     configuration: dict[str, str],
 ) -> Path:
-    from itaxotools.blastax.core import get_output_filename
+    from itaxotools.blastax.core import get_error_filename, get_output_filename
 
-    return output_dir / get_output_filename(
+    output_path = output_dir / get_output_filename(
         input_path=input_path,
         suffix=".fasta",
         description="aligned",
         timestamp=timestamp,
         **configuration,
+    )
+    error_log_path = output_dir / get_error_filename(output_path)
+
+    return TargetPaths(
+        output_path=output_path,
+        error_log_path=error_log_path,
     )
