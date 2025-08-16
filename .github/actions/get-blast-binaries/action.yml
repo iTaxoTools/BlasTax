@@ -10,6 +10,7 @@ runs:
       shell: bash
       run: |
         VERSION=$(curl -s https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/VERSION)
+        VERSION="2.16.0"
         OS=$(uname -s)
         echo "CACHE_KEY=${OS}-${VERSION}" >> $GITHUB_ENV
 
