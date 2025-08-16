@@ -149,6 +149,7 @@ class View(ScrollTaskView):
         self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
         self.cards.blast = DocumentCard("About BLAST+ (???)", resources.documents.blast.resource, self)
         self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
+        self.cards.mafft = DocumentCard("About MAFFT", resources.documents.mafft.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)
