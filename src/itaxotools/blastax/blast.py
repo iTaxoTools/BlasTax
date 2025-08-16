@@ -134,4 +134,6 @@ def execute_blast_command(args: list[str]):
     _, stderr = p.communicate()
     if p.returncode != 0:
         binary = Path(args[0]).stem
-        raise Exception(f"{binary} failed: {stderr.decode('utf-8').strip().splitlines()[-1]}")
+        lines = stderr.decode("utf-8").strip().splitlines()
+        error = lines[-1] if lines else "silently"
+        raise Exception(f"{binary} failed: {error}")
