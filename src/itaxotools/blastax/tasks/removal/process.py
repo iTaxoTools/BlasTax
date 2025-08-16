@@ -22,6 +22,7 @@ def execute(
     mode: RemovalMode,
     frame: int,
     code: int,
+    cutoff: int,
     log: bool,
     append_timestamp: bool,
     append_configuration: bool,
@@ -33,6 +34,7 @@ def execute(
     print(f"{mode=}")
     print(f"{frame=}")
     print(f"{code=}")
+    print(f"{cutoff=}")
     print(f"{log=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
@@ -83,6 +85,16 @@ def execute(
                     log_file=log_file,
                     frame=frame,
                     code=code,
+                )
+
+            case RemovalMode.trim_or_discard:
+                description = execute_trim_or_discard(
+                    input_paths=input_paths,
+                    target_paths=target_paths,
+                    log_file=log_file,
+                    frame=frame,
+                    code=code,
+                    cutoff=cutoff,
                 )
 
             case RemovalMode.report_only:
@@ -244,6 +256,59 @@ def execute_trim_after_stop(
     ss = "" if sequence_count == 1 else "s"
     fs = "" if file_count == 1 else "s"
     return f"Trimmed {sequence_count} sequence{ss} from {file_count} file{fs}"
+
+
+def execute_trim_or_discard(
+    input_paths: list[Path],
+    target_paths: list[Path],
+    log_file: TextIO,
+    frame: int,
+    code: int,
+    cutoff: int,
+) -> str:
+    from itaxotools.blastax.codons import find_stop_codon_in_sequence
+    from itaxotools.taxi2.sequences import Sequence, SequenceHandler
+
+    file_count = 0
+    discard_count = 0
+    trim_count = 0
+
+    for input_path, target_path in zip(input_paths, target_paths):
+        already_encountered = False
+        with (
+            SequenceHandler.Fasta(input_path) as input_file,
+            SequenceHandler.Fasta(target_path, "w", line_width=0) as output_file,
+        ):
+            for sequence in input_file:
+                threshold = len(sequence.seq) - cutoff
+                pos = find_stop_codon_in_sequence(
+                    sequence=sequence.seq,
+                    table_id=code,
+                    reading_frame=frame,
+                )
+                if pos < 0:
+                    output_file.write(sequence)
+                else:
+                    codon = sequence.seq[pos : pos + 3]
+                    if pos >= threshold:
+                        sequence = Sequence(sequence.id, sequence.seq[:pos])
+                        output_file.write(sequence)
+                        trim_count += 1
+                    else:
+                        discard_count += 1
+                    if not already_encountered:
+                        log_filename(log_file, input_path.name)
+                        already_encountered = True
+                        file_count += 1
+                    log_stop_codon(log_file, sequence.id, pos, codon)
+
+    if not file_count:
+        print("No stop codons detected!", file=log_file)
+
+    ds = "" if discard_count == 1 else "s"
+    ts = "" if trim_count == 1 else "s"
+    fs = "" if file_count == 1 else "s"
+    return f"Discarded {discard_count} sequence{ds} and\ntrimmed {trim_count} sequence{ts} from {file_count} file{fs}"
 
 
 def execute_report_only(

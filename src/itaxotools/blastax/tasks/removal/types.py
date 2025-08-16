@@ -17,7 +17,11 @@ class RemovalMode(Enum):
     )
     discard_sequence = (
         "Discard sequence",
-        "remove individual sequences that contain stop codons from each FASTA file.",
+        "remove individual sequences that contain stop codons from each file.",
+    )
+    trim_or_discard = (
+        "Trim or discard",
+        "trim if first stop codon is close to sequence end, else discard entire sequence.",
     )
     discard_file = (
         "Discard file",

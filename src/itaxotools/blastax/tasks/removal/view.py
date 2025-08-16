@@ -16,6 +16,7 @@ from ..common.view import (
     GraphicTitleCard,
     OutputDirectorySelector,
 )
+from ..common.widgets import IntPropertyLineEdit
 from . import long_description, pixmap_medium, title
 from .types import CODON_TABLES, READING_FRAMES, RemovalMode, RemovalResults
 
@@ -64,6 +65,7 @@ class ModeSelector(Card):
         super().__init__(parent)
         self.draw_title(text)
         self.draw_main()
+        self.draw_option()
         self.draw_log()
 
     def draw_title(self, text):
@@ -88,6 +90,33 @@ class ModeSelector(Card):
 
         self.addLayout(mode_layout)
 
+    def draw_option(self):
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setColumnMinimumWidth(0, 0)
+        layout.setColumnMinimumWidth(1, 72)
+        layout.setColumnStretch(3, 1)
+        layout.setHorizontalSpacing(32)
+        layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Stop codon cutoff:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("How close a stop codon must be to the sequence end to trim instead of discard.")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        layout.addWidget(name, row, 1)
+        layout.addWidget(field, row, 2)
+        layout.addWidget(description, row, 3)
+        self.controls.option_cutoff = field
+        row += 1
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.option_widget = widget
+
+        self.addWidget(widget)
+
     def draw_log(self):
         log = QtWidgets.QCheckBox("Generate a report about encountered stop codons and their positions.")
 
@@ -100,7 +129,7 @@ class ModeSelector(Card):
         widget.roll = VerticalRollAnimation(widget)
 
         self.controls.log = log
-        self.controls.options = widget
+        self.controls.log_widget = widget
 
         self.addWidget(widget)
 
@@ -109,10 +138,8 @@ class ModeSelector(Card):
 
     def set_mode(self, mode: RemovalMode):
         self.controls.mode.setValue(mode)
-        self.controls.options.roll.setAnimatedVisible(mode != RemovalMode.report_only)
-
-    def set_options_visible(self, value: bool):
-        self.controls.options.roll.setAnimatedVisible(value)
+        self.controls.option_widget.roll.setAnimatedVisible(mode == RemovalMode.trim_or_discard)
+        self.controls.log_widget.roll.setAnimatedVisible(mode != RemovalMode.report_only)
 
 
 class CodonTableSelector(Card):
@@ -255,6 +282,8 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.option_frame, self.cards.frame.set_frame)
         self.binder.bind(self.cards.frame.frame_changed, object.properties.option_frame)
+
+        self.cards.mode.controls.option_cutoff.bind_property(object.properties.option_cutoff)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
