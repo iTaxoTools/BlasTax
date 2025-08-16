@@ -23,4 +23,4 @@ runs:
     - name: Fetch binaries if cache is not hit
       shell: bash
       if: steps.cache-binaries.outputs.cache-hit != 'true'
-      run: python src/itaxotools/blastax/download.py --trim
+      run: python src/itaxotools/blastax/download.py --trim --version 2.16.0
