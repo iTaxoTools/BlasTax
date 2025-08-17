@@ -10,11 +10,11 @@ from itaxotools.taxi_gui.view.widgets import RadioButtonGroup, RichRadioButton
 
 from ..common.types import BlastMethod
 from ..common.view import (
+    BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
-    PathFileSelector,
 )
 from ..common.widgets import (
     BasePropertyLineEdit,
@@ -172,7 +172,7 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = PathFileSelector("\u25B6  Query sequences", self)
+        self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
@@ -202,8 +202,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
-        self.binder.bind(object.properties.input_query_path, self.cards.query.set_path)
-        self.binder.bind(self.cards.query.selectedPath, object.properties.input_query_path)
+        self.cards.query.bind_batch_model(self.binder, object.input_queries)
 
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
@@ -220,8 +219,6 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.append_timestamp, self.cards.output.controls.append_timestamp.setChecked)
         self.binder.bind(self.cards.output.controls.append_timestamp.toggled, object.properties.append_timestamp)
-
-        self.binder.bind(self.cards.query.selectedPath, object.properties.output_path, lambda p: p.parent)
 
         self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
         self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
