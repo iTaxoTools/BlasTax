@@ -130,8 +130,12 @@ class RetrievalOptionSelector(Card):
         group.add(original, True)
         self.controls.mode = group
 
+        deduplicate = QtWidgets.QCheckBox("Only keep the hit that matches the longest portion of each query sequence")
+        self.controls.deduplicate = deduplicate
+
         mode_layout.addWidget(alignment)
         mode_layout.addWidget(original)
+        mode_layout.addWidget(deduplicate)
 
         options_layout = QtWidgets.QGridLayout()
         options_layout.setContentsMargins(0, 0, 0, 0)
@@ -225,6 +229,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.retrieve_original, self.cards.retrieval.set_mode)
         self.binder.bind(self.cards.retrieval.mode_changed, object.properties.retrieve_original)
+
+        self.binder.bind(object.properties.deduplicate, self.cards.retrieval.controls.deduplicate.setChecked)
+        self.binder.bind(self.cards.retrieval.controls.deduplicate.toggled, object.properties.deduplicate)
 
         self.binder.bind(object.properties.pident_threshold, self.cards.retrieval.controls.pident.setValue)
         self.binder.bind(self.cards.retrieval.controls.pident.valueChanged, object.properties.pident_threshold)

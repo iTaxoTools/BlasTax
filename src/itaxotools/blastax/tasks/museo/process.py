@@ -24,6 +24,7 @@ def execute(
     blast_num_threads: int,
     pident_threshold: float,
     retrieve_original: bool,
+    deduplicate: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -40,6 +41,7 @@ def execute(
     print(f"{blast_num_threads=}")
     print(f"{pident_threshold=}")
     print(f"{retrieve_original=}")
+    print(f"{deduplicate=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -59,6 +61,8 @@ def execute(
             museo_options["originals"] = None
         else:
             museo_options["matches"] = None
+        if not deduplicate:
+            museo_options["all"] = None
         museo_options["pident"] = str(pident_threshold)
 
     target_paths_list = [
@@ -86,6 +90,7 @@ def execute(
                 blast_outfmt_options=blast_outfmt_options,
                 pident_threshold=pident_threshold,
                 retrieve_original=retrieve_original,
+                deduplicate=deduplicate,
             )
         except Exception as e:
             if total == 1:
@@ -114,12 +119,9 @@ def execute_single(
     blast_outfmt_options: str,
     pident_threshold: float,
     retrieve_original: bool,
+    deduplicate: bool,
 ) -> BatchResults:
-    from itaxotools.blastax.core import (
-        museoscript_original_reads,
-        museoscript_parse,
-        run_blast,
-    )
+    from itaxotools.blastax.core import museoscript, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
@@ -141,19 +143,13 @@ def execute_single(
         other="",
     )
 
-    if retrieve_original:
-        museoscript_original_reads(
-            blast_path=blast_output_path,
-            original_query_path=input_query_path_no_gaps,
-            output_path=museo_output_path,
-            pident_threshold=pident_threshold,
-        )
-    else:
-        museoscript_parse(
-            blast_path=blast_output_path,
-            output_path=museo_output_path,
-            pident_threshold=pident_threshold,
-        )
+    museoscript(
+        blast_path=blast_output_path,
+        output_path=museo_output_path,
+        original_reads_path=input_query_path_no_gaps if retrieve_original else None,
+        pident_threshold=pident_threshold,
+        deduplicate=deduplicate,
+    )
 
 
 def get_target_paths(

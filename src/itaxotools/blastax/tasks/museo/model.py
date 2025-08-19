@@ -20,6 +20,7 @@ class Model(BlastTaskModel):
 
     pident_threshold = Property(float, 90.000)
     retrieve_original = Property(bool, False)
+    deduplicate = Property(bool, True)
 
     blast_method = Property(BlastMethod, BlastMethod.blastn)
     blast_evalue = Property(float, 1e-5)
@@ -75,6 +76,7 @@ class Model(BlastTaskModel):
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             pident_threshold=self.pident_threshold,
             retrieve_original=self.retrieve_original,
+            deduplicate=self.deduplicate,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )
