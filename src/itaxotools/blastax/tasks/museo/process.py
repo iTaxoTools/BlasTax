@@ -61,7 +61,9 @@ def execute(
             museo_options["originals"] = None
         else:
             museo_options["matches"] = None
-        if not deduplicate:
+        if deduplicate:
+            museo_options["singles"] = None
+        else:
             museo_options["all"] = None
         museo_options["pident"] = str(pident_threshold)
 
