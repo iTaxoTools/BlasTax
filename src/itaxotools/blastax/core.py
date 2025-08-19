@@ -381,13 +381,17 @@ def museoscript(
         for line in blast_file:
             query_id = line[0]
             reference_id = line[1]
-            pident = line[4]
+            pident = float(line[4])
             sequence = line[5]
-            if float(pident) >= pident_threshold:
-                if deduplicate and pidents[query_id]:
+            if pident >= pident_threshold:
+                if deduplicate and sequences[query_id]:
+                    old_sequence = next(iter(sequences[query_id].values()))
                     old_pident = next(iter(pidents[query_id].values()))
-                    if pident >= old_pident:
+                    if len(sequence) < len(old_sequence):
                         continue
+                    if len(sequence) == len(old_sequence):
+                        if pident <= old_pident:
+                            continue
                     sequences[query_id] = {}
                     pidents[query_id] = {}
                 sequences[query_id][reference_id] = sequence
@@ -407,7 +411,7 @@ def museoscript(
             for reference_id in sequences[query_id]:
                 sequence = sequences[query_id][reference_id]
                 pident = pidents[query_id][reference_id]
-                header = f"{query_id}_{reference_id}_{pident}"
+                header = f"{query_id}_{reference_id}_{pident:.3f}"
                 museo_file.write(Sequence(header, sequence))
 
 
