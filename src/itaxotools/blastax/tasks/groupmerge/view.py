@@ -138,7 +138,7 @@ class DiscardDuplicatesSelector(Card):
     def draw_main(self, text):
         label = QtWidgets.QLabel(text + ":")
         label.setStyleSheet("""font-size: 14px;""")
-        label.setMinimumWidth(150)
+        label.setMinimumWidth(214)
 
         first = QtWidgets.QRadioButton("Only keep first sequence")
         all = QtWidgets.QRadioButton("Keep all occurences")
@@ -180,7 +180,7 @@ class View(BlastTaskView):
         self.cards.input = PathDirectorySelector("\u25B6  Input folder", self)
         self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
         self.cards.rule = MatchingRuleSelector("Matching rule")
-        self.cards.duplicates = DiscardDuplicatesSelector("On duplicate identifiers")
+        self.cards.duplicates = DiscardDuplicatesSelector("On duplicate sequence identifiers")
 
         self.cards.input.set_placeholder_text("Folder that contains the FASTA files to be merged")
         self.cards.output.set_placeholder_text("All merged FASTA files will be saved here")

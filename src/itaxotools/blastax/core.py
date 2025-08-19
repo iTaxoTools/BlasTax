@@ -1,11 +1,12 @@
 import shutil
 import string
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
 from itaxotools.taxi2.handlers import FileHandler
-from itaxotools.taxi2.sequences import SequenceHandler
+from itaxotools.taxi2.sequences import Sequence, SequenceHandler
 
 from .blast import command_to_args, execute_blast_command, get_blast_binary
 from .utils import complement, string_trimmer, translate
@@ -366,58 +367,48 @@ def blast_parse(
     blastfile.close()
 
 
-def museoscript_original_reads(
-    blast_path: Path | str,
-    original_query_path: Path | str,
-    output_path: Path | str,
-    pident_threshold: float,
-):
-    query_list = {}
-    header = None
-    # read the file into dictionary when multilines seq -> one value
-    with open(original_query_path, "r") as org_query:
-        for line in org_query:
-            line = line.strip()
-            if line.startswith(">"):
-                header = line[1:]
-                query_list[header] = ""
-            else:
-                query_list[header] += line  # Concatenate sequence lines
-    #  write original reads to the output file
-    with open(blast_path, "r") as blast:
-        with open(output_path, "w") as museo:
-            for line in blast:
-                splitti = line.split("\t")
-                pident = splitti[4]
-                header = splitti[0]
-                if float(pident) >= pident_threshold:
-                    # Search for a matching key in the query_sequences where the BLAST header is a substring
-                    matching_header = None
-                    for query_header in query_list:
-                        if header in query_header:
-                            matching_header = query_header
-                            break
-                    if matching_header:
-                        museo.write(f">{splitti[0]}_{splitti[1]}_{pident}\n")
-                        museo.write(query_list[matching_header] + "\n")
-
-
-def museoscript_parse(
+def museoscript(
     blast_path: Path | str,
     output_path: Path | str,
-    pident_threshold: float,
+    original_reads_path: Path | None = None,
+    pident_threshold: float = 0.9,
+    deduplicate: float = True,
 ):
-    with open(blast_path, "r") as blast:
-        with open(output_path, "w") as museo:
-            for line in blast:
-                splitti = line.split("\t")
-                pident = splitti[4]
+    sequences: dict[str, dict[str, str]] = defaultdict(dict)
+    pidents: dict[str, dict[str, str]] = defaultdict(dict)
 
-                if float(pident) >= pident_threshold:
-                    sequence_line = f"{splitti[5]}"
-                    header = f">{splitti[0]}_{splitti[1]}_{pident}\n"
-                    museo.write(header)
-                    museo.write(sequence_line)
+    with FileHandler.Tabfile(blast_path) as blast_file:
+        for line in blast_file:
+            query_id = line[0]
+            reference_id = line[1]
+            pident = line[4]
+            sequence = line[5]
+            if float(pident) >= pident_threshold:
+                if deduplicate and pidents[query_id]:
+                    old_pident = next(iter(pidents[query_id].values()))
+                    if pident >= old_pident:
+                        continue
+                    sequences[query_id] = {}
+                    pidents[query_id] = {}
+                sequences[query_id][reference_id] = sequence
+                pidents[query_id][reference_id] = pident
+
+    if original_reads_path is not None:
+        with SequenceHandler.Fasta(original_reads_path) as original_file:
+            for original in original_file:
+                for query_id in sequences:
+                    if original.id.startswith(query_id):
+                        for reference_id in sequences[query_id]:
+                            sequences[query_id][reference_id] = original.seq
+                        break
+
+    with SequenceHandler.Fasta(output_path, "w", line_width=0) as museo_file:
+        for query_id in sequences:
+            for reference_id in sequences[query_id]:
+                sequence = sequences[query_id][reference_id]
+                pident = pidents[query_id][reference_id]
+                header = f"{query_id}_{reference_id}_{pident}"
+                museo_file.write(Sequence(header, sequence))
 
 
 def _get_decont_hits_dict(
