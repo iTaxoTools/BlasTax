@@ -2,6 +2,10 @@
   universal2_url: https://files.pythonhosted.org/packages/0b/52/a5c727db5f4f907a53679aa6ed36a8b2bb9c74708674cdc53309f3990979/itaxotools_calculate_distances-0.1.1-cp37-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl
   universal2_sha256: 16e74488c7a36e52a0fd81962ac4db71ce3a784a58375b3ad95d4d2cd39f3fae
 
+- egg: itaxotools-mafftpy
+  universal2_url: https://files.pythonhosted.org/packages/d4/ff/4b0b3df502e2d1720ae43fb39d0bfb3ac08b078e85694363ea0587e98dba/itaxotools_mafftpy-0.3.0-cp312-cp312-macosx_11_0_universal2.whl
+  universal2_sha256: 7122ca92eafa8a1352a87d73ee3b1ede8b31eeba2affe44285400a18a79e3b7f
+
 - egg: numpy
   arm64_url: https://files.pythonhosted.org/packages/2a/17/1fdc154e75d24d8c20c42b71bae1b5cf752453f0fc3a2504bbb810293dd1/numpy-1.26.2-cp312-cp312-macosx_11_0_arm64.whl
   arm64_sha256: 5d5244aabd6ed7f312268b9247be47343a654ebea52a60f002dc70c769048e75
