@@ -210,7 +210,7 @@ def get_target_paths(
 ) -> TargetPaths:
     from itaxotools.blastax.core import get_error_filename, get_output_filename
 
-    suffix = "fastq" if input_path.suffix in [".fastq", ".fq"] else ".fasta"
+    suffix = ".fastq" if input_path.suffix in [".fastq", ".fq"] else ".fasta"
 
     output_path = output_dir / get_output_filename(
         input_path=input_path,

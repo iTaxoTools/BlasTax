@@ -162,7 +162,7 @@ class CutadaptOptionSelector(Card):
 
         name = QtWidgets.QLabel("Quality trim (3’):")
         field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Trim low-quality bases from the 3’ end of each read before adapter removal")
+        description = QtWidgets.QLabel("Cutoff for low-quality bases from the 3’ end of each read (FASTQ only)")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
@@ -172,7 +172,7 @@ class CutadaptOptionSelector(Card):
 
         name = QtWidgets.QLabel("Quality trim (5’):")
         field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Trim low-quality bases from the 5’ end of each read before adapter removal")
+        description = QtWidgets.QLabel("Cutoff for low-quality bases from the 5’ end of each read (FASTQ only)")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(name, row, 1)
         options_layout.addWidget(field, row, 2)
