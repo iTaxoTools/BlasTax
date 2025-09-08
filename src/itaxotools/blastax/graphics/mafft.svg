@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="128" height="128" version="1.1" viewBox="0 0 33.867 33.867" xmlns="http://www.w3.org/2000/svg">
- <g transform="translate(.39688 .39688)">
-  <rect x="3.9688" y="6.6146" width="1.3229" height="19.844" ry="0" fill="#8b8d8a"/>
-  <rect x="27.782" y="6.6146" width="1.3229" height="19.844" ry="0" fill="#8b8d8a"/>
-  <g fill="#ee4e5f">
-   <rect x="6.6146" y="9.2605" width="11.906" height="3.9688" ry="0"/>
-   <rect x="18.521" y="19.844" width="7.9376" height="3.9688" ry="0"/>
-   <rect x="6.6146" y="14.552" width="3.9688" height="3.9688" ry="0"/>
-   <rect x="22.49" y="9.2605" width="3.9688" height="3.9688" ry="0"/>
-   <rect x="6.6146" y="19.844" width="7.9376" height="3.9688" ry="0"/>
-   <rect x="14.552" y="14.552" width="11.906" height="3.9688" ry="0"/>
-  </g>
- </g>
+ <path d="m4.4974 7.9376v17.992h25.136v-17.992zm2.6464 2.6459h11.905l1e-3 3.175h-11.906zm15.875 0h3.9688l5.16e-4 3.175h-3.9688zm-15.875 4.7625h3.9693v3.175h-3.9693zm7.9381 0h11.906v3.175h-11.906zm-7.9381 4.7625h7.9376v3.175h-7.9376zm11.906 0h7.9376v3.175h-7.9376z" fill="#ee4e5f" stroke-linecap="square" stroke-width="1.0583"/>
 </svg>
