@@ -7,7 +7,7 @@ pixmap = task_pixmaps_large.codon_align
 pixmap_medium = task_pixmaps_medium.codon_align
 
 long_description = (
-    "Performs codon-aware alignment by translating nucleotides to proteins, aligning using MAFFTpy,"
+    "Performs codon-aware alignment by translating nucleotides to proteins, aligning using MAFFTpy, "
     "then restoring the original nucleotide sequence for accurate downstream analysis. "
     "\n\n"
     "Input files must be in FASTA format. "

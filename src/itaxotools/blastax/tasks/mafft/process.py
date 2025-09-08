@@ -102,7 +102,7 @@ def get_target_paths(
     output_dir: Path,
     timestamp: datetime | None,
     configuration: dict[str, str],
-) -> Path:
+) -> TargetPaths:
     from itaxotools.blastax.core import get_error_filename, get_output_filename
 
     output_path = output_dir / get_output_filename(

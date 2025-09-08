@@ -69,7 +69,6 @@ class Model(BlastTaskModel):
         if self.blast_method == BlastMethod.blastx:
             if self.input_nucleotides_path == Path():
                 return False
-        print("!!", self.specify_identifier_str, self.specify_identifier)
         if self.specify_identifier:
             if not self.specify_identifier_str:
                 return False

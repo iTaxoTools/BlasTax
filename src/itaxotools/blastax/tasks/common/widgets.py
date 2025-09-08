@@ -156,6 +156,60 @@ class GrowingListView(QtWidgets.QListView):
         return int(lines * height)
 
 
+class GTextEdit(QtWidgets.QPlainTextEdit):
+    textEditedSafe = QtCore.Signal(str)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self._handleEdit)
+        self._guard = Guard()
+
+    def _handleEdit(self):
+        with self._guard:
+            self.textEditedSafe.emit(self.toPlainText())
+
+    @override
+    def setText(self, text):
+        if self._guard:
+            return
+        super().setPlainText(text)
+
+
+class GrowingTextEdit(GTextEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
+        self.document().contentsChanged.connect(self.updateGeometry)
+        self.height_slack = 16
+        self.lines_min = 4
+        self.lines_max = 12
+
+    def setPlaceholderText(self, text: str):
+        super().setPlaceholderText(text)
+        self.lines_min = len(self.placeholderText().splitlines())
+
+    def getHeightHint(self):
+        lines = self.document().size().height()
+        lines = min(lines, self.lines_max)
+        lines = max(lines, self.lines_min)
+        height = self.fontMetrics().height()
+        return int(lines * height)
+
+    def sizeHint(self):
+        width = super().sizeHint().width()
+        height = self.getHeightHint() + self.height_slack
+        return QtCore.QSize(width, height)
+
+
+class NoWheelRadioButton(QtWidgets.QRadioButton):
+    # Fix scrolling when hovering disabled button
+    def event(self, event):
+        if isinstance(event, QtGui.QWheelEvent):
+            event.ignore()
+            return False
+        return super().event(event)
+
+
 class BlastComboboxDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         if not index.isValid():

@@ -6,6 +6,7 @@ from .tasks import (
     blast,
     codon_align,
     create,
+    cutadapt,
     decont,
     fastmerge,
     fastsplit,
@@ -40,5 +41,5 @@ tasks = [
     ["Extras", 2],
     [scafos, translator],
     [mafft, codon_align],
-    [about],
+    [cutadapt, about],
 ]
