@@ -90,6 +90,7 @@ class AboutTitleCard(Card):
         layout.setSpacing(16)
         layout.addLayout(pixmap_layout)
         layout.addLayout(text_layout, 1)
+        layout.addSpacing(64)
         layout.addWidget(separator, 0)
         layout.addLayout(buttons)
 
@@ -150,6 +151,7 @@ class View(ScrollTaskView):
         self.cards.blast = DocumentCard("About BLAST+ (???)", resources.documents.blast.resource, self)
         self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
         self.cards.mafft = DocumentCard("About MAFFT", resources.documents.mafft.resource, self)
+        self.cards.cutadapt = DocumentCard("About Cutadapt", resources.documents.cutadapt.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)

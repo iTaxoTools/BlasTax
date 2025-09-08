@@ -38,6 +38,7 @@ documents = LazyResourceCollection(
     blast=lambda: text_from_path(get_data("documents/blast.html")),
     museo=lambda: text_from_path(get_data("documents/museo.html")),
     mafft=lambda: text_from_path(get_data("documents/mafft.html")),
+    cutadapt=lambda: text_from_path(get_data("documents/cutadapt.html")),
 )
 
 

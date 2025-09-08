@@ -35,6 +35,7 @@ class AdapterSelector(OptionCard):
         label = LongLabel(self.list_text)
 
         list = GrowingTextEdit()
+        list.document().setDocumentMargin(8)
         list.setPlaceholderText(self.list_placeholder)
         fixed_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
         list.setFont(fixed_font)
