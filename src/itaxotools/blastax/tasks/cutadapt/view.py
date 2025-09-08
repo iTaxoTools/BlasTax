@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
+from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import LongLabel
 
 from ..common.view import (
@@ -16,9 +17,13 @@ from ..common.view import (
     OutputDirectorySelector,
 )
 from ..common.widgets import (
+    ConsolePropertyLineEdit,
+    FloatPropertyLineEdit,
     GrowingTextEdit,
+    IntPropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
+from .widgets import CutAdaptActionCombobox
 
 
 class AdapterSelector(OptionCard):
@@ -28,7 +33,7 @@ class AdapterSelector(OptionCard):
 
     def __init__(self, parent=None):
         super().__init__(self.title_text, "", parent)
-        self.controls.title.setFixedWidth(250)
+        self.controls.title.setFixedWidth(300)
         self.draw_list()
 
     def draw_list(self):
@@ -61,7 +66,7 @@ class AdapterSelector(OptionCard):
 
 
 class AdapterASelector(AdapterSelector):
-    title_text = "Cut 3’ adapters (trim after)"
+    title_text = "Cut 3’ adapters (at sequence end)"
     list_text = (
         "Enter a list of 3’ adapters separated by new lines. "
         "A 3’ adapter is assumed to be ligated to the 3’ end of your sequences of interest. "
@@ -83,7 +88,7 @@ class AdapterASelector(AdapterSelector):
 
 
 class AdapterGSelector(AdapterSelector):
-    title_text = "Cut 5’ adapters (trim before)"
+    title_text = "Cut 5’ adapters (at sequence start)"
     list_text = (
         "Enter a list of 5’ adapters separated by new lines. "
         "A 5’ adapter is assumed to be ligated to the 5’ end of your sequences of interest. "
@@ -102,6 +107,137 @@ class AdapterGSelector(AdapterSelector):
     )
 
 
+class CutadaptOptionSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Cutadapt options:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Parametrize the arguments passed to Cutadapt.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setColumnMinimumWidth(0, 16)
+        options_layout.setColumnMinimumWidth(1, 94)
+        options_layout.setColumnMinimumWidth(3, 16)
+        options_layout.setColumnStretch(4, 1)
+        options_layout.setHorizontalSpacing(16)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Action:")
+        field = CutAdaptActionCombobox()
+        description = QtWidgets.QLabel("What to do when a match is found")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_action = field
+        row += 1
+
+        name = QtWidgets.QLabel("Error rate:")
+        field = FloatPropertyLineEdit()
+        description = QtWidgets.QLabel("Maximum allowed error rate (or absolute number of errors if greater than 1.0)")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_error_rate = field
+        row += 1
+
+        name = QtWidgets.QLabel("Overlap:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Minimum overlap between read and adapter for an adapter to be considered")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_overlap = field
+        row += 1
+
+        name = QtWidgets.QLabel("Quality trim (3’):")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Trim low-quality bases from the 3’ end of each read before adapter removal")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_quality_trim_a = field
+        row += 1
+
+        name = QtWidgets.QLabel("Quality trim (5’):")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Trim low-quality bases from the 5’ end of each read before adapter removal")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_quality_trim_g = field
+        row += 1
+
+        name = QtWidgets.QLabel("Threads:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Number of threads (CPUs) to use")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.cutadapt_num_threads = field
+        row += 1
+
+        options_long_layout = QtWidgets.QGridLayout()
+        options_long_layout.setContentsMargins(0, 0, 0, 0)
+        options_long_layout.setColumnMinimumWidth(0, 16)
+        options_long_layout.setColumnMinimumWidth(1, 94)
+        options_long_layout.setColumnStretch(2, 1)
+        options_long_layout.setHorizontalSpacing(16)
+        options_long_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Extras:")
+        field = ConsolePropertyLineEdit()
+        field.setPlaceholderText("Extra arguments to pass to the BLAST+ executable")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_long_layout.addWidget(name, row, 1)
+        options_long_layout.addWidget(field, row, 2)
+        self.controls.cutadapt_extra_args = field
+        row += 1
+
+        options_checks_layout = QtWidgets.QVBoxLayout()
+        options_checks_layout.setContentsMargins(16, 4, 0, 8)
+        options_checks_layout.setSpacing(8)
+
+        field = QtWidgets.QCheckBox("Disallow indels in alignments (mismatches are always allowed)")
+        self.controls.cutadapt_no_indels = field
+        options_checks_layout.addWidget(field)
+
+        field = QtWidgets.QCheckBox("Check both the read and its reverse complement for adapter matches")
+        self.controls.cutadapt_reverse_complement = field
+        options_checks_layout.addWidget(field)
+
+        field = QtWidgets.QCheckBox("Trim poly-A tails (done after adapter trimming)")
+        self.controls.cutadapt_trim_poly_a = field
+        options_checks_layout.addWidget(field)
+
+        field = QtWidgets.QCheckBox("Write a report with adapter statistics for each input file")
+        self.controls.write_reports = field
+        options_checks_layout.addWidget(field)
+
+        self.addLayout(title_layout)
+        self.addLayout(options_layout)
+        self.addLayout(options_long_layout)
+        self.addLayout(options_checks_layout)
+
+    def set_outfmt_options_visible(self, value: bool):
+        self.controls.blast_outfmt_options.setVisible(value)
+        self.controls.blast_outfmt_options_label.setVisible(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -115,6 +251,8 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.adapters_a = AdapterASelector(self)
         self.cards.adapters_g = AdapterGSelector(self)
+        self.cards.cutadapt_options = CutadaptOptionSelector(self)
+
         self.cards.input.set_batch_only(True)
 
         self.cards.input.set_placeholder_text("Sequences that will be processed")
@@ -166,6 +304,50 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.adapters_g_list, self.cards.adapters_g.controls.list.setText)
         self.binder.bind(self.cards.adapters_g.controls.list.textEditedSafe, object.properties.adapters_g_list)
+
+        self.binder.bind(
+            object.properties.cutadapt_action, self.cards.cutadapt_options.controls.cutadapt_action.setValue
+        )
+        self.binder.bind(
+            self.cards.cutadapt_options.controls.cutadapt_action.valueChanged, object.properties.cutadapt_action
+        )
+
+        self.cards.cutadapt_options.controls.cutadapt_error_rate.bind_property(object.properties.cutadapt_error_rate)
+        self.cards.cutadapt_options.controls.cutadapt_overlap.bind_property(object.properties.cutadapt_overlap)
+        self.cards.cutadapt_options.controls.cutadapt_quality_trim_a.bind_property(
+            object.properties.cutadapt_quality_trim_a
+        )
+        self.cards.cutadapt_options.controls.cutadapt_quality_trim_g.bind_property(
+            object.properties.cutadapt_quality_trim_g
+        )
+        self.cards.cutadapt_options.controls.cutadapt_num_threads.bind_property(object.properties.cutadapt_num_threads)
+        self.cards.cutadapt_options.controls.cutadapt_extra_args.bind_property(object.properties.cutadapt_extra_args)
+
+        self.binder.bind(
+            object.properties.cutadapt_no_indels, self.cards.cutadapt_options.controls.cutadapt_no_indels.setChecked
+        )
+        self.binder.bind(
+            self.cards.cutadapt_options.controls.cutadapt_no_indels.toggled, object.properties.cutadapt_no_indels
+        )
+
+        self.binder.bind(
+            object.properties.cutadapt_reverse_complement,
+            self.cards.cutadapt_options.controls.cutadapt_reverse_complement.setChecked,
+        )
+        self.binder.bind(
+            self.cards.cutadapt_options.controls.cutadapt_reverse_complement.toggled,
+            object.properties.cutadapt_reverse_complement,
+        )
+
+        self.binder.bind(
+            object.properties.cutadapt_trim_poly_a, self.cards.cutadapt_options.controls.cutadapt_trim_poly_a.setChecked
+        )
+        self.binder.bind(
+            self.cards.cutadapt_options.controls.cutadapt_trim_poly_a.toggled, object.properties.cutadapt_trim_poly_a
+        )
+
+        self.binder.bind(object.properties.write_reports, self.cards.cutadapt_options.controls.write_reports.setChecked)
+        self.binder.bind(self.cards.cutadapt_options.controls.write_reports.toggled, object.properties.write_reports)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

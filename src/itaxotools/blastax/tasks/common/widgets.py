@@ -244,6 +244,9 @@ class BlastMethodCombobox(NoWheelComboBox):
         delegate = BlastComboboxDelegate(self)
         self.setItemDelegate(delegate)
 
+        fixed_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        self.setFont(fixed_font)
+
         metrics = self.fontMetrics()
         length = max([metrics.horizontalAdvance(method.label) for method in BlastMethod])
         self.view().setMinimumWidth(length + 16)
@@ -328,6 +331,13 @@ class BasePropertyLineEdit(GLineEdit):
         self.binder.unbind_all()
         self.binder.bind(property, self.setText, proxy=self.proxy_in)
         self.binder.bind(self.textEditedSafe, property, proxy=self.proxy_out)
+
+
+class ConsolePropertyLineEdit(BasePropertyLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
+        self.setStyleSheet("GLineEdit { padding: 2px; padding-top: 4px;} ")
 
 
 class PropertyLineEdit(BasePropertyLineEdit):

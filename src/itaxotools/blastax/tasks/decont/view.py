@@ -18,8 +18,8 @@ from ..common.view import (
     PathDatabaseSelector,
 )
 from ..common.widgets import (
-    BasePropertyLineEdit,
     BlastMethodCombobox,
+    ConsolePropertyLineEdit,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
 )
@@ -89,7 +89,7 @@ class BlastOptionSelector(Card):
         row = 0
 
         name = QtWidgets.QLabel("Locked:")
-        field = BasePropertyLineEdit()
+        field = ConsolePropertyLineEdit()
         field.setReadOnly(True)
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_long_layout.addWidget(name, row, 1)

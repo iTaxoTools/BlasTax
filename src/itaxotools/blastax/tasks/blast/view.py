@@ -18,9 +18,9 @@ from ..common.view import (
     PathFileSelector,
 )
 from ..common.widgets import (
-    BasePropertyLineEdit,
     BlastMethodCombobox,
     BlastOutfmtFullCombobox,
+    ConsolePropertyLineEdit,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
     PropertyLineEdit,
@@ -90,7 +90,7 @@ class BlastOptionSelector(Card):
         row = 0
 
         name = QtWidgets.QLabel("Extras:")
-        field = BasePropertyLineEdit()
+        field = ConsolePropertyLineEdit()
         field.setPlaceholderText("Extra arguments to pass to the BLAST+ executable")
         description.setStyleSheet("QLabel { font-style: italic; }")
         options_long_layout.addWidget(name, row, 1)
