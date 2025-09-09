@@ -207,6 +207,10 @@ def execute_single(
 
     if report_path:
         data: dict = stats.as_json()
+
+        poly_a_tag = "poly_a_trimmed_read1"
+        data[poly_a_tag] = [x.value for x in data[poly_a_tag]]
+
         with report_path.open("w") as file:
             yaml.safe_dump(data, file, sort_keys=False)
 
