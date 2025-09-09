@@ -149,9 +149,9 @@ class View(ScrollTaskView):
         self.cards = AttrDict()
         self.cards.title = AboutTitleCard(title, resources.documents.about.resource, pixmap_medium.resource, self)
         self.cards.blast = DocumentCard("About BLAST+ (???)", resources.documents.blast.resource, self)
+        self.cards.cutadapt = DocumentCard("About Cutadapt (???)", resources.documents.cutadapt.resource, self)
         self.cards.museo = DocumentCard("About Museoscript", resources.documents.museo.resource, self)
         self.cards.mafft = DocumentCard("About MAFFT", resources.documents.mafft.resource, self)
-        self.cards.cutadapt = DocumentCard("About Cutadapt", resources.documents.cutadapt.resource, self)
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)
@@ -165,7 +165,11 @@ class View(ScrollTaskView):
         self.object = object
         self.binder.unbind_all()
         self.binder.bind(object.notification, self.showNotification)
+        self.binder.bind(object.properties.cutadapt_version, self._update_cutadapt_version)
         self.binder.bind(object.properties.blast_version, self._update_blast_version)
 
     def _update_blast_version(self, version: str):
         self.cards.blast.set_title(f"About BLAST+ ({version})")
+
+    def _update_cutadapt_version(self, version: str):
+        self.cards.cutadapt.set_title(f"About Cutadapt ({version})")

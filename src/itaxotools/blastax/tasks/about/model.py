@@ -25,8 +25,8 @@ from itaxotools.taxi_gui.model.tasks import SubtaskModel, TaskModel
 from . import process, title
 
 
-class BlastVersionSubtaskModel(SubtaskModel):
-    task_name = "FileInfoSubtask"
+class VersionSubtaskModel(SubtaskModel):
+    task_name = "VersionSubtask"
 
     done = QtCore.Signal(object)
 
@@ -38,6 +38,7 @@ class BlastVersionSubtaskModel(SubtaskModel):
 class Model(TaskModel):
     task_name = title
     blast_version = Property(str, "checking version...")
+    cutadapt_version = Property(str, "checking version...")
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -45,13 +46,24 @@ class Model(TaskModel):
         self.can_save = False
         self.ready = False
 
-        self.subtask_version = BlastVersionSubtaskModel(self, bind_busy=False)
-        self.binder.bind(self.subtask_version.done, self._handle_version_done)
-        self.subtask_version.start(process.get_blast_version)
+        self.subtask_blast_version = VersionSubtaskModel(self, bind_busy=False)
+        self.binder.bind(self.subtask_blast_version.done, self._handle_blast_version_done)
+        self.subtask_blast_version.start(process.get_blast_version)
 
-    def _handle_version_done(self, report: ReportDone):
+        self.subtask_cutadapt_version = VersionSubtaskModel(self, bind_busy=False)
+        self.binder.bind(self.subtask_cutadapt_version.done, self._handle_cutadapt_version_done)
+        self.subtask_cutadapt_version.start(process.get_cutadapt_version)
+
+    def _handle_blast_version_done(self, report: ReportDone):
         version = report.result
         if version:
             self.blast_version = "v" + version
         else:
             self.blast_version = "could not find binaries!"
+
+    def _handle_cutadapt_version_done(self, report: ReportDone):
+        version = report.result
+        if version:
+            self.cutadapt_version = "v" + version
+        else:
+            self.cutadapt_version = "could not determine version!"
