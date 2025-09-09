@@ -1,3 +1,5 @@
+import io
+import sys
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
@@ -36,6 +38,14 @@ def execute(
     append_configuration: bool,
 ) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
+
+    if sys.stdin is None:
+        # Monkeypatch required by cutadapt.runners.ParallelPipelineRunner
+        class DummyStdin(io.TextIOBase):
+            def fileno(self):
+                return -1
+
+        sys.stdin = DummyStdin()
 
     adapters_a_list = [line.strip() for line in adapters_a.splitlines()]
     adapters_g_list = [line.strip() for line in adapters_g.splitlines()]
