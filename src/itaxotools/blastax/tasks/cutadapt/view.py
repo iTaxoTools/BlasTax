@@ -1,9 +1,10 @@
-from PySide6 import QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
+from itaxotools.taxi_gui.utility import human_readable_seconds
 from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import LongLabel
@@ -23,6 +24,7 @@ from ..common.widgets import (
     IntPropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
+from .types import CutAdaptResults
 from .widgets import CutAdaptActionCombobox
 
 
@@ -212,19 +214,19 @@ class CutadaptOptionSelector(Card):
         options_checks_layout.setContentsMargins(16, 4, 0, 8)
         options_checks_layout.setSpacing(8)
 
-        field = QtWidgets.QCheckBox("Disallow indels in alignments (mismatches are always allowed)")
+        field = QtWidgets.QCheckBox("Disallow indels in alignments (mismatches are always allowed).")
         self.controls.cutadapt_no_indels = field
         options_checks_layout.addWidget(field)
 
-        field = QtWidgets.QCheckBox("Check both the read and its reverse complement for adapter matches")
+        field = QtWidgets.QCheckBox("Check both the read and its reverse complement for adapter matches.")
         self.controls.cutadapt_reverse_complement = field
         options_checks_layout.addWidget(field)
 
-        field = QtWidgets.QCheckBox("Trim poly-A tails (done after adapter trimming)")
+        field = QtWidgets.QCheckBox("Trim poly-A tails (done after adapter trimming).")
         self.controls.cutadapt_trim_poly_a = field
         options_checks_layout.addWidget(field)
 
-        field = QtWidgets.QCheckBox("Write a report with adapter statistics for each input file")
+        field = QtWidgets.QCheckBox("Write a report with adapter statistics for each input file.")
         self.controls.write_reports = field
         options_checks_layout.addWidget(field)
 
@@ -350,6 +352,40 @@ class View(BlastTaskView):
         self.binder.bind(self.cards.cutadapt_options.controls.write_reports.toggled, object.properties.write_reports)
 
         self.binder.bind(object.properties.editable, self.setEditable)
+
+    def report_results(self, task_name: str, results: CutAdaptResults):
+        msg_info = (
+            f"Total reads processed: {results.total_reads}"
+            "\n"
+            f"Reads with adapters: {results.reads_with_adapters} ({results.percent:.2f}%)"
+            "\n"
+            f"Time taken: {human_readable_seconds(results.seconds_taken)}."
+        )
+        if results.failed:
+            msg_icon = QtWidgets.QMessageBox.Warning
+            msg_text = f"{task_name} completed with errors!"
+            msg_info = f"Files with errors: {len(results.failed)}\n" + msg_info
+            msg_details = (
+                "Error logs were written for the following files:\n"
+                + "\n".join(f"- {path.name}" for path in results.failed)
+                + "\n"
+            )
+        else:
+            msg_icon = QtWidgets.QMessageBox.Information
+            msg_text = f"{task_name} completed successfully!"
+            msg_details = ""
+
+        msgBox = QtWidgets.QMessageBox(self.window())
+        msgBox.setWindowTitle(app.config.title)
+        msgBox.setIcon(msg_icon)
+        msgBox.setText(msg_text.ljust(50))
+        msgBox.setInformativeText(msg_info)
+        msgBox.setDetailedText(msg_details)
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Open)
+        button = self.window().msgShow(msgBox)
+        if button == QtWidgets.QMessageBox.Open:
+            url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
+            QtGui.QDesktopServices.openUrl(url)
 
     def setEditable(self, editable: bool):
         for card in self.cards:

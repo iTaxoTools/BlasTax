@@ -5,8 +5,7 @@ from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 
-from ..common.types import BatchResults
-from .types import TargetPaths
+from .types import CutAdaptResults, TargetPaths
 
 
 def initialize():
@@ -36,7 +35,7 @@ def execute(
     write_reports: bool,
     append_timestamp: bool,
     append_configuration: bool,
-) -> BatchResults:
+) -> CutAdaptResults:
     from itaxotools import abort, get_feedback, progress_handler
 
     if sys.stdin is None:
@@ -98,10 +97,14 @@ def execute(
 
     ts = perf_counter()
 
+    sum_reads_total = 0
+    sum_reads_cut = 0
+    file_count = 0
+
     for i, (path, target) in enumerate(zip(input_paths, target_paths_list)):
         progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
         try:
-            execute_single(
+            reads_total, reads_cut = execute_single(
                 input_path=path,
                 output_path=target.output_path,
                 report_path=target.report_path,
@@ -118,6 +121,9 @@ def execute(
                 cutadapt_reverse_complement=cutadapt_reverse_complement,
                 cutadapt_trim_poly_a=cutadapt_trim_poly_a,
             )
+            sum_reads_total += reads_total
+            sum_reads_cut += reads_cut
+            file_count += 1
         except Exception as e:
             if total == 1:
                 raise e
@@ -129,7 +135,7 @@ def execute(
 
     tf = perf_counter()
 
-    return BatchResults(output_dir, failed, tf - ts)
+    return CutAdaptResults(output_dir, sum_reads_total, sum_reads_cut, failed, tf - ts)
 
 
 def execute_single(
@@ -148,7 +154,7 @@ def execute_single(
     cutadapt_no_indels: bool,
     cutadapt_reverse_complement: bool,
     cutadapt_trim_poly_a: bool,
-):
+) -> tuple[int, int]:
     import yaml
 
     from cutadapt.cli import main
@@ -209,6 +215,8 @@ def execute_single(
         data: dict = stats.as_json()
         with report_path.open("w") as file:
             yaml.safe_dump(data, file, sort_keys=False)
+
+    return stats.n or 0, stats.with_adapters[0] or 0
 
 
 def get_target_paths(

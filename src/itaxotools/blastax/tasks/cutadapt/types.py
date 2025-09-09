@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import NamedTuple
 
 
 @dataclass
@@ -27,3 +28,17 @@ class CutAdaptAction(Enum):
         self.action = action
         self.description = description
         self.label = f'{str(action+":").ljust(10)} {description.lower().replace("-", " - ")}'
+
+
+class CutAdaptResults(NamedTuple):
+    output_path: Path
+    total_reads: int
+    reads_with_adapters: int
+    failed: list[Path]
+    seconds_taken: float
+
+    @property
+    def percent(self) -> float:
+        if not self.total_reads:
+            return 0.0
+        return 100 * self.reads_with_adapters / self.total_reads
