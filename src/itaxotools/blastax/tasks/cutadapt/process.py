@@ -13,8 +13,10 @@ def initialize():
 
     itaxotools.progress_handler("Initializing...")
     import itaxotools.blastax.blast  # noqa
-    import cutadapt  # noqa
+    import cutadapt.cli  # noqa
     import yaml  # noqa
+
+    monkeypatch()
 
 
 def execute(
@@ -37,14 +39,6 @@ def execute(
     append_configuration: bool,
 ) -> CutAdaptResults:
     from itaxotools import abort, get_feedback, progress_handler
-
-    if sys.stdin is None:
-        # Monkeypatch required by cutadapt.runners.ParallelPipelineRunner
-        class DummyStdin(io.TextIOBase):
-            def fileno(self):
-                return -1
-
-        sys.stdin = DummyStdin()
 
     adapters_a_list = [line.strip() for line in adapters_a.splitlines()]
     adapters_g_list = [line.strip() for line in adapters_g.splitlines()]
@@ -253,3 +247,45 @@ def get_target_paths(
         report_path=report_path,
         error_log_path=error_log_path,
     )
+
+
+def monkeypatch():
+    import logging
+
+    import cutadapt.cli
+
+    # Patch stdin,required by cutadapt.runners.ParallelPipelineRunner
+    # when running as PyInstaller executable
+
+    if sys.stdin is None:
+
+        class _DummyStdin(io.TextIOBase):
+            def fileno(self):
+                return -1
+
+        sys.stdin = _DummyStdin()
+
+    # Patch cutadapt parser to not call sys.exit
+
+    _original_get_argument_parser = cutadapt.cli.get_argument_parser
+
+    def patched_get_argument_parser(*args, **kwargs):
+        parser = _original_get_argument_parser(*args, **kwargs)
+
+        def _error(message):
+            raise Exception(f"Argument error: {message}")
+
+        parser.error = _error
+
+        return parser
+
+    cutadapt.cli.get_argument_parser = patched_get_argument_parser
+
+    # Raise exception on log right before sys.exit is called
+
+    class RaiseOnErrorHandler(logging.Handler):
+        def emit(self, record):
+            if record.levelno >= logging.ERROR:
+                raise Exception(f"{record.getMessage()}")
+
+    cutadapt.cli.logger.addHandler(RaiseOnErrorHandler())
