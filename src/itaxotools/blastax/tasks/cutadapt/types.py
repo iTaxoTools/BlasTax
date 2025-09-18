@@ -33,12 +33,20 @@ class CutAdaptAction(Enum):
 class CutAdaptResults(NamedTuple):
     output_path: Path
     total_reads: int
+    total_bp: int
+    quality_trimmed: int
     reads_with_adapters: int
     failed: list[Path]
     seconds_taken: float
 
     @property
-    def percent(self) -> float:
+    def adapters_percent(self) -> float:
         if not self.total_reads:
             return 0.0
         return 100 * self.reads_with_adapters / self.total_reads
+
+    @property
+    def trimmed_percent(self) -> float:
+        if not self.total_bp:
+            return 0.0
+        return 100 * self.quality_trimmed / self.total_bp

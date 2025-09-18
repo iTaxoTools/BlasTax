@@ -95,13 +95,15 @@ def execute(
     ts = perf_counter()
 
     sum_reads_total = 0
+    sum_bp_total = 0
+    sum_quality_trimmed = 0
     sum_reads_cut = 0
     file_count = 0
 
     for i, (path, target) in enumerate(zip(input_paths, target_paths_list)):
         progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
         try:
-            reads_total, reads_cut = execute_single(
+            reads_total, bp_total, quality_trimmed, reads_cut = execute_single(
                 input_path=path,
                 output_path=target.output_path,
                 report_path=target.report_path,
@@ -120,6 +122,8 @@ def execute(
                 cutadapt_trim_poly_a=cutadapt_trim_poly_a,
             )
             sum_reads_total += reads_total
+            sum_bp_total += bp_total
+            sum_quality_trimmed += quality_trimmed
             sum_reads_cut += reads_cut
             file_count += 1
         except Exception as e:
@@ -133,7 +137,15 @@ def execute(
 
     tf = perf_counter()
 
-    return CutAdaptResults(output_dir, sum_reads_total, sum_reads_cut, failed, tf - ts)
+    return CutAdaptResults(
+        output_path=output_dir,
+        total_reads=sum_reads_total,
+        total_bp=sum_bp_total,
+        quality_trimmed=sum_quality_trimmed,
+        reads_with_adapters=sum_reads_cut,
+        failed=failed,
+        seconds_taken=tf - ts,
+    )
 
 
 def execute_single(
@@ -153,7 +165,7 @@ def execute_single(
     cutadapt_no_indels: bool,
     cutadapt_reverse_complement: bool,
     cutadapt_trim_poly_a: bool,
-) -> tuple[int, int]:
+) -> tuple[int, int, int, int]:
     import yaml
 
     from cutadapt.cli import main
@@ -220,7 +232,7 @@ def execute_single(
         with report_path.open("w") as file:
             yaml.safe_dump(data, file, sort_keys=False)
 
-    return stats.n or 0, stats.with_adapters[0] or 0
+    return stats.n or 0, stats.total or 0, stats.quality_trimmed or 0, stats.with_adapters[0] or 0
 
 
 def get_target_paths(

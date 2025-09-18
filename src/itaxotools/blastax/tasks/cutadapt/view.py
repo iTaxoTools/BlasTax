@@ -410,13 +410,13 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.editable, self.setEditable)
 
     def report_results(self, task_name: str, results: CutAdaptResults):
-        msg_info = (
-            f"Total reads processed: {results.total_reads}"
-            "\n"
-            f"Reads with adapters: {results.reads_with_adapters} ({results.percent:.2f}%)"
-            "\n"
-            f"Time taken: {human_readable_seconds(results.seconds_taken)}."
-        )
+        msg_info = f"Total reads processed: {results.total_reads}"
+        if results.quality_trimmed:
+            msg_info += f"\nQuality trimmed: {results.quality_trimmed} bp ({results.trimmed_percent:.2f}%)"
+        if results.reads_with_adapters:
+            msg_info += f"\nReads with adapters: {results.reads_with_adapters} ({results.adapters_percent:.2f}%)"
+        msg_info += f"\nTime taken: {human_readable_seconds(results.seconds_taken)}."
+
         if results.failed:
             msg_icon = QtWidgets.QMessageBox.Warning
             msg_text = f"{task_name} completed with errors!"
