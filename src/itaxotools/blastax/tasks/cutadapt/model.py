@@ -65,7 +65,7 @@ class Model(BlastTaskModel):
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
 
-        self.subtask_init.start(process.initialize)
+        self.subtask_init.autostart(process.initialize)
 
     def isReady(self):
         if not self.input_paths.ready:
