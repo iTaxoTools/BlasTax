@@ -24,11 +24,12 @@ def execute(
     output_dir: Path,
     adapters_a: str,
     adapters_g: str,
+    quality_trim_enabled: bool,
+    quality_trim_a: int,
+    quality_trim_g: int,
     cutadapt_action: str,
     cutadapt_error_rate: float,
     cutadapt_overlap: int,
-    cutadapt_quality_trim_a: int,
-    cutadapt_quality_trim_g: int,
     cutadapt_num_threads: int,
     cutadapt_extra_args: str,
     cutadapt_no_indels: bool,
@@ -47,11 +48,12 @@ def execute(
     print(f"{output_dir=}")
     print(f"{adapters_a_list=}")
     print(f"{adapters_g_list=}")
+    print(f"{quality_trim_enabled=}")
+    print(f"{quality_trim_a=}")
+    print(f"{quality_trim_g=}")
     print(f"{cutadapt_action=}")
     print(f"{cutadapt_error_rate=}")
     print(f"{cutadapt_overlap=}")
-    print(f"{cutadapt_quality_trim_a=}")
-    print(f"{cutadapt_quality_trim_g=}")
     print(f"{cutadapt_num_threads=}")
     print(f"{cutadapt_extra_args=}")
     print(f"{cutadapt_no_indels=}")
@@ -70,10 +72,11 @@ def execute(
         options[cutadapt_action] = None
         options["e"] = f"{cutadapt_error_rate:.2f}"
         options["o"] = str(cutadapt_overlap)
-        if cutadapt_quality_trim_a:
-            options["q3"] = str(cutadapt_quality_trim_a)
-        if cutadapt_quality_trim_g:
-            options["q5"] = str(cutadapt_quality_trim_g)
+        if quality_trim_enabled:
+            if quality_trim_a:
+                options["q3"] = str(quality_trim_a)
+            if quality_trim_g:
+                options["q5"] = str(quality_trim_g)
         if cutadapt_no_indels:
             options["no_indels"] = None
         if cutadapt_reverse_complement:
@@ -104,11 +107,12 @@ def execute(
                 report_path=target.report_path,
                 adapters_a_list=adapters_a_list,
                 adapters_g_list=adapters_g_list,
+                quality_trim_enabled=quality_trim_enabled,
+                quality_trim_a=quality_trim_a,
+                quality_trim_g=quality_trim_g,
                 cutadapt_action=cutadapt_action,
                 cutadapt_error_rate=cutadapt_error_rate,
                 cutadapt_overlap=cutadapt_overlap,
-                cutadapt_quality_trim_a=cutadapt_quality_trim_a,
-                cutadapt_quality_trim_g=cutadapt_quality_trim_g,
                 cutadapt_num_threads=cutadapt_num_threads,
                 cutadapt_extra_args=cutadapt_extra_args,
                 cutadapt_no_indels=cutadapt_no_indels,
@@ -138,11 +142,12 @@ def execute_single(
     report_path: Path | None,
     adapters_a_list: list[str],
     adapters_g_list: list[str],
+    quality_trim_enabled: bool,
+    quality_trim_a: int,
+    quality_trim_g: int,
     cutadapt_action: str,
     cutadapt_error_rate: float,
     cutadapt_overlap: int,
-    cutadapt_quality_trim_a: int,
-    cutadapt_quality_trim_g: int,
     cutadapt_num_threads: int,
     cutadapt_extra_args: str,
     cutadapt_no_indels: bool,
@@ -172,11 +177,11 @@ def execute_single(
     args.append("--overlap")
     args.append(str(cutadapt_overlap))
 
-    if cutadapt_quality_trim_a or cutadapt_quality_trim_g:
+    if quality_trim_enabled:
         args.append("--quality-cutoff")
-        arg = str(cutadapt_quality_trim_a)
-        if cutadapt_quality_trim_g:
-            arg = str(cutadapt_quality_trim_g) + "," + arg
+        arg = str(quality_trim_a)
+        if quality_trim_g:
+            arg = str(quality_trim_g) + "," + arg
         args.append(arg)
 
     if cutadapt_no_indels:
@@ -209,7 +214,8 @@ def execute_single(
         data: dict = stats.as_json()
 
         poly_a_tag = "poly_a_trimmed_read1"
-        data[poly_a_tag] = [x.value for x in data[poly_a_tag]]
+        if data[poly_a_tag] is not None:
+            data[poly_a_tag] = [x.value for x in data[poly_a_tag]]
 
         with report_path.open("w") as file:
             yaml.safe_dump(data, file, sort_keys=False)

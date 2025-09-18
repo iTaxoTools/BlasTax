@@ -95,7 +95,7 @@ class AdapterGSelector(AdapterSelector):
         "Enter a list of 5’ adapters separated by new lines. "
         "A 5’ adapter is assumed to be ligated to the 5’ end of your sequences of interest. "
         "When such an adapter is found, the adapter sequence itself and the sequence preceding it (if there is any) are trimmed. "
-        "You may use Cutadapt's syntax to define anchored, non-internal adapters or adapter-specific parameters (see examples below). "
+        "You may use Cutadapt's syntax to define anchored, non-internal adapters or adapter-specific parameters. "
         "In the examples below, replace 'ADAPTER' with the actual nucleotide sequence of your adapter. "
     )
     list_placeholder = (
@@ -107,6 +107,80 @@ class AdapterGSelector(AdapterSelector):
         "\n"
         " ADAPTER;e=0.2;o=5 -> adapter with maximum error rate = 0.2 and minimum overlap = 5"
     )
+
+
+class QualityTrimmingSelector(OptionCard):
+    help_text_a = (
+        "Remove low-quality bases from the start or end of each read before adapter trimming. "
+        "This option is available only for FASTQ files, since quality scores are required. "
+        "Trimming is performed using the BWA-style algorithm, which evaluates read sequences "
+        "and may retain bases slightly below the cutoff if they are surrounded by higher-quality bases."
+    )
+
+    help_text_b = (
+        "Each cutoff value sets the quality threshold used by the algorithm to decide which bases to trim. "
+        "Higher values lead to more aggressive trimming and improved overall read quality. "
+        "For reference, a Phred score of 10 corresponds to 90% accuracy, a score of 20 corresponds to 99% accuracy, "
+        "and a score of 30 corresponds to 99.9% accuracy."
+    )
+
+    def __init__(self, title: str, parent=None):
+        super().__init__(title, "", parent)
+        self.controls.title.setFixedWidth(300)
+        self.draw_list()
+
+    def draw_list(self):
+        label_a = LongLabel(self.help_text_a)
+        label_b = LongLabel(self.help_text_b)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setColumnMinimumWidth(0, 16)
+        options_layout.setColumnMinimumWidth(1, 94)
+        options_layout.setColumnMinimumWidth(3, 16)
+        options_layout.setColumnStretch(4, 1)
+        options_layout.setHorizontalSpacing(16)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("3’ cutoff:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Applied to the end of each read. Lower cutoff means more bases kept.")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.quality_trim_a = field
+        row += 1
+
+        name = QtWidgets.QLabel("5’ cutoff:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Applied to the start of each read. Often left at 0 for Illumina data.")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 4)
+        self.controls.quality_trim_g = field
+        row += 1
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+        layout.addWidget(label_a)
+        layout.addLayout(options_layout, 1)
+        layout.addWidget(label_b)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.roll = VerticalRollAnimation(widget)
+        self.controls.options_widget = widget
+        self.controls.list = list
+
+        self.toggled.connect(self.set_options_visible)
+
+        self.addWidget(widget)
+
+    def set_options_visible(self, value: bool):
+        self.controls.options_widget.roll.setAnimatedVisible(value)
 
 
 class CutadaptOptionSelector(Card):
@@ -160,26 +234,6 @@ class CutadaptOptionSelector(Card):
         options_layout.addWidget(field, row, 2)
         options_layout.addWidget(description, row, 4)
         self.controls.cutadapt_overlap = field
-        row += 1
-
-        name = QtWidgets.QLabel("Quality trim (3’):")
-        field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Cutoff for low-quality bases from the 3’ end of each read (FASTQ only)")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 4)
-        self.controls.cutadapt_quality_trim_a = field
-        row += 1
-
-        name = QtWidgets.QLabel("Quality trim (5’):")
-        field = IntPropertyLineEdit()
-        description = QtWidgets.QLabel("Cutoff for low-quality bases from the 5’ end of each read (FASTQ only)")
-        description.setStyleSheet("QLabel { font-style: italic; }")
-        options_layout.addWidget(name, row, 1)
-        options_layout.addWidget(field, row, 2)
-        options_layout.addWidget(description, row, 4)
-        self.controls.cutadapt_quality_trim_g = field
         row += 1
 
         name = QtWidgets.QLabel("Threads:")
@@ -253,6 +307,7 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.adapters_a = AdapterASelector(self)
         self.cards.adapters_g = AdapterGSelector(self)
+        self.cards.trimming = QualityTrimmingSelector("Quality trimming", self)
         self.cards.cutadapt_options = CutadaptOptionSelector(self)
 
         self.cards.input.set_batch_only(True)
@@ -307,6 +362,13 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.adapters_g_list, self.cards.adapters_g.controls.list.setText)
         self.binder.bind(self.cards.adapters_g.controls.list.textEditedSafe, object.properties.adapters_g_list)
 
+        self.binder.bind(object.properties.quality_trim_enabled, self.cards.trimming.setChecked)
+        self.binder.bind(self.cards.trimming.toggled, object.properties.quality_trim_enabled)
+        self.cards.trimming.set_options_visible(object.quality_trim_enabled)
+
+        self.cards.trimming.controls.quality_trim_a.bind_property(object.properties.quality_trim_a)
+        self.cards.trimming.controls.quality_trim_g.bind_property(object.properties.quality_trim_g)
+
         self.binder.bind(
             object.properties.cutadapt_action, self.cards.cutadapt_options.controls.cutadapt_action.setValue
         )
@@ -316,12 +378,6 @@ class View(BlastTaskView):
 
         self.cards.cutadapt_options.controls.cutadapt_error_rate.bind_property(object.properties.cutadapt_error_rate)
         self.cards.cutadapt_options.controls.cutadapt_overlap.bind_property(object.properties.cutadapt_overlap)
-        self.cards.cutadapt_options.controls.cutadapt_quality_trim_a.bind_property(
-            object.properties.cutadapt_quality_trim_a
-        )
-        self.cards.cutadapt_options.controls.cutadapt_quality_trim_g.bind_property(
-            object.properties.cutadapt_quality_trim_g
-        )
         self.cards.cutadapt_options.controls.cutadapt_num_threads.bind_property(object.properties.cutadapt_num_threads)
         self.cards.cutadapt_options.controls.cutadapt_extra_args.bind_property(object.properties.cutadapt_extra_args)
 

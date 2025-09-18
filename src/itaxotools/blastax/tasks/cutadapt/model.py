@@ -20,11 +20,13 @@ class Model(BlastTaskModel):
     adapters_a_list = Property(str, "")
     adapters_g_list = Property(str, "")
 
+    quality_trim_enabled = Property(bool, False)
+    quality_trim_a = Property(int, 10)
+    quality_trim_g = Property(int, 0)
+
     cutadapt_action = Property(CutAdaptAction, CutAdaptAction.trim)
     cutadapt_error_rate = Property(float, 0.1)
     cutadapt_overlap = Property(int, 3)
-    cutadapt_quality_trim_a = Property(int, 0)
-    cutadapt_quality_trim_g = Property(int, 0)
     cutadapt_num_threads = Property(int, 1)
     cutadapt_extra_args = Property(str, "")
     cutadapt_no_indels = Property(bool, False)
@@ -56,6 +58,9 @@ class Model(BlastTaskModel):
             self.properties.adapters_g_enabled,
             self.properties.adapters_a_list,
             self.properties.adapters_g_list,
+            self.properties.quality_trim_enabled,
+            self.properties.quality_trim_a,
+            self.properties.quality_trim_g,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -67,12 +72,15 @@ class Model(BlastTaskModel):
             return False
         if self.output_dir == Path():
             return False
-        if not (self.adapters_a_enabled or self.adapters_g_enabled):
+        if not (self.adapters_a_enabled or self.adapters_g_enabled or self.quality_trim_enabled):
             return False
         if self.adapters_a_enabled and not self.adapters_a_list.strip():
             return False
         if self.adapters_g_enabled and not self.adapters_g_list.strip():
             return False
+        if self.quality_trim_enabled:
+            if not (self.quality_trim_a or self.quality_trim_g):
+                return False
         return True
 
     def start(self):
@@ -83,11 +91,12 @@ class Model(BlastTaskModel):
             output_dir=self.output_dir,
             adapters_a=self.adapters_a_list if self.adapters_a_enabled else "",
             adapters_g=self.adapters_g_list if self.adapters_g_enabled else "",
+            quality_trim_enabled=self.quality_trim_enabled,
+            quality_trim_a=self.quality_trim_a,
+            quality_trim_g=self.quality_trim_g,
             cutadapt_action=self.cutadapt_action.action,
             cutadapt_error_rate=self.cutadapt_error_rate,
             cutadapt_overlap=self.cutadapt_overlap,
-            cutadapt_quality_trim_a=self.cutadapt_quality_trim_a,
-            cutadapt_quality_trim_g=self.cutadapt_quality_trim_g,
             cutadapt_num_threads=self.cutadapt_num_threads,
             cutadapt_extra_args=self.cutadapt_extra_args,
             cutadapt_no_indels=self.cutadapt_no_indels,
