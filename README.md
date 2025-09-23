@@ -7,9 +7,7 @@
 [![GitHub - macOS](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/macos.yml?label=macos)](
     https://github.com/iTaxoTools/BlasTax/actions/workflows/macos.yml)
 
-**WORK IN PROGRESS**
-
-A graphical user interface to run BLAST and parse hits.
+A graphical user interface to run BLAST and parse hits:
 
 - **Make BLAST database**: Create a BLAST database from a sequence file
 - **Regular BLAST**: Find regions of similarity between sequences in a query file and a BLAST database
@@ -18,17 +16,22 @@ A graphical user interface to run BLAST and parse hits.
 - **Decontaminate**: Remove contaminants from query sequences based on two ingroup and outgroup databases
 - **Museoscript**: Create sequence files from BLAST matches
 
-The program also includes a variety of tools for processing FASTA files.
+The program also includes a variety of tools for processing FASTA files:
 
 - **Fast prepare**: Rename FASTA sequence identifiers in preparation for BLAST analysis
 - **Fast split**: Split large sequences or text files into smaller files
 - **Fast merge**: Merge multiple sequences or text files into a single large file
 - **Group merge**: Merge FASTA files by filename
-- **Stop codon removal**: Remove stop codons from a dataset
+- **Removal of stop codons**: Remove stop codons from a dataset
 - **Codon trimming**: Trim coding sequences to start with first codon position
+
+Some extra tools are also available:
 
 - **SCaFoSpy**: Create chimerical sequences for species
 - **Protein translator**: Generate protein translations for each sequence
+- **MAFFT alignment**: Multiple sequence alignment using MAFFTpy
+- **Codon-aware alignment**: Align nucleotide sequences as proteins without altering codons
+- **Cutadapt**: Remove adapter sequences and quality trimming
 
 Input sequences must be in the FASTA or FASTQ file formats.
 
@@ -76,13 +79,23 @@ blastax
 
 Code by Nikita Kulikov, Anja-Kristina Schulz and Stefanos Patmanidis.
 
+---
+
 BlasTax integrates the BLAST+ suite from NCBI:
 
 > *Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., and Madden, T.L. 2009. BLAST+: architecture and applications. BMC Bioinformatics, 10, 421.*
 
-Museoscript recoded following original concept Linux bash script:
+Cutadapt is included as a Python module to remove adapter sequences from high-throughput sequencing reads:
+
+> *Martin, M. (2011). Cutadapt removes adapter sequences from high-throughput sequencing reads. EMBnet.journal, 17(1), 10-12.*
+
+Museoscript was rewritten following the original concept of the Linux bash script:
 
 > *Rancilhac, L., Bruy, T., Scherz, M. D., Pereira, E. A., Preick, M., Straube, N., Lyra, M. L., Ohler, A., Streicher, J. W., Andreone,
     F., Crottini, A., Hutter, C. R., Randrianantoandro,J. C., Rokotoarison, A., Glaw, F., Hofreiter, M. & Vences, M. (2020).
     Target-enriched DNA sequencing from historical type material enables a partial revision of the Madagascar giant stream frogs (genus Mantidactylus).
     Journal of Natural History, 1-32.*
+
+MAFFT is a multiple sequence alignment program that was integrated using MAFFTpy:
+
+> *Katoh, K., Misawa, K., Kuma, K., & Miyata, T. (2002). MAFFT: a novel method for rapid multiple sequence alignment based on fast Fourier transform. Nucleic Acids Research, 30(14), 3059-3066.*
