@@ -52,6 +52,9 @@ jobs:
           pip install -r requirements.txt
           pip install ".[dev]"
 
+      - name: Get BLAST+ binaries
+        uses: ./.github/actions/get-blast-binaries
+
       - name: Test with pytest
         run: |
           pip install pytest pytest-qt pytest-xvfb
@@ -89,6 +92,9 @@ jobs:
 
       - name: Install macOS wheels
         uses: iTaxoTools/TaxIGui/.github/actions/install-macos-wheels@main
+
+      - name: Get BLAST+ binaries
+        uses: ./.github/actions/get-blast-binaries
 
       - name: Build bundle
         uses: iTaxoTools/TaxIGui/.github/actions/make-bundle@main
