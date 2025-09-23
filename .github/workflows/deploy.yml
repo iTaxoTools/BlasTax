@@ -56,7 +56,9 @@ jobs:
         uses: ./.github/actions/get-blast-binaries
 
       - name: Test with pytest
+        shell: bash
         run: |
+          export PATH="bin:$PATH"
           pip install pytest pytest-qt pytest-xvfb
           pytest
 
@@ -95,6 +97,13 @@ jobs:
 
       - name: Get BLAST+ binaries
         uses: ./.github/actions/get-blast-binaries
+
+      - name: Test with pytest
+        shell: bash
+        run: |
+          export PATH="bin:$PATH"
+          pip install pytest pytest-qt pytest-xvfb
+          pytest
 
       - name: Build bundle
         uses: iTaxoTools/TaxIGui/.github/actions/make-bundle@main
