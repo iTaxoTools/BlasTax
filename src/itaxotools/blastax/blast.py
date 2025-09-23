@@ -37,7 +37,7 @@ def load_user_blast_path() -> Path | None:
 
 
 def suggest_user_blast_path() -> Path:
-    return Path(user_data_dir()) / "bin"
+    return Path(user_data_dir(appname="BlasTax", appauthor="iTaxoTools")) / "bin"
 
 
 def get_blast_env() -> dict:
