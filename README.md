@@ -1,5 +1,9 @@
 # BlasTax
 
+[![PyPI - Version](https://img.shields.io/pypi/v/itaxotools-blastax?color=tomato)](
+    https://pypi.org/project/itaxotools-blastax)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/itaxotools-blastax)](
+    https://pypi.org/project/itaxotools-blastax)
 [![GitHub - Tests](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/test.yml?label=tests)](
     https://github.com/iTaxoTools/BlasTax/actions/workflows/test.yml)
 [![GitHub - Windows](https://img.shields.io/github/actions/workflow/status/iTaxoTools/BlasTax/windows.yml?label=windows)](
@@ -41,34 +45,34 @@ Input sequences must be in the FASTA or FASTQ file formats.
 
 Download and run the standalone executables without installing Python or BLAST+.
 
-[![Pre-release](https://img.shields.io/badge/pre--release-BlasTax_0.0.1-red?style=for-the-badge)](
-    https://github.com/iTaxoTools/BlasTax/releases/latest)
+[![Release](https://img.shields.io/badge/release-BlasTax_0.1.0-red?style=for-the-badge)](
+    https://github.com/iTaxoTools/BlasTax/releases/v0.1.0)
 [![Windows](https://img.shields.io/badge/Windows-blue.svg?style=for-the-badge&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBDcmVhdGVkIHdpdGggSW5rc2NhcGUgKGh0dHA6Ly93d3cuaW5rc2NhcGUub3JnLykgLS0+Cjxzdmcgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAxMi43IDEyLjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8ZyBmaWxsPSIjZmZmIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2Utd2lkdGg9IjMuMTc0OSI+CiAgPHJlY3QgeD0iLjc5MzczIiB5PSIuNzkzNzMiIHdpZHRoPSI1LjAyNyIgaGVpZ2h0PSI1LjAyNyIvPgogIDxyZWN0IHg9IjcuMTQzNiIgeT0iLjc5MzczIiB3aWR0aD0iNC43NjI0IiBoZWlnaHQ9IjUuMDI3Ii8+CiAgPHJlY3QgeD0iLjc5MzczIiB5PSI2Ljg3OSIgd2lkdGg9IjUuMDI3IiBoZWlnaHQ9IjUuMDI3Ii8+CiAgPHJlY3QgeD0iNy4xNDM2IiB5PSI2Ljg3OSIgd2lkdGg9IjQuNzYyNCIgaGVpZ2h0PSI1LjAyNyIvPgogPC9nPgo8L3N2Zz4K)](
     https://github.com/iTaxoTools/BlasTax/releases/latest)
 [![MacOS](https://img.shields.io/badge/macOS-slategray.svg?style=for-the-badge&logo=apple)](
     https://github.com/iTaxoTools/BlasTax/releases/latest)
 
-## Running from source
+## Installation
 
-First clone the repository and install the module.
+BlasTax is available on PyPI and can be installed using `pip`:
 
 ```
-git clone https://github.com/iTaxoTools/BlasTax.git
-pip install BlasTax
+pip install itaxotools-blastax
 ```
 
-You need to provide the BLAST+ binaries and add them to the system PATH before running the program.
-You can use the provided submodule for downloading the binaries:
-```
-python -m itaxotools.blastax.download --trim
-```
-
-Adding them to PATH is OS specific. We are working on a way to bypass this step.
-
-Run BlasTax from the command line using:
+After installation, run the program with:
 
 ```
 blastax
+```
+
+If the BLAST+ binaries are not found in your system PATH at runtime, the program will prompt you to
+automatically download them to your system-specific configuration directory (under iTaxoTools/BlasTax, see [platformdirs](https://pypi.org/project/platformdirs/)).
+
+To reset the location where the program looks for BLAST+, run:
+
+```
+blastax --reset
 ```
 
 ## Citations
