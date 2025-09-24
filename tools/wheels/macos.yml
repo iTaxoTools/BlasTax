@@ -24,6 +24,12 @@
   x86_64_url: https://files.pythonhosted.org/packages/e4/6f/ad3b032d3881a5f35d673b429a8a524d8cb2b56d81f8ca4194117a502509/zlib_ng-1.0.0-cp312-cp312-macosx_10_13_x86_64.whl
   x86_64_sha256: d894ed89fd1f53344b8334333794f53d7119da034b49e08e39f0d2b05a1f699c
 
+- egg: isal
+  arm64_url: https://files.pythonhosted.org/packages/e2/9b/0c3f5fc05aa7d67dc1aa9542549c044234e2d6abd8a2b39f5f689ab9b612/isal-1.8.0-cp312-cp312-macosx_11_0_arm64.whl
+  arm64_sha256: 2147175ea74b9028653c5949b7e1b241e2e24f017879fb55d52de9496786d9d8
+  x86_64_url: https://files.pythonhosted.org/packages/58/6f/e170e758293712e4f7ac1d0cf92290a80816d0eea8eb0871d82877ca7372/isal-1.8.0-cp312-cp312-macosx_10_13_x86_64.whl
+  x86_64_sha256: 3255b5dd6ac0238d410a6d630761e3826d4360400e88d6106e8ad85fe9042966
+
 - egg: numpy
   arm64_url: https://files.pythonhosted.org/packages/2a/17/1fdc154e75d24d8c20c42b71bae1b5cf752453f0fc3a2504bbb810293dd1/numpy-1.26.2-cp312-cp312-macosx_11_0_arm64.whl
   arm64_sha256: 5d5244aabd6ed7f312268b9247be47343a654ebea52a60f002dc70c769048e75
