@@ -12,6 +12,12 @@
   x86_64_url: https://files.pythonhosted.org/packages/92/0d/e79030175d573dcc27f38c870730be63cfff995c4dda65937dfa9a32e94a/cutadapt-5.1-cp312-cp312-macosx_10_13_x86_64.whl
   x86_64_sha256: c71de55657d06b1b746363deb11773affe9b7bb127a3e74056f8dcd9b479222f
 
+- egg: dnaio
+  arm64_url: https://files.pythonhosted.org/packages/00/b5/13d00b6346d2e0771f51905299a4ae40ba5525fa5660da6345ef3225fff6/dnaio-1.2.3-cp312-cp312-macosx_11_0_arm64.whl
+  arm64_sha256: f43d36490361bf35a90b0735fe235a423337cfa96d291f50e3cbf6ad3b2d26a2
+  x86_64_url: https://files.pythonhosted.org/packages/23/13/421faa3b909df1a74dbaae841c83e9cf60be9e4d2abbf75b8174d564dc21/dnaio-1.2.3-cp312-cp312-macosx_10_13_x86_64.whl
+  x86_64_sha256: 68a1c0acd6b5e7ca8bb6e6b29156f3e140c5fbbdfca9976eae64a709e95f0888
+
 - egg: numpy
   arm64_url: https://files.pythonhosted.org/packages/2a/17/1fdc154e75d24d8c20c42b71bae1b5cf752453f0fc3a2504bbb810293dd1/numpy-1.26.2-cp312-cp312-macosx_11_0_arm64.whl
   arm64_sha256: 5d5244aabd6ed7f312268b9247be47343a654ebea52a60f002dc70c769048e75
