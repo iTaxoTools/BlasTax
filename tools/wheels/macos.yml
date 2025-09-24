@@ -18,6 +18,12 @@
   x86_64_url: https://files.pythonhosted.org/packages/23/13/421faa3b909df1a74dbaae841c83e9cf60be9e4d2abbf75b8174d564dc21/dnaio-1.2.3-cp312-cp312-macosx_10_13_x86_64.whl
   x86_64_sha256: 68a1c0acd6b5e7ca8bb6e6b29156f3e140c5fbbdfca9976eae64a709e95f0888
 
+- egg: zlib_ng
+  arm64_url: https://files.pythonhosted.org/packages/a1/7c/67d4a0bb72039f8a8e11cd711aed63a0adf83961fea668e204b07d6f469d/zlib_ng-1.0.0-cp312-cp312-macosx_11_0_arm64.whl
+  arm64_sha256: c01e44613d9a4cc1f6f6dcfab03ae43fd3b4f9bd909006398c75fe4a1fb48333
+  x86_64_url: https://files.pythonhosted.org/packages/e4/6f/ad3b032d3881a5f35d673b429a8a524d8cb2b56d81f8ca4194117a502509/zlib_ng-1.0.0-cp312-cp312-macosx_10_13_x86_64.whl
+  x86_64_sha256: d894ed89fd1f53344b8334333794f53d7119da034b49e08e39f0d2b05a1f699c
+
 - egg: numpy
   arm64_url: https://files.pythonhosted.org/packages/2a/17/1fdc154e75d24d8c20c42b71bae1b5cf752453f0fc3a2504bbb810293dd1/numpy-1.26.2-cp312-cp312-macosx_11_0_arm64.whl
   arm64_sha256: 5d5244aabd6ed7f312268b9247be47343a654ebea52a60f002dc70c769048e75
