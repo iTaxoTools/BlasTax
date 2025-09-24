@@ -411,9 +411,9 @@ class View(BlastTaskView):
 
     def report_results(self, task_name: str, results: CutAdaptResults):
         msg_info = f"Total reads processed: {results.total_reads}"
-        if results.quality_trimmed:
+        if results.quality_trimmed >= 0:
             msg_info += f"\nQuality trimmed: {results.quality_trimmed} bp ({results.trimmed_percent:.2f}%)"
-        if results.reads_with_adapters:
+        if results.reads_with_adapters >= 0:
             msg_info += f"\nReads with adapters: {results.reads_with_adapters} ({results.adapters_percent:.2f}%)"
         msg_info += f"\nTime taken: {human_readable_seconds(results.seconds_taken)}."
 

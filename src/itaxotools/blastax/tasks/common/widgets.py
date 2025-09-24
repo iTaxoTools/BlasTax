@@ -180,7 +180,7 @@ class GrowingTextEdit(GTextEdit):
         super().__init__(*args, **kwargs)
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
         self.document().contentsChanged.connect(self.updateGeometry)
-        self.height_slack = 16
+        self.height_slack = 20
         self.lines_min = 4
         self.lines_max = 12
 

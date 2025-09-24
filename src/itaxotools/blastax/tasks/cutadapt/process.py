@@ -69,22 +69,23 @@ def execute(
     timestamp = datetime.now() if append_timestamp else None
     options: dict[str, str] = {}
     if append_configuration:
-        options[cutadapt_action] = None
-        options["e"] = f"{cutadapt_error_rate:.2f}"
-        options["o"] = str(cutadapt_overlap)
+        if adapters_a_list or adapters_g_list:
+            options[cutadapt_action] = None
+            options["e"] = f"{cutadapt_error_rate:.2f}"
+            options["o"] = str(cutadapt_overlap)
+            if cutadapt_no_indels:
+                options["no_indels"] = None
+            if cutadapt_reverse_complement:
+                options["rev_comp"] = None
+            if cutadapt_trim_poly_a:
+                options["trim_poly_a"] = None
+            if cutadapt_extra_args:
+                options["extra_args"] = None
         if quality_trim_enabled:
             if quality_trim_a:
                 options["q3"] = str(quality_trim_a)
             if quality_trim_g:
                 options["q5"] = str(quality_trim_g)
-        if cutadapt_no_indels:
-            options["no_indels"] = None
-        if cutadapt_reverse_complement:
-            options["rev_comp"] = None
-        if cutadapt_trim_poly_a:
-            options["trim_poly_a"] = None
-        if cutadapt_extra_args:
-            options["extra_args"] = None
 
     target_paths_list = [get_target_paths(path, output_dir, write_reports, timestamp, options) for path in input_paths]
 
@@ -132,6 +133,11 @@ def execute(
             with open(target.error_log_path, "w") as f:
                 print_exc(file=f)
             failed.append(path)
+
+    if not quality_trim_enabled:
+        sum_quality_trimmed = -1
+    if not (adapters_a_list or adapters_g_list):
+        sum_reads_cut = -1
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -279,13 +285,11 @@ def monkeypatch():
     # Patch stdin,required by cutadapt.runners.ParallelPipelineRunner
     # when running as PyInstaller executable
 
-    if sys.stdin is None:
+    class _DummyStdin(io.TextIOBase):
+        def fileno(self):
+            return -1
 
-        class _DummyStdin(io.TextIOBase):
-            def fileno(self):
-                return -1
-
-        sys.stdin = _DummyStdin()
+    sys.stdin = _DummyStdin()
 
     # Patch cutadapt parser to not call sys.exit
 
