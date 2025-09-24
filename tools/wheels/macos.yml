@@ -6,6 +6,12 @@
   universal2_url: https://files.pythonhosted.org/packages/d4/ff/4b0b3df502e2d1720ae43fb39d0bfb3ac08b078e85694363ea0587e98dba/itaxotools_mafftpy-0.3.0-cp312-cp312-macosx_11_0_universal2.whl
   universal2_sha256: 7122ca92eafa8a1352a87d73ee3b1ede8b31eeba2affe44285400a18a79e3b7f
 
+- egg: cutadapt
+  arm64_url: https://files.pythonhosted.org/packages/bb/bc/4be84d22ea4f2c5d41e35c833f784d34a2d256258468b0c3d27759f34abc/cutadapt-5.1-cp312-cp312-macosx_11_0_arm64.whl
+  arm64_sha256: a59d435a4dbad5f3ac12ec59bf63bbe134d7e0247a390934605d072a64752fba
+  x86_64_url: https://files.pythonhosted.org/packages/92/0d/e79030175d573dcc27f38c870730be63cfff995c4dda65937dfa9a32e94a/cutadapt-5.1-cp312-cp312-macosx_10_13_x86_64.whl
+  x86_64_sha256: c71de55657d06b1b746363deb11773affe9b7bb127a3e74056f8dcd9b479222f
+
 - egg: numpy
   arm64_url: https://files.pythonhosted.org/packages/2a/17/1fdc154e75d24d8c20c42b71bae1b5cf752453f0fc3a2504bbb810293dd1/numpy-1.26.2-cp312-cp312-macosx_11_0_arm64.whl
   arm64_sha256: 5d5244aabd6ed7f312268b9247be47343a654ebea52a60f002dc70c769048e75
