@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from itaxotools.common.bindings import Instance, Property
@@ -8,7 +9,7 @@ from . import process, title
 
 
 class Model(BlastTaskModel):
-    task_name = title
+    task_name = title.replace(" ", "_")
 
     input = Property(BatchQueryModel, Instance)
     output_path = Property(Path, Path())
@@ -23,7 +24,9 @@ class Model(BlastTaskModel):
         self.input.set_globs(["fa", "fas", "fasta"])
 
         self.binder.bind(self.input.properties.parent_path, self.properties.output_path)
-        self.binder.bind(self.input.properties.query_path, self.properties.database_name, lambda x: x.stem)
+        self.binder.bind(
+            self.input.properties.query_path, self.properties.database_name, lambda x: x.stem.replace(" ", "_")
+        )
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
@@ -49,9 +52,13 @@ class Model(BlastTaskModel):
 
     def start(self):
         super().start()
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        work_dir = self.temporary_path / timestamp
+        work_dir.mkdir()
 
         self.exec(
             process.execute,
+            work_dir=work_dir,
             input_paths=self.input.get_all_paths(),
             output_path=self.output_path,
             type=self.database_type,

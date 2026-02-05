@@ -118,7 +118,9 @@ def get_blast_version() -> str | None:
         raise Exception("Version number not found in output!")
 
 
-def execute_blast_command(args: list[str]):
+def execute_blast_command(args: list[str], debug=False):
+    if debug:
+        print("Executing BLAST+ with args: ", args)
     kwargs = {}
     blast_env = get_blast_env()
     if platform.system() == "Windows":

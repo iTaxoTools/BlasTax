@@ -44,7 +44,7 @@ class NameSelector(Card):
         self.controls.field = field
 
     def draw_warning(self):
-        warning = "WARNING:  For best results in downstream analysis, use short database names (10-20 characters) without special characters."
+        warning = "WARNING:  For best results in downstream analysis, use short database names (10-20 characters) without spaces or special characters."
         label = LongLabel(warning)
         self.addWidget(label)
 

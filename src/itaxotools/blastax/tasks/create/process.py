@@ -1,9 +1,15 @@
+import shutil
 from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 from typing import Literal
 
 from ..common.types import BatchResults
+
+
+class IdentityDict(dict):
+    def __missing__(self, key):
+        return key
 
 
 def initialize():
@@ -15,6 +21,7 @@ def initialize():
 
 
 def execute(
+    work_dir: Path,
     input_paths: list[Path],
     output_path: Path,
     type: Literal["nucl", "prot"],
@@ -39,22 +46,29 @@ def execute(
 
     ts = perf_counter()
 
-    for i, (path, target) in enumerate(zip(input_paths, target_paths)):
-        progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
-        try:
-            execute_single(
-                input_path=path,
-                output_path=output_path,
-                type=type,
-                name=name if total == 1 else path.stem,
-            )
-        except Exception as e:
-            if total == 1:
-                raise e
-            error_log_path = output_path / get_error_filename(path)
-            with open(error_log_path, "w") as f:
-                print_exc(file=f)
-            failed.append(path)
+    try:
+        staged_paths = stage_paths(input_paths, output_path, work_dir)
+        for k, v in staged_paths.items():
+            print(f"Staged {repr(k)} as {repr(v)}")
+
+        for i, (path, target) in enumerate(zip(input_paths, target_paths)):
+            progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
+            try:
+                execute_single(
+                    input_path=staged_paths[path],
+                    output_path=staged_paths[output_path],
+                    type=type,
+                    name=name if total == 1 else path.stem,
+                )
+            except Exception as e:
+                if total == 1:
+                    raise e
+                error_log_path = output_path / get_error_filename(path)
+                with open(error_log_path, "w") as f:
+                    print_exc(file=f)
+                failed.append(path)
+    finally:
+        unstage_paths(output_path, work_dir)
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -88,9 +102,36 @@ def execute_single(
         type=type,
         name=name,
         version=4,
+        debug=True,
     )
 
 
 def get_target_path(input_path: Path, output_path: Path, type: Literal["nucl", "prot"]) -> Path:
     suffix = {"nucl": ".nin", "prot": ".pin"}[type]
     return output_path / input_path.with_suffix(suffix).name
+
+
+def stage_paths(input_paths: list[Path], output_path: Path, work_dir: Path) -> dict[Path, Path]:
+    staged_paths: dict[Path, Path] = IdentityDict()
+    input_dir = work_dir / "input"
+    output_dir = work_dir / "output"
+    input_dir.mkdir()
+    output_dir.mkdir()
+    for path in input_paths:
+        if not str(path).isascii() or " " in str(path):
+            staged_paths[path] = input_dir / path.name.replace(" ", "_")
+            shutil.copy(path, staged_paths[path])
+    if not str(output_path).isascii() or " " in str(path):
+        staged_paths[output_path] = output_dir
+
+    return staged_paths
+
+
+def unstage_paths(output_path: Path, work_dir: Path):
+    input_dir = work_dir / "input"
+    output_dir = work_dir / "output"
+    for item in input_dir.iterdir():
+        item.unlink()
+    input_dir.rmdir()
+    shutil.copytree(output_dir, output_path, dirs_exist_ok=True)
+    shutil.rmtree(output_dir)

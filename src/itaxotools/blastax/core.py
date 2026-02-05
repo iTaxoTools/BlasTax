@@ -18,6 +18,7 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
     version: Literal[4, 5] = 4,
+    debug: bool = False,
 ):
     output_pattern = Path(output_path) / name
     args = [
@@ -34,7 +35,7 @@ def make_database(
         "-blastdb_version",
         str(version),
     ]
-    execute_blast_command(args)
+    execute_blast_command(args, debug=debug)
 
 
 def run_blast(
@@ -46,13 +47,14 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
+    debug: bool = False,
 ):
     command = (
         f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
-    execute_blast_command(args)
+    execute_blast_command(args, debug=debug)
 
 
 def run_blast_align(
