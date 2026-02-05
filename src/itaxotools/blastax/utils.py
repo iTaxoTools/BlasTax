@@ -362,3 +362,7 @@ def string_trimmer(
         new_komm = nk
 
     return new_komm
+
+
+def make_str_blast_safe(text: str) -> str:
+    return text.encode("ascii", "replace").decode().translate(str.maketrans("? ", "__"))

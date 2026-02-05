@@ -1,9 +1,9 @@
-import shutil
 from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 from typing import Literal
 
+from ..common.process import stage_paths, unstage_paths
 from ..common.types import BatchResults
 
 
@@ -109,29 +109,3 @@ def execute_single(
 def get_target_path(input_path: Path, output_path: Path, type: Literal["nucl", "prot"]) -> Path:
     suffix = {"nucl": ".nin", "prot": ".pin"}[type]
     return output_path / input_path.with_suffix(suffix).name
-
-
-def stage_paths(input_paths: list[Path], output_path: Path, work_dir: Path) -> dict[Path, Path]:
-    staged_paths: dict[Path, Path] = IdentityDict()
-    input_dir = work_dir / "input"
-    output_dir = work_dir / "output"
-    input_dir.mkdir()
-    output_dir.mkdir()
-    for path in input_paths:
-        if not str(path).isascii() or " " in str(path):
-            staged_paths[path] = input_dir / path.name.replace(" ", "_")
-            shutil.copy(path, staged_paths[path])
-    if not str(output_path).isascii() or " " in str(path):
-        staged_paths[output_path] = output_dir
-
-    return staged_paths
-
-
-def unstage_paths(output_path: Path, work_dir: Path):
-    input_dir = work_dir / "input"
-    output_dir = work_dir / "output"
-    for item in input_dir.iterdir():
-        item.unlink()
-    input_dir.rmdir()
-    shutil.copytree(output_dir, output_path, dirs_exist_ok=True)
-    shutil.rmtree(output_dir)

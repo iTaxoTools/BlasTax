@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+from itaxotools.blastax.utils import make_str_blast_safe
 from itaxotools.common.bindings import Instance, Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
@@ -25,7 +26,7 @@ class Model(BlastTaskModel):
 
         self.binder.bind(self.input.properties.parent_path, self.properties.output_path)
         self.binder.bind(
-            self.input.properties.query_path, self.properties.database_name, lambda x: x.stem.replace(" ", "_")
+            self.input.properties.query_path, self.properties.database_name, lambda x: make_str_blast_safe(x.stem)
         )
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
