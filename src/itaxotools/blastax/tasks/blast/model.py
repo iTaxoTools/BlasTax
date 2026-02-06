@@ -12,7 +12,7 @@ from . import process, title
 
 
 class Model(BlastTaskModel):
-    task_name = title
+    task_name = title.replace(" ", "_")
 
     input_query_path = Property(Path, Path())
     input_database_path = Property(Path, Path())

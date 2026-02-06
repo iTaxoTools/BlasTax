@@ -46,11 +46,11 @@ def execute(
 
     ts = perf_counter()
 
-    try:
-        staged_paths = stage_paths(input_paths, output_path, work_dir)
-        for k, v in staged_paths.items():
-            print(f"Staged {repr(k)} as {repr(v)}")
+    staged_paths = stage_paths(work_dir, input_paths, [output_path])
+    for k, v in staged_paths.items():
+        print(f"Staged {repr(k)} as {repr(v)}")
 
+    try:
         for i, (path, target) in enumerate(zip(input_paths, target_paths)):
             progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
             try:
@@ -58,7 +58,7 @@ def execute(
                     input_path=staged_paths[path],
                     output_path=staged_paths[output_path],
                     type=type,
-                    name=name if total == 1 else path.stem,
+                    name=name if total == 1 else staged_paths[path].stem,
                 )
             except Exception as e:
                 if total == 1:
@@ -68,7 +68,7 @@ def execute(
                     print_exc(file=f)
                 failed.append(path)
     finally:
-        unstage_paths(output_path, work_dir)
+        unstage_paths(work_dir, staged_paths, output_path)
 
     progress_handler("Done processing files.", total, 0, total)
 

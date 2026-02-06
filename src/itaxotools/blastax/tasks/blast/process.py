@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
+from ..common.process import stage_paths, unstage_paths
 from ..common.types import Results
 
 
@@ -78,16 +79,24 @@ def execute(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    run_blast(
-        blast_binary=blast_method,
-        query_path=input_query_path_no_gaps,
-        database_path=input_database_path,
-        output_path=blast_output_path,
-        evalue=blast_evalue,
-        num_threads=blast_num_threads,
-        outfmt=f"{blast_outfmt} {blast_outfmt_options}",
-        other=blast_extra_args,
-    )
+    staged_paths = stage_paths(work_dir, [input_query_path_no_gaps], [blast_output_path], input_database_path)
+    for k, v in staged_paths.items():
+        print(f"Staged {repr(k)} as {repr(v)}")
+
+    try:
+        run_blast(
+            blast_binary=blast_method,
+            query_path=staged_paths[input_query_path_no_gaps],
+            database_path=staged_paths[input_database_path],
+            output_path=staged_paths[blast_output_path],
+            evalue=blast_evalue,
+            num_threads=blast_num_threads,
+            outfmt=f"{blast_outfmt} {blast_outfmt_options}",
+            other=blast_extra_args,
+            debug=True,
+        )
+    finally:
+        unstage_paths(work_dir, staged_paths, blast_output_path)
 
     tf = perf_counter()
 
