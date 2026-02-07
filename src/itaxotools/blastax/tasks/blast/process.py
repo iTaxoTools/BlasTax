@@ -79,7 +79,7 @@ def execute(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    staged_paths = stage_paths(work_dir, [input_query_path_no_gaps], [blast_output_path], input_database_path)
+    staged_paths = stage_paths(work_dir, [input_query_path_no_gaps], [blast_output_path], [input_database_path])
     for k, v in staged_paths.items():
         print(f"Staged {repr(k)} as {repr(v)}")
 

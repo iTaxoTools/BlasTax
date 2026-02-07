@@ -38,17 +38,19 @@ def execute(
     total = len(input_paths)
     failed: list[Path] = []
 
-    target_paths = [get_target_path(path, output_path, type) for path in input_paths]
+    staged_paths = stage_paths(work_dir, input_paths, [output_path])
+    for k, v in staged_paths.items():
+        print(f"Staged {repr(k)} as {repr(v)}")
+
+    target_paths = [
+        get_target_path(output_path, type, name if total == 1 else staged_paths[path].stem) for path in input_paths
+    ]
 
     if any(path.exists() for path in target_paths):
         if not get_feedback(None):
             abort()
 
     ts = perf_counter()
-
-    staged_paths = stage_paths(work_dir, input_paths, [output_path])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
 
     try:
         for i, (path, target) in enumerate(zip(input_paths, target_paths)):
@@ -106,6 +108,6 @@ def execute_single(
     )
 
 
-def get_target_path(input_path: Path, output_path: Path, type: Literal["nucl", "prot"]) -> Path:
+def get_target_path(output_path: Path, type: Literal["nucl", "prot"], name: str) -> Path:
     suffix = {"nucl": ".nin", "prot": ".pin"}[type]
-    return output_path / input_path.with_suffix(suffix).name
+    return Path(output_path / name).with_suffix(suffix)

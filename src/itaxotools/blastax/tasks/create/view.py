@@ -137,7 +137,6 @@ class View(BlastTaskView):
         self.binder.bind(object.request_confirmation, self.request_confirmation)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
-        self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.cards.input.bind_batch_model(self.binder, object.input)

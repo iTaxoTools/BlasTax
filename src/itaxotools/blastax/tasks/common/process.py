@@ -1,5 +1,7 @@
 import shutil
 from pathlib import Path
+from random import choice
+from string import ascii_letters
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
@@ -33,7 +35,7 @@ def stage_paths(
     work_dir: Path,
     input_paths: list[Path],
     output_paths: list[Path],
-    db_path: Path = None,
+    db_paths: list[Path] = None,
 ) -> dict[Path, Path]:
     staged_paths: dict[Path, Path] = IdentityDict()
     input_dir = work_dir / "input"
@@ -42,20 +44,30 @@ def stage_paths(
     output_dir.mkdir()
     for path in input_paths:
         if not _is_str_safe(str(path)):
-            staged_paths[path] = input_dir / make_str_blast_safe(path.name)
+            staged_path = input_dir / make_str_blast_safe(path.name)
+            while staged_path in staged_paths.values():
+                staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
+            staged_paths[path] = staged_path
             shutil.copy(path, staged_paths[path])
     for path in output_paths:
         if not _is_str_safe(str(path)):
             if path.exists() and path.is_dir():
                 staged_paths[path] = output_dir
             else:
-                staged_paths[path] = output_dir / make_str_blast_safe(path.name)
-    if db_path is not None:
-        if not _is_str_safe(str(db_path)):
-            staged_paths[db_path] = input_dir / make_str_blast_safe(db_path.name)
-            for path in _get_database_paths(db_path):
-                staged_paths[path] = input_dir / make_str_blast_safe(path.name)
-                shutil.copy(path, staged_paths[path])
+                staged_path = output_dir / make_str_blast_safe(path.name)
+                while staged_path in staged_paths.values():
+                    staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
+                staged_paths[path] = staged_path
+    if db_paths is not None:
+        for db_path in db_paths:
+            if not _is_str_safe(str(db_path)):
+                staged_path = input_dir / make_str_blast_safe(db_path.name)
+                while staged_path in staged_paths.values():
+                    staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
+                staged_paths[db_path] = staged_path
+                for path in _get_database_paths(db_path):
+                    staged_paths[path] = Path(input_dir / staged_path.name).with_suffix(path.suffix)
+                    shutil.copy(path, staged_paths[path])
 
     return staged_paths
 

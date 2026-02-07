@@ -274,7 +274,6 @@ class View(BlastTaskView):
         self.binder.bind(object.request_confirmation, self.request_confirmation)
         self.binder.bind(object.progression, self.cards.progress.showProgress)
 
-        self.binder.bind(object.properties.name, self.cards.title.setTitle)
         self.binder.bind(object.properties.busy, self.cards.progress.setVisible)
 
         self.binder.bind(object.properties.input_query_path, self.cards.query.set_path)
