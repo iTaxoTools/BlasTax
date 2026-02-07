@@ -102,7 +102,7 @@ def execute(
         )
         progress_handler("Done.", 1, 0, 1)
     finally:
-        unstage_paths(work_dir, staged_paths, blast_output_path)
+        unstage_paths(work_dir, staged_paths, [blast_output_path])
 
     tf = perf_counter()
 

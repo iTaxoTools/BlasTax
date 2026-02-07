@@ -73,7 +73,7 @@ def execute(
                     print_exc(file=f)
                 failed.append(path)
     finally:
-        unstage_paths(work_dir, staged_paths, output_path)
+        unstage_paths(work_dir, staged_paths, [output_path])
 
     progress_handler("Done processing files.", total, 0, total)
 

@@ -12,7 +12,7 @@ from .types import DecontVariable
 
 
 class Model(BlastTaskModel):
-    task_name = title
+    task_name = title.replace(" ", "_")
 
     input_queries = Property(BatchQueryModel, Instance)
     ingroup_database_path = Property(Path, Path())

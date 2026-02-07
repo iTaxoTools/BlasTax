@@ -466,7 +466,7 @@ def execute_single_database_single_query(
             append_only=append_only,
         )
     finally:
-        unstage_paths(work_dir, staged_paths, blast_output_path, prestaged_paths is None)
+        unstage_paths(work_dir, staged_paths, [blast_output_path], prestaged_paths is None)
 
 
 def get_target_paths(

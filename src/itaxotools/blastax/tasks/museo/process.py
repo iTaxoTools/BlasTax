@@ -3,6 +3,9 @@ from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 
+from itaxotools.blastax.utils import make_str_blast_safe
+
+from ..common.process import stage_paths, unstage_paths
 from ..common.types import BatchResults
 from .types import TargetPaths
 
@@ -76,30 +79,40 @@ def execute(
             abort()
 
     ts = perf_counter()
-    for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
-        progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
-        try:
-            execute_single(
-                work_dir=work_dir,
-                input_query_path=path,
-                input_database_path=input_database_path,
-                blast_output_path=target.blast_output_path,
-                museo_output_path=target.museo_output_path,
-                blast_method=blast_method,
-                blast_evalue=blast_evalue,
-                blast_num_threads=blast_num_threads,
-                blast_outfmt=blast_outfmt,
-                blast_outfmt_options=blast_outfmt_options,
-                pident_threshold=pident_threshold,
-                retrieve_original=retrieve_original,
-                deduplicate=deduplicate,
-            )
-        except Exception as e:
-            if total == 1:
-                raise e
-            with open(target.error_log_path, "w") as f:
-                print_exc(file=f)
-            failed.append(path)
+
+    progress_handler("Staging database", 0, 0, 0)
+    staged_paths = stage_paths(work_dir, [], [], [input_database_path])
+    for k, v in staged_paths.items():
+        print(f"Staged {repr(k)} as {repr(v)}")
+
+    try:
+        for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
+            progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
+            try:
+                execute_single(
+                    work_dir=work_dir,
+                    input_query_path=path,
+                    input_database_path=input_database_path,
+                    blast_output_path=target.blast_output_path,
+                    museo_output_path=target.museo_output_path,
+                    blast_method=blast_method,
+                    blast_evalue=blast_evalue,
+                    blast_num_threads=blast_num_threads,
+                    blast_outfmt=blast_outfmt,
+                    blast_outfmt_options=blast_outfmt_options,
+                    pident_threshold=pident_threshold,
+                    retrieve_original=retrieve_original,
+                    deduplicate=deduplicate,
+                    prestaged_paths=staged_paths,
+                )
+            except Exception as e:
+                if total == 1:
+                    raise e
+                with open(target.error_log_path, "w") as f:
+                    print_exc(file=f)
+                failed.append(path)
+    finally:
+        unstage_paths(work_dir, staged_paths)
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -122,6 +135,7 @@ def execute_single(
     pident_threshold: float,
     retrieve_original: bool,
     deduplicate: bool,
+    prestaged_paths: dict[Path, Path] = None,
 ) -> BatchResults:
     from itaxotools.blastax.core import museoscript, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -131,27 +145,38 @@ def execute_single(
         fastq_to_fasta(input_query_path, target_query_path)
         input_query_path = target_query_path
 
-    input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
+    stem = make_str_blast_safe(input_query_path.stem) + "_no_gaps"
+    input_query_path_no_gaps = work_dir / input_query_path.with_stem(stem).name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    run_blast(
-        blast_binary=blast_method,
-        query_path=input_query_path_no_gaps,
-        database_path=input_database_path,
-        output_path=blast_output_path,
-        evalue=blast_evalue,
-        num_threads=blast_num_threads,
-        outfmt=f"{blast_outfmt} {blast_outfmt_options}",
-        other="",
-    )
+    staged_paths = stage_paths(work_dir, [], [blast_output_path], [input_database_path] if not prestaged_paths else [])
+    for k, v in staged_paths.items():
+        print(f"Staged {repr(k)} as {repr(v)}")
 
-    museoscript(
-        blast_path=blast_output_path,
-        output_path=museo_output_path,
-        original_reads_path=input_query_path_no_gaps if retrieve_original else None,
-        pident_threshold=pident_threshold,
-        deduplicate=deduplicate,
-    )
+    if prestaged_paths:
+        staged_paths |= prestaged_paths
+
+    try:
+        run_blast(
+            blast_binary=blast_method,
+            query_path=input_query_path_no_gaps,
+            database_path=staged_paths[input_database_path],
+            output_path=staged_paths[blast_output_path],
+            evalue=blast_evalue,
+            num_threads=blast_num_threads,
+            outfmt=f"{blast_outfmt} {blast_outfmt_options}",
+            other="",
+        )
+
+        museoscript(
+            blast_path=staged_paths[blast_output_path],
+            output_path=museo_output_path,
+            original_reads_path=input_query_path_no_gaps if retrieve_original else None,
+            pident_threshold=pident_threshold,
+            deduplicate=deduplicate,
+        )
+    finally:
+        unstage_paths(work_dir, staged_paths, [blast_output_path], prestaged_paths is None)
 
 
 def get_target_paths(

@@ -182,7 +182,7 @@ def execute_single(
             user_spec_name=specified_identifier,
         )
     finally:
-        unstage_paths(work_dir, staged_paths, blast_output_path, prestaged_paths is None)
+        unstage_paths(work_dir, staged_paths, [blast_output_path], prestaged_paths is None)
 
 
 def get_target_paths(
