@@ -2,6 +2,8 @@ from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
+from itaxotools.blastax.utils import make_str_blast_safe
+
 from ..common.process import stage_paths, unstage_paths
 from ..common.types import Results
 
@@ -28,7 +30,7 @@ def execute(
     append_timestamp: bool,
     append_configuration: bool,
 ) -> Results:
-    from itaxotools import abort, get_feedback
+    from itaxotools import abort, get_feedback, progress_handler
     from itaxotools.blastax.core import get_blast_filename, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
@@ -76,14 +78,17 @@ def execute(
         fastq_to_fasta(input_query_path, target_query_path)
         input_query_path = target_query_path
 
-    input_query_path_no_gaps = work_dir / input_query_path.with_stem(input_query_path.stem + "_no_gaps").name
+    stem = make_str_blast_safe(input_query_path.stem) + "_no_gaps"
+    input_query_path_no_gaps = work_dir / input_query_path.with_stem(stem).name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    staged_paths = stage_paths(work_dir, [input_query_path_no_gaps], [blast_output_path], [input_database_path])
+    progress_handler("Staging files", 0, 0, 0)
+    staged_paths = stage_paths(work_dir, [], [blast_output_path], [input_database_path])
     for k, v in staged_paths.items():
         print(f"Staged {repr(k)} as {repr(v)}")
 
     try:
+        progress_handler("Running BLAST+", 0, 0, 0)
         run_blast(
             blast_binary=blast_method,
             query_path=staged_paths[input_query_path_no_gaps],
@@ -95,6 +100,7 @@ def execute(
             other=blast_extra_args,
             debug=True,
         )
+        progress_handler("Done.", 1, 0, 1)
     finally:
         unstage_paths(work_dir, staged_paths, blast_output_path)
 
