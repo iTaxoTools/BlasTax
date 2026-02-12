@@ -39,6 +39,9 @@ def execute(
     failed: list[Path] = []
 
     staged_paths = stage_paths(work_dir, input_paths, [output_path], dry=True)
+    if staged_paths:
+        if not get_feedback("STAGE"):
+            abort()
 
     target_paths = [
         get_target_path(output_path, type, name if total == 1 else staged_paths[path].stem) for path in input_paths
@@ -52,6 +55,7 @@ def execute(
 
     progress_handler("Staging files", 0, 0, 0)
     staged_paths = stage_paths(work_dir, input_paths, [output_path])
+
     for k, v in staged_paths.items():
         print(f"Staged {repr(k)} as {repr(v)}")
 

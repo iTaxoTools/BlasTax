@@ -111,17 +111,19 @@ class BlastTaskView(ScrollTaskView):
                 url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
                 QtGui.QDesktopServices.openUrl(url)
 
-    def request_confirmation(self, path: Path | None, callback, abort):
+    def request_confirmation(self, data: Path | str | None, callback, abort):
         msgBox = QtWidgets.QMessageBox(self.window())
         msgBox.setWindowTitle(f"{app.config.title} - Warning")
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msgBox.setDefaultButton(QtWidgets.QMessageBox.Cancel)
 
-        if path is None:
+        if data is None:
             text = "Some files already exist. Overwrite?"
+        elif data == "STAGE":
+            text = "Some files are in non-ASCII directories and need to be copied to a temporary directory before processing. This may significantly slow down processing of large files. Continue?"
         else:
-            name = path.name
+            name = data.name
             if len(name) > 42:
                 name = name[:31] + "..." + name[-11:]
             text = f"File '{name}' already exists. Overwrite?"
