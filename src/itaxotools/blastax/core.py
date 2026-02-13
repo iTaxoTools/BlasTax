@@ -18,6 +18,7 @@ def make_database(
     type: Literal["nucl", "prot"],
     name: str,
     version: Literal[4, 5] = 4,
+    taxid_map_path: str | None = None,
     debug: bool = False,
 ):
     output_pattern = Path(output_path) / name
@@ -35,6 +36,12 @@ def make_database(
         "-blastdb_version",
         str(version),
     ]
+    if taxid_map_path:
+        args += [
+            "-taxid_map",
+            taxid_map_path,
+        ]
+
     execute_blast_command(args, debug=debug)
 
 

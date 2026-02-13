@@ -16,6 +16,8 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
     database_type = Property(str, "nucl")
     database_name = Property(str, "")
+    parse_ids = Property(bool, False)
+    taxid_map_path = Property(Path, Path())
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -36,6 +38,8 @@ class Model(BlastTaskModel):
             self.input.properties.batch_mode,
             self.properties.output_path,
             self.properties.database_name,
+            self.properties.parse_ids,
+            self.properties.taxid_map_path,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -48,6 +52,8 @@ class Model(BlastTaskModel):
         if self.output_path == Path():
             return False
         if not self.input.batch_mode and not self.database_name:
+            return False
+        if self.parse_ids and self.taxid_map_path == Path():
             return False
         return True
 
@@ -64,6 +70,7 @@ class Model(BlastTaskModel):
             output_path=self.output_path,
             type=self.database_type,
             name=self.database_name,
+            taxid_map_path=self.taxid_map_path if self.parse_ids else Path(),
         )
 
     def open(self, path: Path):

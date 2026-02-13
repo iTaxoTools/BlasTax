@@ -26,19 +26,25 @@ def execute(
     output_path: Path,
     type: Literal["nucl", "prot"],
     name: str,
+    taxid_map_path: Path,
 ) -> BatchResults:
     from itaxotools import abort, get_feedback, progress_handler
     from itaxotools.blastax.core import get_error_filename
+
+    if taxid_map_path == Path() or len(input_paths) > 1:
+        taxid_map_path = None
 
     print(f"{input_paths=}")
     print(f"{output_path=}")
     print(f"{type=}")
     print(f"{name=}")
+    print(f"{taxid_map_path=}")
 
     total = len(input_paths)
     failed: list[Path] = []
 
-    staged_paths = stage_paths(work_dir, input_paths, [output_path], dry=True)
+    taxid_map_paths = [taxid_map_path] if taxid_map_path else []
+    staged_paths = stage_paths(work_dir, input_paths + taxid_map_paths, [output_path], dry=True)
     if staged_paths:
         if not get_feedback("STAGE"):
             abort()
@@ -54,7 +60,7 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging files", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, input_paths, [output_path])
+    staged_paths = stage_paths(work_dir, input_paths + taxid_map_paths, [output_path])
 
     for k, v in staged_paths.items():
         print(f"Staged {repr(k)} as {repr(v)}")
@@ -68,6 +74,7 @@ def execute(
                     output_path=staged_paths[output_path],
                     type=type,
                     name=name if total == 1 else staged_paths[path].stem,
+                    taxid_map_path=staged_paths[taxid_map_path] if taxid_map_path else None,
                 )
             except Exception as e:
                 if total == 1:
@@ -91,6 +98,7 @@ def execute_single(
     output_path: Path,
     type: Literal["nucl", "prot"],
     name: str,
+    taxid_map_path: Path | None = None,
 ):
     from itaxotools.blastax.core import make_database
     from itaxotools.blastax.utils import check_fasta_headers
@@ -111,6 +119,7 @@ def execute_single(
         type=type,
         name=name,
         version=4,
+        taxid_map_path=str(taxid_map_path) if taxid_map_path else None,
         debug=True,
     )
 

@@ -10,7 +10,15 @@ from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 from itaxotools.taxi_gui.view.widgets import GLineEdit, LongLabel, RadioButtonGroup
 
-from ..common.view import BatchProgressCard, BatchQuerySelector, BlastTaskView, GraphicTitleCard, PathDirectorySelector
+from ..common.view import (
+    BatchProgressCard,
+    BatchQuerySelector,
+    BlastTaskView,
+    GraphicTitleCard,
+    OptionCard,
+    PathDirectorySelector,
+)
+from ..common.widgets import ElidedLineEdit
 from . import long_description, pixmap_medium, title
 
 
@@ -100,6 +108,66 @@ class TypeSelector(Card):
         self.controls.type.setValue(type)
 
 
+class ParseIdsCard(OptionCard):
+    selectedPath = QtCore.Signal(Path)
+
+    def __init__(self, title: str):
+        super().__init__(title, "Add taxonomic information to the database using a mapping file.")
+        self.draw_config()
+        self.roll = VerticalRollAnimation(self)
+
+    def draw_config(self):
+        label = QtWidgets.QLabel("TaxID map file:")
+        label.setMinimumWidth(150)
+
+        field = ElidedLineEdit()
+        field.textDeleted.connect(self._handle_text_deleted)
+        field.setPlaceholderText("Tab-separated file mapping sequence IDs to taxonomy IDs (taxid_map)")
+        field.setReadOnly(True)
+
+        browse = QtWidgets.QPushButton("Browse")
+        browse.clicked.connect(self._handle_browse)
+        browse.setFixedWidth(120)
+
+        widget = QtWidgets.QWidget()
+        widget.roll = VerticalRollAnimation(widget)
+        widget.setVisible(False)
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(label)
+        layout.addWidget(field, 1)
+        layout.addWidget(browse)
+        layout.setSpacing(16)
+
+        self.controls.field = field
+        self.controls.options = widget
+
+        self.addWidget(widget)
+
+    def _handle_text_deleted(self):
+        self.selectedPath.emit(Path())
+
+    def _handle_browse(self, *args):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
+
+    def _handle_path_changed(self, name: str):
+        self.identifierChanged.emit(str(name))
+
+    def set_identifier(self, identifier: str):
+        text = identifier or ""
+        self.controls.field.setText(text)
+
+    def set_path(self, path: Path):
+        text = str(path) if path != Path() else ""
+        self.controls.field.setText(text)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -113,6 +181,7 @@ class View(BlastTaskView):
         self.cards.output_path = PathDirectorySelector("\u25C0  Output folder")
         self.cards.database_name = NameSelector("Database name")
         self.cards.database_type = TypeSelector("Database type")
+        self.cards.parse_ids = ParseIdsCard("Include TaxIDs")
 
         self.cards.input.set_placeholder_text("Sequences to go into the new database")
         self.cards.input.set_batch_placeholder_text("Sequences that each go into a new database")
@@ -146,9 +215,20 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.database_name, self.cards.database_name.set_name)
         self.binder.bind(self.cards.database_name.nameChanged, object.properties.database_name)
+
         self.binder.bind(
             object.input.properties.batch_mode, self.cards.database_name.roll.setAnimatedVisible, lambda x: not x
         )
+        self.binder.bind(
+            object.input.properties.batch_mode, self.cards.parse_ids.roll.setAnimatedVisible, lambda x: not x
+        )
+
+        self.binder.bind(object.properties.parse_ids, self.cards.parse_ids.setChecked)
+        self.binder.bind(self.cards.parse_ids.toggled, object.properties.parse_ids)
+        self.binder.bind(self.cards.parse_ids.toggled, self.cards.parse_ids.controls.options.roll.setAnimatedVisible)
+
+        self.binder.bind(object.properties.taxid_map_path, self.cards.parse_ids.set_path)
+        self.binder.bind(self.cards.parse_ids.selectedPath, object.properties.taxid_map_path)
 
         self.binder.bind(object.properties.database_type, self.cards.database_type.set_type)
         self.binder.bind(self.cards.database_type.typeChanged, object.properties.database_type)
