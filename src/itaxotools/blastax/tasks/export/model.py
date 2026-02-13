@@ -1,12 +1,27 @@
+from PySide6 import QtCore
+
 from datetime import datetime
 from pathlib import Path
 
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
+from itaxotools.taxi_gui.threading import ReportDone
 
 from ..common.model import BlastTaskModel
 from ..common.utils import get_database_index_from_path
 from . import process, title
+
+
+class CheckInfoModel(SubtaskModel):
+    has_taxids = QtCore.Signal(object)
+
+    def start(self, work_dir: Path, input_database_path: Path):
+        self.busy = True
+        self.exec(process.check, work_dir, input_database_path)
+
+    def onDone(self, report: ReportDone):
+        self.has_taxids.emit(report.result)
+        self.busy = False
 
 
 class Model(BlastTaskModel):
@@ -15,7 +30,7 @@ class Model(BlastTaskModel):
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
-    has_taxids = Property(bool, False)
+    has_taxids = Property(bool | None, None)
     blast_outfmt = Property(str, ">%a [taxid=%T]\\n%s\\n")
 
     def __init__(self, name=None):
@@ -24,8 +39,10 @@ class Model(BlastTaskModel):
         self.can_save = False
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
-        self.subtask_open = SubtaskModel(self, bind_busy=True)
+        self.subtask_check = CheckInfoModel(self, bind_busy=True)
 
+        self.binder.bind(self.subtask_check.has_taxids, self.properties.has_taxids)
+        self.binder.bind(self.properties.input_database_path, self.properties.has_taxids, lambda x: None)
         self.binder.bind(
             self.properties.input_database_path, self.properties.output_path, lambda x: self._get_output_path(x)
         )
@@ -74,3 +91,13 @@ class Model(BlastTaskModel):
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
             self.input_database_path = db
+
+    def check_taxids(self):
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        work_dir = self.temporary_path / timestamp
+        work_dir.mkdir()
+
+        self.subtask_check.start(
+            work_dir=work_dir,
+            input_database_path=self.input_database_path,
+        )

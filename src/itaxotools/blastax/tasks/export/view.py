@@ -1,4 +1,6 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
+
+from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui.tasks.common.view import ProgressCard
@@ -16,10 +18,49 @@ from ..common.widgets import (
 from . import long_description, pixmap_medium, title
 
 
+class TaxidInfo(Card):
+    check_taxids = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.draw_title()
+
+    def draw_title(self):
+        checkbox = QtWidgets.QCheckBox("")
+        checkbox.setEnabled(False)
+        checkbox.setTristate(True)
+
+        label = QtWidgets.QLabel("Database has TaxID information for each entry?")
+
+        button = QtWidgets.QPushButton("Check")
+        button.clicked.connect(self._handle_check)
+        button.setFixedWidth(120)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(checkbox)
+        layout.addWidget(label, 1)
+        layout.addWidget(button)
+        layout.setSpacing(12)
+        self.addLayout(layout)
+
+        self.controls.checkbox = checkbox
+        self.controls.button = button
+
+    def setChecked(self, checked: bool | None):
+        if checked is None:
+            self.controls.checkbox.setCheckState(QtCore.Qt.PartiallyChecked)
+        else:
+            self.controls.checkbox.setChecked(checked)
+
+    def _handle_check(self):
+        self.check_taxids.emit()
+
+
 class OutfmtSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
-        label = QtWidgets.QLabel("Output format:")
+        label = QtWidgets.QLabel("Export template:")
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
@@ -46,6 +87,7 @@ class View(BlastTaskView):
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.outfmt = OutfmtSelector()
+        self.cards.info = TaxidInfo()
 
         self.cards.database.set_placeholder_text("Database to be processed")
         self.cards.output.set_placeholder_text("Exported sequence file")
@@ -75,6 +117,12 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
+
+        self.binder.bind(object.properties.has_taxids, self.cards.info.setChecked)
+        self.binder.bind(self.cards.info.check_taxids, object.check_taxids)
+        self.binder.bind(
+            object.properties.input_database_path, self.cards.info.controls.button.setEnabled, lambda x: x != Path()
+        )
 
         self.cards.outfmt.controls.outfmt.bind_property(object.properties.blast_outfmt, default_placeholder=True)
 
