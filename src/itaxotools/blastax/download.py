@@ -15,6 +15,7 @@ BLAST_URL = "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/"
 
 REQUIRED_BLAST_BINARIES = [
     "makeblastdb",
+    "blastdbcmd",
     "blastn",
     "blastp",
     "blastx",

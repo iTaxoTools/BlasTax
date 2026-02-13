@@ -133,9 +133,10 @@ def execute_blast_command(args: list[str], debug=False):
         **kwargs,
     )
     p.wait()
-    _, stderr = p.communicate()
+    stdout, stderr = p.communicate()
     if p.returncode != 0:
         binary = Path(args[0]).stem
         lines = stderr.decode("utf-8").strip().splitlines()
         error = lines[-1] if lines else "silently"
         raise Exception(f"{binary} failed: {error}")
+    return stdout

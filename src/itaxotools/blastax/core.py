@@ -42,7 +42,27 @@ def make_database(
             taxid_map_path,
         ]
 
-    execute_blast_command(args, debug=debug)
+    return execute_blast_command(args, debug=debug)
+
+
+def run_blast_export(
+    database_path: str,
+    output_path: str,
+    outfmt: str = ">%a\n%s\n",
+    debug: bool = False,
+):
+    args = [
+        get_blast_binary("blastdbcmd"),
+        "-db",
+        database_path,
+        "-entry",
+        "all",
+        "-outfmt",
+        outfmt,
+        "-out",
+        output_path,
+    ]
+    return execute_blast_command(args, debug=debug)
 
 
 def run_blast(
@@ -61,7 +81,7 @@ def run_blast(
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
-    execute_blast_command(args, debug=debug)
+    return execute_blast_command(args, debug=debug)
 
 
 def run_blast_align(

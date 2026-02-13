@@ -80,10 +80,11 @@ def unstage_paths(work_dir: Path, staged_paths: dict[Path, Path], output_paths: 
     output_dir = work_dir / "output"
     if output_paths is not None:
         for output_path in output_paths:
-            if staged_paths[output_path].is_file():
-                shutil.copy(staged_paths[output_path], output_path)
-            else:
-                shutil.copytree(output_dir, output_path, dirs_exist_ok=True)
+            if output_path != staged_paths[output_path]:
+                if staged_paths[output_path].is_file():
+                    shutil.copy(staged_paths[output_path], output_path)
+                else:
+                    shutil.copytree(output_dir, output_path, dirs_exist_ok=True)
     if clear:
         shutil.rmtree(output_dir)
         shutil.rmtree(input_dir)

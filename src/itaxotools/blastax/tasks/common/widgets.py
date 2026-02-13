@@ -339,6 +339,11 @@ class ConsolePropertyLineEdit(BasePropertyLineEdit):
         self.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
         self.setStyleSheet("GLineEdit { padding: 2px; padding-top: 4px;} ")
 
+    def bind_property(self, property: PropertyRef, default_placeholder=False):
+        super().bind_property(property)
+        if default_placeholder:
+            self.setPlaceholderText(self.proxy_in(property.default))
+
 
 class PropertyLineEdit(BasePropertyLineEdit):
     def bind_property(self, property: PropertyRef):

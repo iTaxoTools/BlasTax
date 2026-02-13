@@ -21,7 +21,7 @@ class BlastTaskModel(TaskModel):
         self.binder.bind(self.query, self.onQuery)
 
     def onDone(self, report: ReportDone):
-        self.report_results.emit(self.task_name, report.result)
+        self.report_results.emit(self.task_name.replace("_", " "), report.result)
         self.busy = False
 
     def onQuery(self, query: DataQuery):
