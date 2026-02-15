@@ -1,0 +1,103 @@
+import multiprocessing
+from datetime import datetime
+from pathlib import Path
+
+from itaxotools.common.bindings import Instance, Property
+from itaxotools.taxi_gui.model.tasks import SubtaskModel
+
+from ..common.model import BatchDatabaseModel, BatchQueryModel, BlastTaskModel
+from ..common.types import BlastMethod
+from ..common.utils import get_database_index_from_path
+from . import process, title
+
+
+class Model(BlastTaskModel):
+    task_name = title.replace(" ", "_")
+
+    input_queries = Property(BatchQueryModel, Instance)
+    input_databases = Property(BatchDatabaseModel, Instance)
+    output_path = Property(Path, Path())
+
+    blast_method = Property(BlastMethod, BlastMethod.blastn)
+    blast_evalue = Property(float, 1e-5)
+    blast_num_threads = Property(int, 1)
+    blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid staxids sscinames"')
+
+    use_taxdb = Property(bool, False)
+    blast_taxdb_path = Property(Path, Path())
+
+    append_timestamp = Property(bool, False)
+    append_configuration = Property(bool, True)
+
+    def __init__(self, name=None):
+        super().__init__(name)
+        self.can_open = True
+        self.can_save = False
+
+        self._update_num_threads_default()
+
+        self.binder.bind(self.input_queries.properties.parent_path, self.properties.output_path)
+
+        self.subtask_init = SubtaskModel(self, bind_busy=False)
+
+        for handle in [
+            self.input_queries.properties.ready,
+            self.input_databases.properties.ready,
+            self.input_queries.properties.batch_mode,
+            self.input_databases.properties.batch_mode,
+            self.properties.output_path,
+            self.properties.blast_method,
+            self.properties.use_taxdb,
+            self.properties.blast_taxdb_path,
+        ]:
+            self.binder.bind(handle, self.checkReady)
+        self.checkReady()
+
+        self.subtask_init.start(process.initialize)
+
+    def isReady(self):
+        if self.input_queries.batch_mode:
+            return False
+        if self.input_databases.batch_mode:
+            return False
+        if not self.input_queries.ready:
+            return False
+        if not self.input_databases.ready:
+            return False
+        if self.output_path == Path():
+            return False
+        if self.use_taxdb and self.blast_taxdb_path == Path():
+            return False
+        return True
+
+    def start(self):
+        super().start()
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        work_dir = self.temporary_path / timestamp
+        work_dir.mkdir()
+
+        self.exec(
+            process.execute,
+            work_dir=work_dir,
+            input_query_paths=self.input_queries.get_all_paths(),
+            input_database_paths=self.input_databases.get_all_paths(),
+            output_path=self.output_path,
+            blast_method=self.blast_method.executable,
+            blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
+            blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            blast_taxdb_path=self.blast_taxdb_path if self.use_taxdb else None,
+            append_timestamp=self.append_timestamp,
+            append_configuration=self.append_configuration,
+        )
+
+    def _update_num_threads_default(self):
+        cpus = multiprocessing.cpu_count()
+        property = self.properties.blast_num_threads
+        setattr(property._parent, Property.key_default(property._key), cpus)
+        property.set(cpus)
+
+    def open(self, path: Path):
+        if db := get_database_index_from_path(path):
+            self.input_databases.open(db)
+        else:
+            self.input_queries.open(path)

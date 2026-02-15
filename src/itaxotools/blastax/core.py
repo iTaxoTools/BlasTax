@@ -77,6 +77,7 @@ def run_blast(
     num_threads: int,
     outfmt: str,
     other: str,
+    blastdb_path: Path | str | None = None,
     debug: bool = False,
 ):
     command = (
@@ -84,7 +85,7 @@ def run_blast(
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
-    return execute_blast_command(args, debug=debug)
+    return execute_blast_command(args, blastdb_path=blastdb_path, debug=debug)
 
 
 def run_blast_align(
@@ -447,6 +448,14 @@ def museoscript(
                 museo_file.write(Sequence(header, sequence))
 
 
+def assign_taxonomy(
+    query_path: Path | str,
+    blast_path: Path | str,
+    output_path: Path | str,
+):
+    pass
+
+
 def _get_decont_hits_dict(
     path: Path | str,
     column: int,
@@ -569,6 +578,20 @@ def get_append_filename(
         input_path=input_path,
         suffix=".fasta",
         description="with_blast_matches",
+        timestamp=timestamp,
+        **kwargs,
+    )
+
+
+def get_taxo_filename(
+    input_path: Path,
+    timestamp: datetime | None = None,
+    **kwargs,
+) -> str:
+    return get_output_filename(
+        input_path=input_path,
+        suffix=".fasta",
+        description="with_organism_names",
         timestamp=timestamp,
         **kwargs,
     )

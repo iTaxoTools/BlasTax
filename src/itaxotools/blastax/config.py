@@ -17,6 +17,7 @@ from .tasks import (
     prepare,
     removal,
     scafos,
+    taxo,
     translator,
     trim,
 )
@@ -35,7 +36,7 @@ tasks = [
     [create, blast],
     [append, appendx],
     [decont, museo],
-    [export],
+    [taxo, export],
     ["FASTA preparation", 2],
     [prepare, fastsplit],
     [fastmerge, groupmerge],

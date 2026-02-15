@@ -48,6 +48,13 @@ def get_blast_env() -> dict:
     return env
 
 
+def set_blastdb_path(env: dict, path: Path | None) -> dict:
+    if path is None:
+        return env
+    env["BLASTDB"] = str(path)
+    return env
+
+
 def check_binaries_in_path() -> bool:
     blast_env = get_blast_env()
     path = blast_env["PATH"]
@@ -118,11 +125,12 @@ def get_blast_version() -> str | None:
         raise Exception("Version number not found in output!")
 
 
-def execute_blast_command(args: list[str], debug=False):
+def execute_blast_command(args: list[str], blastdb_path: Path | str | None = None, debug=False):
     if debug:
         print("Executing BLAST+ with args: ", args)
     kwargs = {}
     blast_env = get_blast_env()
+    blast_env = set_blastdb_path(blast_env, blastdb_path)
     if platform.system() == "Windows":
         kwargs = dict(creationflags=subprocess.CREATE_NO_WINDOW)
     p = subprocess.Popen(
