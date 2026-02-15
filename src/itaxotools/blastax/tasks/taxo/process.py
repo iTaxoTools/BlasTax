@@ -11,7 +11,7 @@ from ..common.process import stage_paths, unstage_paths
 from ..common.types import BatchResults, DoubleBatchResults
 from .types import TargetPaths, TargetXPaths
 
-BLAST_OUTFMT_OPTIONS = "length pident qseqid sseqid staxids sscinames"
+BLAST_OUTFMT_OPTIONS = "qseqid length pident staxids sscinames"
 
 
 def initialize():

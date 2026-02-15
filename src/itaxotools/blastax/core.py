@@ -453,7 +453,28 @@ def assign_taxonomy(
     blast_path: Path | str,
     output_path: Path | str,
 ):
-    pass
+    lengths: dict[str, int] = defaultdict(lambda: 0)
+    pidents: dict[str, float] = defaultdict(lambda: 0.0)
+    staxids: dict[str, str] = defaultdict(lambda: "N/A")
+    sscinames: dict[str, str] = defaultdict(lambda: "N/A")
+
+    with FileHandler.Tabfile(blast_path) as blast_file:
+        for line in blast_file:
+            query_id = line[0]
+            length = int(line[1])
+            pident = float(line[2])
+            staxid = line[3]
+            ssciname = line[4]
+            if length > lengths[query_id] and pident > pidents[query_id]:
+                staxids[query_id] = staxid
+                sscinames[query_id] = ssciname
+
+    with SequenceHandler.Fasta(query_path) as query_file:
+        with SequenceHandler.Fasta(output_path, "w", line_width=0) as output_file:
+            for sequence in query_file:
+                seqid = sequence.id
+                new_seqid = f"{seqid} [pident={pidents[seqid]}] [taxid={staxids[seqid]} [organism={sscinames[seqid]}]"
+                output_file.write(Sequence(new_seqid, sequence.seq))
 
 
 def _get_decont_hits_dict(
