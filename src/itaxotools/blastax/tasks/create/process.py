@@ -3,13 +3,8 @@ from time import perf_counter
 from traceback import print_exc
 from typing import Literal
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import BatchResults
-
-
-class IdentityDict(dict):
-    def __missing__(self, key):
-        return key
 
 
 def initialize():
@@ -44,13 +39,16 @@ def execute(
     failed: list[Path] = []
 
     taxid_map_paths = [taxid_map_path] if taxid_map_path else []
-    staged_paths = stage_paths(work_dir, input_paths + taxid_map_paths, [output_path], dry=True)
-    if staged_paths:
+
+    staging = StagingArea(work_dir)
+    staging.add(input_paths=input_paths + taxid_map_paths, output_paths=[output_path])
+
+    if staging.is_needed():
         if not get_feedback("STAGE"):
             abort()
 
     target_paths = [
-        get_target_path(output_path, type, name if total == 1 else staged_paths[path].stem) for path in input_paths
+        get_target_path(output_path, type, name if total == 1 else staging[path].stem) for path in input_paths
     ]
 
     if any(path.exists() for path in target_paths):
@@ -60,21 +58,21 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging files", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, input_paths + taxid_map_paths, [output_path])
+    staging.stage()
 
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    for original, staged in staging.items():
+        print(f"Staged {repr(original)} as {repr(staged)}")
 
-    try:
+    with staging:
         for i, (path, target) in enumerate(zip(input_paths, target_paths)):
             progress_handler(f"Processing file {i+1}/{total}: {path.name}", i, 0, total)
             try:
                 execute_single(
-                    input_path=staged_paths[path],
-                    output_path=staged_paths[output_path],
+                    input_path=staging[path],
+                    output_path=staging[output_path],
                     type=type,
-                    name=name if total == 1 else staged_paths[path].stem,
-                    taxid_map_path=staged_paths[taxid_map_path] if taxid_map_path else None,
+                    name=name if total == 1 else staging[path].stem,
+                    taxid_map_path=staging[taxid_map_path] if taxid_map_path else None,
                 )
             except Exception as e:
                 if total == 1:
@@ -83,8 +81,6 @@ def execute(
                 with open(error_log_path, "w") as f:
                     print_exc(file=f)
                 failed.append(path)
-    finally:
-        unstage_paths(work_dir, staged_paths, [output_path])
 
     progress_handler("Done processing files.", total, 0, total)
 
