@@ -32,6 +32,27 @@ def _get_database_paths(db_path: Path) -> list[Path]:
 
 
 class StagingArea:
+    """Stage files with unsafe paths for BLAST+ subprocess calls.
+
+    Builds a mapping from original paths to safe staged paths. Files are
+    only copied when stage() is called, so the mapping can be inspected
+    beforehand (e.g. to compute output names or check if staging is needed).
+
+    Supports incremental use: call add() and stage() multiple times to
+    stage additional paths without affecting previously staged ones.
+    Call unstage_outputs() between iterations to copy results back without
+    removing the staging directories (useful for batch processing where
+    databases are staged once and reused across multiple queries).
+
+    Use as a context manager for automatic cleanup::
+
+        staging = StagingArea(work_dir)
+        staging.add(input_paths=[query], output_paths=[result])
+        staging.stage()
+        with staging:
+            run_blast(query=staging[query], output=staging[result])
+    """
+
     def __init__(self, work_dir: Path):
         self._work_dir = work_dir
         self._input_dir = work_dir / "input"
@@ -39,6 +60,7 @@ class StagingArea:
         self._map: dict[Path, Path] = {}
         self._taken: set[str] = set()
         self._pending_copies: list[tuple[Path, Path]] = []
+        self._pending_output_dirs: bool = False
         self._output_originals: list[Path] = []
 
     def __getitem__(self, path: Path) -> Path:
@@ -81,6 +103,7 @@ class StagingArea:
             if not path or _is_str_safe(str(path)):
                 continue
             self._output_originals.append(path)
+            self._pending_output_dirs = True
             if path.exists() and path.is_dir():
                 self._map[path] = self._output_dir
             else:
@@ -104,11 +127,16 @@ class StagingArea:
             for src, dst in self._pending_copies:
                 shutil.copy(src, dst)
             self._pending_copies.clear()
-        if self._output_originals:
+        if self._pending_output_dirs:
             self._output_dir.mkdir(exist_ok=True)
+            self._pending_output_dirs = False
 
     def unstage_outputs(self) -> None:
-        """Copy staged outputs back to their original locations."""
+        """Copy staged outputs back to their original locations.
+
+        Clears the output tracking so that new outputs can be added
+        and unstaged independently in subsequent iterations.
+        """
         for path in self._output_originals:
             staged = self._map.get(path)
             if staged and staged != path:

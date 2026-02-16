@@ -81,7 +81,7 @@ def run_blast(
     debug: bool = False,
 ):
     command = (
-        f"{get_blast_binary(blast_binary)} -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
+        f"'{get_blast_binary(blast_binary)}' -query '{str(query_path)}' -db '{str(database_path)}' -out '{str(output_path)}' "
         f"-evalue {evalue} -num_threads {num_threads} -outfmt '{outfmt}' {other}"
     )
     args = command_to_args(command)
