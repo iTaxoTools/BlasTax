@@ -43,7 +43,7 @@ def execute(
     staging = StagingArea(work_dir)
     staging.add(input_paths=input_paths + taxid_map_paths, output_paths=[output_path])
 
-    if staging.is_needed():
+    if staging.requires_copy():
         if not get_feedback("STAGE"):
             abort()
 

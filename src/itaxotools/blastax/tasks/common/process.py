@@ -1,3 +1,5 @@
+import os
+import platform
 import shutil
 from pathlib import Path
 from random import choice
@@ -53,6 +55,10 @@ class StagingArea:
             run_blast(query=staging[query], output=staging[result])
     """
 
+    # Symlinks require elevated privileges or Developer Mode on Windows,
+    # which most regular users don't have. We fall back to copying there.
+    _can_symlink = platform.system() != "Windows"
+
     def __init__(self, work_dir: Path):
         self._work_dir = work_dir
         self._input_dir = work_dir / "input"
@@ -66,8 +72,13 @@ class StagingArea:
     def __getitem__(self, path: Path) -> Path:
         return self._map.get(path, path)
 
-    def is_needed(self) -> bool:
-        return bool(self._map)
+    def requires_copy(self) -> bool:
+        """True if staging will copy files to disk.
+
+        On Linux/macOS, inputs are symlinked (instant, no extra disk use)
+        so no warning is needed. On Windows, files must be copied.
+        """
+        return bool(self._pending_copies) and not self._can_symlink
 
     def items(self):
         return self._map.items()
@@ -121,11 +132,14 @@ class StagingArea:
                 self._pending_copies.append((sidecar, staged_sidecar))
 
     def stage(self) -> None:
-        """Copy pending files to the staging area."""
+        """Stage pending files. Uses symlinks where available, copies otherwise."""
         if self._pending_copies:
             self._input_dir.mkdir(exist_ok=True)
             for src, dst in self._pending_copies:
-                shutil.copy(src, dst)
+                if self._can_symlink:
+                    os.symlink(src.resolve(), dst)
+                else:
+                    shutil.copy(src, dst)
             self._pending_copies.clear()
         if self._pending_output_dirs:
             self._output_dir.mkdir(exist_ok=True)
