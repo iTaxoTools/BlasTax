@@ -6,6 +6,7 @@ from pathlib import Path
 from itaxotools.common.bindings import Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 from itaxotools.taxi_gui.threading import ReportDone
+from itaxotools.taxi_gui.types import Notification
 
 from ..common.model import BlastTaskModel
 from ..common.utils import get_database_index_from_path
@@ -21,6 +22,12 @@ class CheckInfoModel(SubtaskModel):
 
     def onDone(self, report: ReportDone):
         self.has_taxids.emit(report.result)
+        if report.result is None:
+            self.notification.emit(Notification.Warn("Could not read taxonomy IDs from the database."))
+        elif report.result:
+            self.notification.emit(Notification.Info("Database contains taxonomy ID mappings."))
+        else:
+            self.notification.emit(Notification.Warn("Database does not contain taxonomy ID mappings."))
         self.busy = False
 
 

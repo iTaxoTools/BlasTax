@@ -95,7 +95,6 @@ def check(
         return None
 
     for line in output.splitlines():
-        print(">>>", repr(line))
         if not line.strip() or line.strip() == "0":
             return False
 
