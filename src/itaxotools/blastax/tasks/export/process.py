@@ -1,7 +1,7 @@
 from pathlib import Path
 from time import perf_counter
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import Results
 
 
@@ -28,8 +28,9 @@ def execute(
 
     blast_outfmt = blast_outfmt.encode().decode("unicode_escape")
 
-    staged_paths = stage_paths(work_dir, [], [output_path], [input_database_path], dry=True)
-    if staged_paths:
+    staging = StagingArea(work_dir)
+    staging.add(output_paths=[output_path], db_paths=[input_database_path])
+    if staging.requires_copy():
         if not get_feedback("STAGE"):
             abort()
 
@@ -40,22 +41,17 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging files", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [output_path], [input_database_path])
+    staging.stage(verbose=True)
 
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
-
-    try:
+    with staging:
         progress_handler("Running BLAST+", 0, 0, 0)
         run_blast_export(
-            database_path=staged_paths[input_database_path],
-            output_path=staged_paths[output_path],
+            database_path=staging[input_database_path],
+            output_path=staging[output_path],
             outfmt=blast_outfmt,
             debug=True,
         )
         progress_handler("Done.", 1, 0, 1)
-    finally:
-        unstage_paths(work_dir, staged_paths, [output_path])
 
     tf = perf_counter()
 
@@ -73,28 +69,26 @@ def check(
 
     blast_outfmt = "%T"
 
-    staged_paths = stage_paths(work_dir, [], [], [input_database_path], dry=True)
-    if staged_paths:
+    staging = StagingArea(work_dir)
+    staging.add(db_paths=[input_database_path])
+    if staging.requires_copy():
         if not get_feedback("STAGE"):
             abort()
 
     progress_handler("Staging files", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [], [input_database_path])
-
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    staging.stage(verbose=True)
 
     try:
         progress_handler("Running BLAST+", 0, 0, 0)
         output_bytes = run_blast_export(
-            database_path=staged_paths[input_database_path],
+            database_path=staging[input_database_path],
             output_path=None,
             outfmt=blast_outfmt,
             debug=True,
         )
         progress_handler("Done.", 1, 0, 1)
     finally:
-        unstage_paths(work_dir, staged_paths, [])
+        staging.cleanup()
 
     output = output_bytes.decode("utf-8")
     if not output.strip():

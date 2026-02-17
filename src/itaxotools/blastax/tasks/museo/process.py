@@ -5,7 +5,7 @@ from traceback import print_exc
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import BatchResults
 from .types import TargetPaths
 
@@ -74,6 +74,12 @@ def execute(
         get_target_paths(path, output_path, timestamp, blast_options, museo_options) for path in input_query_paths
     ]
 
+    staging = StagingArea(work_dir)
+    staging.add(db_paths=[input_database_path])
+    if staging.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
@@ -81,9 +87,7 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging database", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [], [input_database_path])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    staging.stage(verbose=True)
 
     try:
         for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
@@ -91,6 +95,7 @@ def execute(
             try:
                 execute_single(
                     work_dir=work_dir,
+                    staging=staging,
                     input_query_path=path,
                     input_database_path=input_database_path,
                     blast_output_path=target.blast_output_path,
@@ -103,7 +108,6 @@ def execute(
                     pident_threshold=pident_threshold,
                     retrieve_original=retrieve_original,
                     deduplicate=deduplicate,
-                    prestaged_paths=staged_paths,
                 )
             except Exception as e:
                 if total == 1:
@@ -112,7 +116,7 @@ def execute(
                     print_exc(file=f)
                 failed.append(path)
     finally:
-        unstage_paths(work_dir, staged_paths)
+        staging.cleanup()
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -123,6 +127,7 @@ def execute(
 
 def execute_single(
     work_dir: Path,
+    staging: StagingArea,
     input_query_path: Path,
     input_database_path: Path,
     blast_output_path: Path,
@@ -135,8 +140,7 @@ def execute_single(
     pident_threshold: float,
     retrieve_original: bool,
     deduplicate: bool,
-    prestaged_paths: dict[Path, Path] = None,
-) -> BatchResults:
+):
     from itaxotools.blastax.core import museoscript, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
@@ -149,19 +153,15 @@ def execute_single(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(stem).name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    staged_paths = stage_paths(work_dir, [], [blast_output_path], [input_database_path] if not prestaged_paths else [])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
-
-    if prestaged_paths:
-        staged_paths |= prestaged_paths
+    staging.add(output_paths=[blast_output_path])
+    staging.stage()
 
     try:
         run_blast(
             blast_binary=blast_method,
             query_path=input_query_path_no_gaps,
-            database_path=staged_paths[input_database_path],
-            output_path=staged_paths[blast_output_path],
+            database_path=staging[input_database_path],
+            output_path=staging[blast_output_path],
             evalue=blast_evalue,
             num_threads=blast_num_threads,
             outfmt=f"{blast_outfmt} {blast_outfmt_options}",
@@ -169,14 +169,14 @@ def execute_single(
         )
 
         museoscript(
-            blast_path=staged_paths[blast_output_path],
+            blast_path=staging[blast_output_path],
             output_path=museo_output_path,
             original_reads_path=input_query_path_no_gaps if retrieve_original else None,
             pident_threshold=pident_threshold,
             deduplicate=deduplicate,
         )
     finally:
-        unstage_paths(work_dir, staged_paths, [blast_output_path], prestaged_paths is None)
+        staging.unstage_outputs()
 
 
 def get_target_paths(

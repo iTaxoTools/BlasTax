@@ -148,6 +148,12 @@ def execute_batch_databases_single_query(
         for input_database_path in input_database_paths
     ]
 
+    staging_check = StagingArea(work_dir)
+    staging_check.add(db_paths=input_database_paths)
+    if staging_check.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if appended_output_path.exists() or any(
         (path.exists() for target_paths in target_paths_list for path in target_paths)
     ):
@@ -164,9 +170,7 @@ def execute_batch_databases_single_query(
         staging.add(db_paths=[input_database_path])
 
         progress_handler(f"Staging database {i+1}/{total - 1}", i + 1, 0, total)
-        staging.stage()
-        for original, staged in staging.items():
-            print(f"Staged {repr(original)} as {repr(staged)}")
+        staging.stage(verbose=True)
 
         progress_handler(f"Processing query for database {i+1}/{total - 1}: {input_query_path.name}", i + 1, 0, total)
         try:
@@ -251,6 +255,12 @@ def execute_batch_database_batch_queries(
         for input_database_path in input_database_paths
     }
 
+    staging_check = StagingArea(work_dir)
+    staging_check.add(db_paths=input_database_paths)
+    if staging_check.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any(
         (
             path.exists()
@@ -272,9 +282,7 @@ def execute_batch_database_batch_queries(
         staging.add(db_paths=[input_database_path])
 
         progress_handler(f"Staging database {i+1}/{total - 1}", i + 1, 0, total)
-        staging.stage()
-        for original, staged in staging.items():
-            print(f"Staged {repr(original)} as {repr(staged)}")
+        staging.stage(verbose=True)
 
         try:
             for j, (input_query_path, target) in enumerate(
@@ -363,19 +371,20 @@ def execute_single_database_batch_queries(
         get_target_paths(path, output_path, timestamp, blast_options, match_options) for path in input_query_paths
     ]
 
+    staging = StagingArea(work_dir)
+    staging.add(db_paths=[input_database_path])
+    if staging.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
 
     ts = perf_counter()
 
-    staging = StagingArea(work_dir)
-    staging.add(db_paths=[input_database_path])
-
     progress_handler("Staging database", 0, 0, 0)
-    staging.stage()
-    for original, staged in staging.items():
-        print(f"Staged {repr(original)} as {repr(staged)}")
+    staging.stage(verbose=True)
 
     try:
         for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):

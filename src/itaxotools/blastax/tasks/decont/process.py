@@ -5,7 +5,7 @@ from traceback import print_exc
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import BatchResults
 from .types import TargetPaths
 
@@ -66,6 +66,12 @@ def execute(
         get_target_paths(path, output_path, timestamp, blast_options, decont_options) for path in input_query_paths
     ]
 
+    staging = StagingArea(work_dir)
+    staging.add(db_paths=[ingroup_database_path, outgroup_database_path])
+    if staging.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
@@ -73,9 +79,7 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging database", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [], [ingroup_database_path, outgroup_database_path])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    staging.stage(verbose=True)
 
     try:
         for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
@@ -83,6 +87,7 @@ def execute(
             try:
                 execute_single(
                     work_dir=work_dir,
+                    staging=staging,
                     input_query_path=path,
                     ingroup_database_path=ingroup_database_path,
                     outgroup_database_path=outgroup_database_path,
@@ -94,7 +99,6 @@ def execute(
                     blast_method=blast_method,
                     blast_evalue=blast_evalue,
                     blast_num_threads=blast_num_threads,
-                    prestaged_paths=staged_paths,
                 )
             except Exception as e:
                 if total == 1:
@@ -103,7 +107,7 @@ def execute(
                     print_exc(file=f)
                 failed.append(path)
     finally:
-        unstage_paths(work_dir, staged_paths)
+        staging.cleanup()
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -114,6 +118,7 @@ def execute(
 
 def execute_single(
     work_dir: Path,
+    staging: StagingArea,
     input_query_path: Path,
     ingroup_database_path: Path,
     outgroup_database_path: Path,
@@ -125,7 +130,6 @@ def execute_single(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
-    prestaged_paths: dict[Path, Path] = None,
 ):
     from itaxotools.blastax.core import decontaminate, run_blast_decont
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -139,24 +143,15 @@ def execute_single(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(stem).name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    staged_paths = stage_paths(
-        work_dir,
-        [],
-        [blasted_ingroup_path, blasted_outgroup_path],
-        [ingroup_database_path, outgroup_database_path] if not prestaged_paths else [],
-    )
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
-
-    if prestaged_paths:
-        staged_paths |= prestaged_paths
+    staging.add(output_paths=[blasted_ingroup_path, blasted_outgroup_path])
+    staging.stage()
 
     try:
         run_blast_decont(
             blast_binary=blast_method,
             query_path=input_query_path_no_gaps,
-            database_path=staged_paths[ingroup_database_path],
-            output_path=staged_paths[blasted_ingroup_path],
+            database_path=staging[ingroup_database_path],
+            output_path=staging[blasted_ingroup_path],
             evalue=blast_evalue,
             num_threads=blast_num_threads,
         )
@@ -164,22 +159,22 @@ def execute_single(
         run_blast_decont(
             blast_binary=blast_method,
             query_path=input_query_path_no_gaps,
-            database_path=staged_paths[outgroup_database_path],
-            output_path=staged_paths[blasted_outgroup_path],
+            database_path=staging[outgroup_database_path],
+            output_path=staging[blasted_outgroup_path],
             evalue=blast_evalue,
             num_threads=blast_num_threads,
         )
 
         decontaminate(
             query_path=input_query_path,
-            blasted_ingroup_path=staged_paths[blasted_ingroup_path],
-            blasted_outgroup_path=staged_paths[blasted_outgroup_path],
+            blasted_ingroup_path=staging[blasted_ingroup_path],
+            blasted_outgroup_path=staging[blasted_outgroup_path],
             ingroup_sequences_path=ingroup_sequences_path,
             outgroup_sequences_path=outgroup_sequences_path,
             column=decont_column,
         )
     finally:
-        unstage_paths(work_dir, staged_paths, [blasted_ingroup_path, blasted_outgroup_path], prestaged_paths is None)
+        staging.unstage_outputs()
 
 
 def get_target_paths(

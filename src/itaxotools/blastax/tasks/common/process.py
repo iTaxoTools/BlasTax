@@ -2,15 +2,8 @@ import os
 import platform
 import shutil
 from pathlib import Path
-from random import choice
-from string import ascii_letters
 
 from itaxotools.blastax.utils import make_str_blast_safe
-
-
-class IdentityDict(dict):
-    def __missing__(self, key):
-        return key
 
 
 def _is_str_safe(text: str) -> bool:
@@ -131,15 +124,19 @@ class StagingArea:
                 self._map[sidecar] = staged_sidecar
                 self._pending_copies.append((sidecar, staged_sidecar))
 
-    def stage(self) -> None:
+    def stage(self, verbose: bool = False) -> None:
         """Stage pending files. Uses symlinks where available, copies otherwise."""
         if self._pending_copies:
             self._input_dir.mkdir(exist_ok=True)
             for src, dst in self._pending_copies:
                 if self._can_symlink:
                     os.symlink(src.resolve(), dst)
+                    if verbose:
+                        print(f"Symlinked {src} -> {dst}")
                 else:
                     shutil.copy(src, dst)
+                    if verbose:
+                        print(f"Copied {src} -> {dst}")
             self._pending_copies.clear()
         if self._pending_output_dirs:
             self._output_dir.mkdir(exist_ok=True)
@@ -173,62 +170,3 @@ class StagingArea:
     def __exit__(self, *exc):
         self.unstage_outputs()
         self.cleanup()
-
-
-def stage_paths(
-    work_dir: Path,
-    input_paths: list[Path],
-    output_paths: list[Path],
-    db_paths: list[Path] = None,
-    dry: bool = False,
-) -> dict[Path, Path]:
-    staged_paths: dict[Path, Path] = IdentityDict()
-    input_dir = work_dir / "input"
-    output_dir = work_dir / "output"
-    input_dir.mkdir(exist_ok=True)
-    output_dir.mkdir(exist_ok=True)
-    for path in input_paths:
-        if not _is_str_safe(str(path)):
-            staged_path = input_dir / make_str_blast_safe(path.name)
-            while staged_path in staged_paths.values():
-                staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
-            staged_paths[path] = staged_path
-            if not dry:
-                shutil.copy(path, staged_paths[path])
-    for path in output_paths:
-        if not _is_str_safe(str(path)):
-            if path.exists() and path.is_dir():
-                staged_paths[path] = output_dir
-            else:
-                staged_path = output_dir / make_str_blast_safe(path.name)
-                while staged_path in staged_paths.values():
-                    staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
-                staged_paths[path] = staged_path
-    if db_paths is not None:
-        for db_path in db_paths:
-            if not _is_str_safe(str(db_path)):
-                staged_path = input_dir / make_str_blast_safe(db_path.name)
-                while staged_path in staged_paths.values():
-                    staged_path = staged_path.with_stem(staged_path.stem + choice(ascii_letters))
-                staged_paths[db_path] = staged_path
-                for path in _get_database_paths(db_path):
-                    staged_paths[path] = Path(input_dir / staged_path.name).with_suffix(path.suffix)
-                    if not dry:
-                        shutil.copy(path, staged_paths[path])
-
-    return staged_paths
-
-
-def unstage_paths(work_dir: Path, staged_paths: dict[Path, Path], output_paths: list[Path] = None, clear: bool = True):
-    input_dir = work_dir / "input"
-    output_dir = work_dir / "output"
-    if output_paths is not None:
-        for output_path in output_paths:
-            if output_path != staged_paths[output_path]:
-                if staged_paths[output_path].is_file():
-                    shutil.copy(staged_paths[output_path], output_path)
-                else:
-                    shutil.copytree(output_dir, output_path, dirs_exist_ok=True)
-    if clear:
-        shutil.rmtree(output_dir)
-        shutil.rmtree(input_dir)

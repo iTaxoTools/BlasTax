@@ -4,7 +4,7 @@ from time import perf_counter
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import Results
 
 
@@ -71,6 +71,13 @@ def execute(
         if not get_feedback(blast_output_path):
             abort()
 
+    staging = StagingArea(work_dir)
+    staging.add(output_paths=[blast_output_path], db_paths=[input_database_path])
+
+    if staging.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     ts = perf_counter()
 
     if is_fastq(input_query_path):
@@ -83,17 +90,15 @@ def execute(
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
     progress_handler("Staging files", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [blast_output_path], [input_database_path])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    staging.stage(verbose=True)
 
-    try:
+    with staging:
         progress_handler("Running BLAST+", 0, 0, 0)
         run_blast(
             blast_binary=blast_method,
-            query_path=staged_paths[input_query_path_no_gaps],
-            database_path=staged_paths[input_database_path],
-            output_path=staged_paths[blast_output_path],
+            query_path=staging[input_query_path_no_gaps],
+            database_path=staging[input_database_path],
+            output_path=staging[blast_output_path],
             evalue=blast_evalue,
             num_threads=blast_num_threads,
             outfmt=f"{blast_outfmt} {blast_outfmt_options}",
@@ -101,8 +106,6 @@ def execute(
             debug=True,
         )
         progress_handler("Done.", 1, 0, 1)
-    finally:
-        unstage_paths(work_dir, staged_paths, [blast_output_path])
 
     tf = perf_counter()
 

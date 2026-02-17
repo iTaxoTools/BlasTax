@@ -58,10 +58,7 @@ def execute(
     ts = perf_counter()
 
     progress_handler("Staging files", 0, 0, 0)
-    staging.stage()
-
-    for original, staged in staging.items():
-        print(f"Staged {repr(original)} as {repr(staged)}")
+    staging.stage(verbose=True)
 
     with staging:
         for i, (path, target) in enumerate(zip(input_paths, target_paths)):

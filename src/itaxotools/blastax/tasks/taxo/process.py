@@ -7,7 +7,7 @@ from traceback import print_exc
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
-from ..common.process import stage_paths, unstage_paths
+from ..common.process import StagingArea
 from ..common.types import BatchResults, DoubleBatchResults
 from .types import TargetPaths, TargetXPaths
 
@@ -126,6 +126,12 @@ def execute_batch_databases_single_query(
         for input_database_path in input_database_paths
     ]
 
+    staging_check = StagingArea(work_dir)
+    staging_check.add(db_paths=input_database_paths)
+    if staging_check.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if taxo_output_path.exists() or any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
@@ -136,15 +142,17 @@ def execute_batch_databases_single_query(
     shutil.copyfile(input_query_path, taxo_output_path)
 
     for i, (input_database_path, target) in enumerate(zip(input_database_paths, target_paths_list)):
+        staging = StagingArea(work_dir)
+        staging.add(db_paths=[input_database_path])
+
         progress_handler(f"Staging database {i+1}/{total - 1}", i + 1, 0, total)
-        staged_paths = stage_paths(work_dir, [], [], [input_database_path])
-        for k, v in staged_paths.items():
-            print(f"Staged {repr(k)} as {repr(v)}")
+        staging.stage(verbose=True)
 
         progress_handler(f"Processing query for database {i+1}/{total - 1}: {input_query_path.name}", i + 1, 0, total)
         try:
             execute_single_database_single_query(
                 work_dir=work_dir,
+                staging=staging,
                 input_query_path=input_query_path,
                 input_database_path=input_database_path,
                 blast_output_path=target.blast_output_path,
@@ -155,14 +163,13 @@ def execute_batch_databases_single_query(
                 blast_evalue=blast_evalue,
                 blast_num_threads=blast_num_threads,
                 blast_taxdb_path=blast_taxdb_path,
-                prestaged_paths=staged_paths,
             )
         except Exception:
             with open(target.error_log_path, "w") as f:
                 print_exc(file=f)
             failed.append(input_database_path)
         finally:
-            unstage_paths(work_dir, staged_paths)
+            staging.cleanup()
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -179,6 +186,7 @@ def execute_batch_database_batch_queries(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
+    blast_taxdb_path: Path,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -210,6 +218,12 @@ def execute_batch_database_batch_queries(
         for input_database_path in input_database_paths
     }
 
+    staging_check = StagingArea(work_dir)
+    staging_check.add(db_paths=input_database_paths)
+    if staging_check.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any(
         (
             path.exists()
@@ -227,10 +241,11 @@ def execute_batch_database_batch_queries(
         database_output_path = output_path / input_database_path.name
         database_output_path.mkdir(exist_ok=True)
 
+        staging = StagingArea(work_dir)
+        staging.add(db_paths=[input_database_path])
+
         progress_handler(f"Staging database {i+1}/{total - 1}", i + 1, 0, total)
-        staged_paths = stage_paths(work_dir, [], [], [input_database_path])
-        for k, v in staged_paths.items():
-            print(f"Staged {repr(k)} as {repr(v)}")
+        staging.stage(verbose=True)
 
         try:
             for j, (input_query_path, target) in enumerate(
@@ -245,6 +260,7 @@ def execute_batch_database_batch_queries(
                 try:
                     execute_single_database_single_query(
                         work_dir=work_dir,
+                        staging=staging,
                         input_query_path=input_query_path,
                         input_database_path=input_database_path,
                         blast_output_path=target.blast_output_path,
@@ -254,7 +270,7 @@ def execute_batch_database_batch_queries(
                         blast_outfmt_options=blast_outfmt_options,
                         blast_evalue=blast_evalue,
                         blast_num_threads=blast_num_threads,
-                        prestaged_paths=staged_paths,
+                        blast_taxdb_path=blast_taxdb_path,
                     )
                 except Exception as e:
                     if total == 1:
@@ -263,7 +279,7 @@ def execute_batch_database_batch_queries(
                         print_exc(file=f)
                     failed[input_database_path].append(input_query_path)
         finally:
-            unstage_paths(work_dir, staged_paths)
+            staging.cleanup()
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -306,6 +322,12 @@ def execute_single_database_batch_queries(
         get_target_paths(path, output_path, timestamp, blast_options, match_options) for path in input_query_paths
     ]
 
+    staging = StagingArea(work_dir)
+    staging.add(db_paths=[input_database_path])
+    if staging.requires_copy():
+        if not get_feedback("STAGE"):
+            abort()
+
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(None):
             abort()
@@ -313,9 +335,7 @@ def execute_single_database_batch_queries(
     ts = perf_counter()
 
     progress_handler("Staging database", 0, 0, 0)
-    staged_paths = stage_paths(work_dir, [], [], [input_database_path])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
+    staging.stage(verbose=True)
 
     try:
         for i, (path, target) in enumerate(zip(input_query_paths, target_paths_list)):
@@ -323,6 +343,7 @@ def execute_single_database_batch_queries(
             try:
                 execute_single_database_single_query(
                     work_dir=work_dir,
+                    staging=staging,
                     input_query_path=path,
                     input_database_path=input_database_path,
                     blast_output_path=target.blast_output_path,
@@ -331,9 +352,8 @@ def execute_single_database_batch_queries(
                     blast_outfmt=blast_outfmt,
                     blast_outfmt_options=blast_outfmt_options,
                     blast_evalue=blast_evalue,
-                    blast_taxdb_path=blast_taxdb_path,
                     blast_num_threads=blast_num_threads,
-                    prestaged_paths=staged_paths,
+                    blast_taxdb_path=blast_taxdb_path,
                 )
             except Exception as e:
                 if total == 1:
@@ -342,7 +362,7 @@ def execute_single_database_batch_queries(
                     print_exc(file=f)
                 failed.append(path)
     finally:
-        unstage_paths(work_dir, staged_paths)
+        staging.cleanup()
 
     progress_handler("Done processing files.", total, 0, total)
 
@@ -353,6 +373,7 @@ def execute_single_database_batch_queries(
 
 def execute_single_database_single_query(
     work_dir: Path,
+    staging: StagingArea,
     input_query_path: Path,
     input_database_path: Path,
     blast_output_path: Path,
@@ -363,7 +384,6 @@ def execute_single_database_single_query(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
-    prestaged_paths: dict[Path, Path] = None,
 ):
     from itaxotools.blastax.core import assign_taxonomy, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -377,19 +397,15 @@ def execute_single_database_single_query(
     input_query_path_no_gaps = work_dir / input_query_path.with_stem(stem).name
     remove_gaps(input_query_path, input_query_path_no_gaps)
 
-    staged_paths = stage_paths(work_dir, [], [blast_output_path], [input_database_path] if not prestaged_paths else [])
-    for k, v in staged_paths.items():
-        print(f"Staged {repr(k)} as {repr(v)}")
-
-    if prestaged_paths:
-        staged_paths |= prestaged_paths
+    staging.add(output_paths=[blast_output_path])
+    staging.stage()
 
     try:
         run_blast(
             blast_binary=blast_method,
             query_path=input_query_path_no_gaps,
-            database_path=staged_paths[input_database_path],
-            output_path=staged_paths[blast_output_path],
+            database_path=staging[input_database_path],
+            output_path=staging[blast_output_path],
             evalue=blast_evalue,
             num_threads=blast_num_threads,
             outfmt=f"{blast_outfmt} {blast_outfmt_options}",
@@ -399,12 +415,12 @@ def execute_single_database_single_query(
         )
         assign_taxonomy(
             query_path=input_query_path,
-            blast_path=staged_paths[blast_output_path],
+            blast_path=staging[blast_output_path],
             output_path=taxo_output_path,
         )
 
     finally:
-        unstage_paths(work_dir, staged_paths, [blast_output_path], prestaged_paths is None)
+        staging.unstage_outputs()
 
 
 def get_target_paths(
