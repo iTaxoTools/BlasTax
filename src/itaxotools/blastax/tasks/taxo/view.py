@@ -15,7 +15,7 @@ from ..common.view import (
     GraphicTitleCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
-    TaxDbCard,
+    PathDirectorySelector,
 )
 from ..common.widgets import (
     BlastMethodCombobox,
@@ -111,15 +111,11 @@ class BlastOptionSelector(Card):
 class FilterOptionSelector(Card):
     def __init__(self, parent=None):
         super().__init__(parent)
-        label = QtWidgets.QLabel("Filter options:")
+        label = QtWidgets.QLabel("Assignment threholds:")
         label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(150)
-
-        description = QtWidgets.QLabel("Set minimum thresholds for taxonomy assignment.")
 
         title_layout = QtWidgets.QHBoxLayout()
         title_layout.addWidget(label)
-        title_layout.addWidget(description, 1)
         title_layout.setSpacing(16)
 
         options_layout = QtWidgets.QGridLayout()
@@ -192,13 +188,14 @@ class View(BlastTaskView):
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
+        self.cards.taxdb = PathDirectorySelector("\u25B6  TaxDB (optional)", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.filter_options = FilterOptionSelector(self)
         self.cards.reports = ReportSelector(self)
-        self.cards.taxdb = TaxDbCard(self)
 
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.taxdb.set_placeholder_text("Directory containing taxdb.btd and taxdb.bti (leave empty to skip)")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -240,10 +237,6 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.blast_method, self.cards.blast_options.controls.blast_method.setValue)
         self.binder.bind(self.cards.blast_options.controls.blast_method.valueChanged, object.properties.blast_method)
-
-        self.binder.bind(object.properties.use_taxdb, self.cards.taxdb.setChecked)
-        self.binder.bind(self.cards.taxdb.toggled, object.properties.use_taxdb)
-        self.binder.bind(self.cards.taxdb.toggled, self.cards.taxdb.controls.options.roll.setAnimatedVisible)
 
         self.binder.bind(object.properties.blast_taxdb_path, self.cards.taxdb.set_path)
         self.binder.bind(self.cards.taxdb.selectedPath, object.properties.blast_taxdb_path)

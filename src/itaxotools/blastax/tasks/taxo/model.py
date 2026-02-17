@@ -30,7 +30,6 @@ class Model(BlastTaskModel):
     write_organism_report = Property(bool, True)
     write_blast_headers = Property(bool, True)
 
-    use_taxdb = Property(bool, False)
     blast_taxdb_path = Property(Path, Path())
 
     append_timestamp = Property(bool, False)
@@ -52,8 +51,6 @@ class Model(BlastTaskModel):
             self.properties.input_database_path,
             self.properties.output_path,
             self.properties.blast_method,
-            self.properties.use_taxdb,
-            self.properties.blast_taxdb_path,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -66,8 +63,6 @@ class Model(BlastTaskModel):
         if self.input_database_path == Path():
             return False
         if self.output_path == Path():
-            return False
-        if self.use_taxdb and self.blast_taxdb_path == Path():
             return False
         return True
 
@@ -86,7 +81,7 @@ class Model(BlastTaskModel):
             blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
-            blast_taxdb_path=self.blast_taxdb_path if self.use_taxdb else None,
+            blast_taxdb_path=self.blast_taxdb_path if self.blast_taxdb_path != Path() else None,
             match_pident=self.match_pident,
             match_length=self.match_length,
             write_blast_headers=self.write_blast_headers,

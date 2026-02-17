@@ -10,8 +10,8 @@ from ..common.view import (
     BlastTaskView,
     GraphicTitleCard,
     PathDatabaseSelector,
+    PathDirectorySelector,
     PathFileOutSelector,
-    TaxDbCard,
 )
 from ..common.widgets import (
     ConsolePropertyLineEdit,
@@ -86,13 +86,14 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
+        self.cards.taxdb = PathDirectorySelector("\u25B6  TaxDB (optional)", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.outfmt = OutfmtSelector()
-        self.cards.taxdb = TaxDbCard(self)
         self.cards.info = TaxidInfo()
 
         self.cards.database.set_placeholder_text("Database to be processed")
         self.cards.output.set_placeholder_text("Exported sequence file")
+        self.cards.taxdb.set_placeholder_text("Directory containing taxdb.btd and taxdb.bti (leave empty to skip)")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -125,10 +126,6 @@ class View(BlastTaskView):
         self.binder.bind(
             object.properties.input_database_path, self.cards.info.controls.button.setEnabled, lambda x: x != Path()
         )
-
-        self.binder.bind(object.properties.use_taxdb, self.cards.taxdb.setChecked)
-        self.binder.bind(self.cards.taxdb.toggled, object.properties.use_taxdb)
-        self.binder.bind(self.cards.taxdb.toggled, self.cards.taxdb.controls.options.roll.setAnimatedVisible)
 
         self.binder.bind(object.properties.blast_taxdb_path, self.cards.taxdb.set_path)
         self.binder.bind(self.cards.taxdb.selectedPath, object.properties.blast_taxdb_path)
