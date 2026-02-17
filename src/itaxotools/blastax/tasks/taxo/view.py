@@ -1,10 +1,9 @@
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtWidgets
 
 from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
-from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
 
 from ..common.types import BlastMethod
@@ -13,14 +12,13 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
-    OptionCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
+    TaxDbCard,
 )
 from ..common.widgets import (
     BlastMethodCombobox,
     ConsolePropertyLineEdit,
-    ElidedLineEdit,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
     PidentSpinBox,
@@ -153,66 +151,6 @@ class FilterOptionSelector(Card):
 
         self.addLayout(title_layout)
         self.addLayout(options_layout)
-
-
-class TaxDbCard(OptionCard):
-    selectedPath = QtCore.Signal(Path)
-
-    def __init__(self, parent=None):
-        super().__init__("Use TaxDB", "Retrieve the organism name corresponding to the taxid for each result.")
-        self.draw_config()
-        self.roll = VerticalRollAnimation(self)
-
-    def draw_config(self):
-        label = QtWidgets.QLabel("TaxDB folder:")
-        label.setMinimumWidth(150)
-
-        field = ElidedLineEdit()
-        field.textDeleted.connect(self._handle_text_deleted)
-        field.setPlaceholderText("Local directory containing taxdb.btd and taxdb.bti")
-        field.setReadOnly(True)
-
-        browse = QtWidgets.QPushButton("Browse")
-        browse.clicked.connect(self._handle_browse)
-        browse.setFixedWidth(120)
-
-        widget = QtWidgets.QWidget()
-        widget.roll = VerticalRollAnimation(widget)
-        widget.setVisible(False)
-        layout = QtWidgets.QHBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(label)
-        layout.addWidget(field, 1)
-        layout.addWidget(browse)
-        layout.setSpacing(16)
-
-        self.controls.field = field
-        self.controls.options = widget
-
-        self.addWidget(widget)
-
-    def _handle_text_deleted(self):
-        self.selectedPath.emit(Path())
-
-    def _handle_browse(self, *args):
-        filename = QtWidgets.QFileDialog.getExistingDirectory(
-            parent=self.window(),
-            caption=f"{app.config.title} - Browse file",
-        )
-        if not filename:
-            return
-        self.selectedPath.emit(Path(filename))
-
-    def _handle_path_changed(self, name: str):
-        self.identifierChanged.emit(str(name))
-
-    def set_identifier(self, identifier: str):
-        text = identifier or ""
-        self.controls.field.setText(text)
-
-    def set_path(self, path: Path):
-        text = str(path) if path != Path() else ""
-        self.controls.field.setText(text)
 
 
 class View(BlastTaskView):

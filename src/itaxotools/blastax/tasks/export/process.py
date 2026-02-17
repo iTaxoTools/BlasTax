@@ -18,6 +18,7 @@ def execute(
     input_database_path: Path,
     output_path: Path,
     blast_outfmt: str,
+    blast_taxdb_path: Path,
 ) -> Results:
     from itaxotools import abort, get_feedback, progress_handler
     from itaxotools.blastax.core import run_blast_export
@@ -25,11 +26,12 @@ def execute(
     print(f"{input_database_path=}")
     print(f"{output_path=}")
     print(f"{blast_outfmt=}")
+    print(f"{blast_taxdb_path=}")
 
     blast_outfmt = blast_outfmt.encode().decode("unicode_escape")
 
     staging = StagingArea(work_dir)
-    staging.add(output_paths=[output_path], db_paths=[input_database_path])
+    staging.add(output_paths=[output_path], db_paths=[input_database_path], taxdb_path=blast_taxdb_path)
     if staging.requires_copy():
         if not get_feedback(Confirmation.StagingRequired):
             abort()
@@ -48,6 +50,7 @@ def execute(
         run_blast_export(
             database_path=staging[input_database_path],
             output_path=staging[output_path],
+            blastdb_path=staging[blast_taxdb_path],
             outfmt=blast_outfmt,
             debug=True,
         )

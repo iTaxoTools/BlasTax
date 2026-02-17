@@ -38,7 +38,10 @@ class Model(BlastTaskModel):
     output_path = Property(Path, Path())
 
     has_taxids = Property(bool | None, None)
-    blast_outfmt = Property(str, ">%a [taxid=%T]\\n%s\\n")
+    blast_outfmt = Property(str, ">%a [taxid=%T] [organism=%S]\\n%s\\n")
+
+    use_taxdb = Property(bool, False)
+    blast_taxdb_path = Property(Path, Path())
 
     def __init__(self, name=None):
         super().__init__(name)
@@ -57,6 +60,8 @@ class Model(BlastTaskModel):
         for handle in [
             self.properties.input_database_path,
             self.properties.output_path,
+            self.properties.use_taxdb,
+            self.properties.blast_taxdb_path,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -76,6 +81,8 @@ class Model(BlastTaskModel):
             return False
         if self.output_path == Path():
             return False
+        if self.use_taxdb and self.blast_taxdb_path == Path():
+            return False
         return True
 
     def start(self):
@@ -90,6 +97,7 @@ class Model(BlastTaskModel):
             input_database_path=self.input_database_path,
             output_path=self.output_path,
             blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
+            blast_taxdb_path=self.blast_taxdb_path if self.use_taxdb else None,
         )
 
     def outfmt_restore_defaults(self):

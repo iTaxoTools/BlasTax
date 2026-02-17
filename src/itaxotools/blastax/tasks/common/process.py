@@ -62,7 +62,7 @@ class StagingArea:
         self._pending_output_dirs: bool = False
         self._output_originals: list[Path] = []
 
-    def __getitem__(self, path: Path) -> Path:
+    def __getitem__(self, path: Path | None) -> Path | None:
         return self._map.get(path, path)
 
     def requires_copy(self) -> bool:

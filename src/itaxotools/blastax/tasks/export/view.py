@@ -11,6 +11,7 @@ from ..common.view import (
     GraphicTitleCard,
     PathDatabaseSelector,
     PathFileOutSelector,
+    TaxDbCard,
 )
 from ..common.widgets import (
     ConsolePropertyLineEdit,
@@ -87,6 +88,7 @@ class View(BlastTaskView):
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.outfmt = OutfmtSelector()
+        self.cards.taxdb = TaxDbCard(self)
         self.cards.info = TaxidInfo()
 
         self.cards.database.set_placeholder_text("Database to be processed")
@@ -123,6 +125,13 @@ class View(BlastTaskView):
         self.binder.bind(
             object.properties.input_database_path, self.cards.info.controls.button.setEnabled, lambda x: x != Path()
         )
+
+        self.binder.bind(object.properties.use_taxdb, self.cards.taxdb.setChecked)
+        self.binder.bind(self.cards.taxdb.toggled, object.properties.use_taxdb)
+        self.binder.bind(self.cards.taxdb.toggled, self.cards.taxdb.controls.options.roll.setAnimatedVisible)
+
+        self.binder.bind(object.properties.blast_taxdb_path, self.cards.taxdb.set_path)
+        self.binder.bind(self.cards.taxdb.selectedPath, object.properties.blast_taxdb_path)
 
         self.cards.outfmt.controls.outfmt.bind_property(object.properties.blast_outfmt, default_placeholder=True)
 

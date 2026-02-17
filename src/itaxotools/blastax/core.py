@@ -48,6 +48,7 @@ def make_database(
 def run_blast_export(
     database_path: str,
     output_path: str | None,
+    blastdb_path: str | None = None,
     outfmt: str = ">%a\n%s\n",
     debug: bool = False,
 ):
@@ -65,7 +66,7 @@ def run_blast_export(
             "-out",
             output_path,
         ]
-    return execute_blast_command(args, debug=debug)
+    return execute_blast_command(args, blastdb_path=blastdb_path, debug=debug)
 
 
 def run_blast(
