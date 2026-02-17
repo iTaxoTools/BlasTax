@@ -4,7 +4,7 @@ from traceback import print_exc
 from typing import Literal
 
 from ..common.process import StagingArea
-from ..common.types import BatchResults
+from ..common.types import BatchResults, Confirmation
 
 
 def initialize():
@@ -44,7 +44,7 @@ def execute(
     staging.add(input_paths=input_paths + taxid_map_paths, output_paths=[output_path])
 
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     target_paths = [
@@ -52,7 +52,7 @@ def execute(
     ]
 
     if any(path.exists() for path in target_paths):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

@@ -4,7 +4,7 @@ from time import perf_counter
 from traceback import print_exc
 from typing import cast
 
-from ..common.types import BatchResults
+from ..common.types import BatchResults, Confirmation
 from .types import AmalgamationMethodTexts, DistanceTargetPaths, TagMethodTexts, TargetPaths
 
 
@@ -60,7 +60,7 @@ def execute(
     ]
 
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

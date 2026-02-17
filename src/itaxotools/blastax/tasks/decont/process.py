@@ -6,7 +6,7 @@ from traceback import print_exc
 from itaxotools.blastax.utils import make_str_blast_safe
 
 from ..common.process import StagingArea
-from ..common.types import BatchResults
+from ..common.types import BatchResults, Confirmation
 from .types import TargetPaths
 
 
@@ -69,11 +69,11 @@ def execute(
     staging = StagingArea(work_dir)
     staging.add(db_paths=[ingroup_database_path, outgroup_database_path])
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

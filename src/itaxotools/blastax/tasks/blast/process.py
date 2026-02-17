@@ -5,7 +5,7 @@ from time import perf_counter
 from itaxotools.blastax.utils import make_str_blast_safe
 
 from ..common.process import StagingArea
-from ..common.types import Results
+from ..common.types import Confirmation, Results
 
 
 def initialize():
@@ -68,14 +68,14 @@ def execute(
     )
 
     if blast_output_path.exists():
-        if not get_feedback(blast_output_path):
+        if not get_feedback(Confirmation.overwrite_file(blast_output_path)):
             abort()
 
     staging = StagingArea(work_dir)
     staging.add(output_paths=[blast_output_path], db_paths=[input_database_path])
 
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     ts = perf_counter()

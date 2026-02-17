@@ -5,6 +5,7 @@ from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 
+from ..common.types import Confirmation
 from .types import CutAdaptResults, TargetPaths
 
 
@@ -90,7 +91,7 @@ def execute(
     target_paths_list = [get_target_paths(path, output_dir, write_reports, timestamp, options) for path in input_paths]
 
     if any((path.exists() for target_paths in target_paths_list for path in target_paths if path)):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

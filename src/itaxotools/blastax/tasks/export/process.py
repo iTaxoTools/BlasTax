@@ -2,7 +2,7 @@ from pathlib import Path
 from time import perf_counter
 
 from ..common.process import StagingArea
-from ..common.types import Results
+from ..common.types import Confirmation, Results
 
 
 def initialize():
@@ -31,11 +31,11 @@ def execute(
     staging = StagingArea(work_dir)
     staging.add(output_paths=[output_path], db_paths=[input_database_path])
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     if output_path.exists():
-        if not get_feedback(output_path):
+        if not get_feedback(Confirmation.overwrite_file(output_path)):
             abort()
 
     ts = perf_counter()
@@ -72,7 +72,7 @@ def check(
     staging = StagingArea(work_dir)
     staging.add(db_paths=[input_database_path])
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     progress_handler("Staging files", 0, 0, 0)

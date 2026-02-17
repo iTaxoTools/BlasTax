@@ -8,7 +8,7 @@ from traceback import print_exc
 from itaxotools.blastax.utils import make_str_blast_safe
 
 from ..common.process import StagingArea
-from ..common.types import BatchResults, DoubleBatchResults
+from ..common.types import BatchResults, Confirmation, DoubleBatchResults
 from .types import TargetPaths, TargetXPaths
 
 
@@ -151,13 +151,13 @@ def execute_batch_databases_single_query(
     staging_check = StagingArea(work_dir)
     staging_check.add(db_paths=input_database_paths)
     if staging_check.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     if appended_output_path.exists() or any(
         (path.exists() for target_paths in target_paths_list for path in target_paths)
     ):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()
@@ -258,7 +258,7 @@ def execute_batch_database_batch_queries(
     staging_check = StagingArea(work_dir)
     staging_check.add(db_paths=input_database_paths)
     if staging_check.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     if any(
@@ -269,7 +269,7 @@ def execute_batch_database_batch_queries(
             for path in target_paths
         )
     ):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()
@@ -374,11 +374,11 @@ def execute_single_database_batch_queries(
     staging = StagingArea(work_dir)
     staging.add(db_paths=[input_database_path])
     if staging.requires_copy():
-        if not get_feedback("STAGE"):
+        if not get_feedback(Confirmation.StagingRequired):
             abort()
 
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

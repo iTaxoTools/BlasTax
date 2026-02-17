@@ -28,6 +28,19 @@ class DoubleBatchResults(NamedTuple):
     seconds_taken: float
 
 
+class Confirmation(NamedTuple):
+    kind: str
+    path: Path | None = None
+
+    @classmethod
+    def overwrite_file(cls, path: Path) -> Confirmation:
+        return cls("overwrite_file", path)
+
+
+Confirmation.StagingRequired = Confirmation("staging_required")
+Confirmation.OverwriteFiles = Confirmation("overwrite_files")
+
+
 class BlastMethod(Enum):
     blastn = ("blastn", "Nucleotide-Nucleotide")
     blastp = ("blastp", "Protein-Protein")

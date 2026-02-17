@@ -11,7 +11,7 @@ from itaxotools.taxi_gui.view.tasks import ScrollTaskView
 from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchDatabaseModel, BatchQueryModel
-from .types import BatchResults, DoubleBatchResults, Results, WarnResults
+from .types import BatchResults, Confirmation, DoubleBatchResults, Results, WarnResults
 from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
 
 
@@ -111,23 +111,38 @@ class BlastTaskView(ScrollTaskView):
                 url = QtCore.QUrl.fromLocalFile(str(results.output_path.absolute()))
                 QtGui.QDesktopServices.openUrl(url)
 
-    def request_confirmation(self, data: Path | str | None, callback, abort):
+    def request_confirmation(self, data: Confirmation, callback, abort):
         msgBox = QtWidgets.QMessageBox(self.window())
         msgBox.setWindowTitle(f"{app.config.title} - Warning")
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msgBox.setDefaultButton(QtWidgets.QMessageBox.Cancel)
+        msgBox.setText("Undefined warning!")
 
-        if data is None:
-            text = "Some files already exist. Overwrite?"
-        elif data == "STAGE":
-            text = "Some files are in non-ASCII directories and need to be copied to a temporary directory before processing. This may significantly slow down processing of large files. Continue?"
-        else:
-            name = data.name
+        if data == Confirmation.StagingRequired:
+            msgBox.setText(
+                "Some file or folder names in the selected paths contain "
+                "special characters that BLAST+ cannot handle."
+            )
+            msgBox.setInformativeText(
+                "These files will be copied to a temporary location before processing. "
+                "This may take extra time and disk space for large files. Continue?"
+            )
+            msgBox.setDetailedText(
+                "BLAST+ only supports file paths with basic English characters. "
+                "Accented letters, non-Latin scripts, and spaces in file or folder "
+                "names will cause errors.\n\n"
+                "To avoid this extra step, move your files to a path that only uses "
+                "English letters, numbers, dashes, and underscores, e.g.:\n"
+                "  C:\\BLAST_Data\\my_sequences.fasta"
+            )
+        elif data == Confirmation.OverwriteFiles:
+            msgBox.setText("Some output files already exist. Overwrite?")
+        elif data.path is not None:
+            name = data.path.name
             if len(name) > 42:
                 name = name[:31] + "..." + name[-11:]
-            text = f"File '{name}' already exists. Overwrite?"
-        msgBox.setText(text)
+            msgBox.setText(f"File '{name}' already exists. Overwrite?")
 
         result = self.window().msgShow(msgBox)
         if result == QtWidgets.QMessageBox.Ok:

@@ -3,7 +3,7 @@ from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
 
-from ..common.types import BatchResults
+from ..common.types import BatchResults, Confirmation
 
 
 def initialize():
@@ -64,7 +64,7 @@ def execute(
     target_paths = [output_path / get_fasta_prepared_filename(path, timestamp=timestamp) for path in input_paths]
 
     if any((path.exists() for path in target_paths)):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()

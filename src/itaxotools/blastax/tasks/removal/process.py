@@ -4,6 +4,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import TextIO
 
+from ..common.types import Confirmation
 from .types import RemovalMode, RemovalResults
 
 
@@ -49,7 +50,7 @@ def execute(
     target_paths = [get_target_path(path, output_dir, description, timestamp) for path in input_paths]
 
     if any(path.exists() for path in target_paths) or (log and log_path.exists()):
-        if not get_feedback(None):
+        if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
     ts = perf_counter()
