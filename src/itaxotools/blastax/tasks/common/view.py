@@ -120,11 +120,9 @@ class BlastTaskView(ScrollTaskView):
         msgBox.setText("Undefined warning!")
 
         if data == Confirmation.StagingRequired:
+            msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
             msgBox.setText(
-                "Some file or folder names in the selected paths contain "
-                "special characters that BLAST+ cannot handle."
-            )
-            msgBox.setInformativeText(
+                "Some file or folder names contain special characters that BLAST+ cannot handle. "
                 "These files will be copied to a temporary location before processing. "
                 "This may take extra time and disk space for large files. Continue?"
             )
@@ -133,8 +131,8 @@ class BlastTaskView(ScrollTaskView):
                 "Accented letters, non-Latin scripts, and spaces in file or folder "
                 "names will cause errors.\n\n"
                 "To avoid this extra step, move your files to a path that only uses "
-                "English letters, numbers, dashes, and underscores, e.g.:\n"
-                "  C:\\BLAST_Data\\my_sequences.fasta"
+                "English letters, numbers, dashes, and underscores, for example: "
+                "C:\\BLAST\\my_sequences.fasta"
             )
         elif data == Confirmation.OverwriteFiles:
             msgBox.setText("Some output files already exist. Overwrite?")
