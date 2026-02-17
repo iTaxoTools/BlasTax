@@ -12,7 +12,6 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
-    OptionCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
     TaxDbCard,
@@ -154,6 +153,30 @@ class FilterOptionSelector(Card):
         self.addLayout(options_layout)
 
 
+class ReportSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        title = QtWidgets.QLabel("Additional reports:")
+        title.setStyleSheet("""font-size: 16px;""")
+        title.setMinimumWidth(150)
+        self.addWidget(title)
+
+        best_hits = QtWidgets.QCheckBox("Best hits: single best BLAST match per query sequence.")
+        organism = QtWidgets.QCheckBox("Organism counts: number of matching queries per taxid.")
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+        layout.addWidget(best_hits)
+        layout.addWidget(organism)
+
+        self.controls.best_hits = best_hits
+        self.controls.organism = organism
+
+        self.addLayout(layout)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -168,9 +191,7 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.filter_options = FilterOptionSelector(self)
-        self.cards.write_best_hits_report = OptionCard(
-            "Best hits report", "Save a tabular summary of the single best BLAST hit per query.", self
-        )
+        self.cards.reports = ReportSelector(self)
         self.cards.taxdb = TaxDbCard(self)
 
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
@@ -231,8 +252,11 @@ class View(BlastTaskView):
         self.binder.bind(self.cards.filter_options.controls.pident.valueChangedSafe, object.properties.match_pident)
         self.cards.filter_options.controls.length.bind_property(object.properties.match_length)
 
-        self.binder.bind(object.properties.write_report, self.cards.write_best_hits_report.setChecked)
-        self.binder.bind(self.cards.write_best_hits_report.toggled, object.properties.write_report)
+        self.binder.bind(object.properties.write_best_hits_report, self.cards.reports.controls.best_hits.setChecked)
+        self.binder.bind(self.cards.reports.controls.best_hits.toggled, object.properties.write_best_hits_report)
+
+        self.binder.bind(object.properties.write_organism_report, self.cards.reports.controls.organism.setChecked)
+        self.binder.bind(self.cards.reports.controls.organism.toggled, object.properties.write_organism_report)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

@@ -8,7 +8,8 @@ from pathlib import Path
 class TargetPaths:
     blast_output_path: Path
     taxo_output_path: Path
-    report_path: Path | None
+    best_hits_report_path: Path | None
+    organism_report_path: Path | None
     error_log_path: Path
 
     def __iter__(self):

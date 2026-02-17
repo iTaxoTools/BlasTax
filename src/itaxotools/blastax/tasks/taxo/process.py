@@ -31,7 +31,8 @@ def execute(
     blast_taxdb_path: Path,
     match_pident: float,
     match_length: int,
-    write_report: bool,
+    write_best_hits_report: bool,
+    write_organism_report: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -49,7 +50,8 @@ def execute(
     print(f"{blast_taxdb_path=}")
     print(f"{match_pident=}")
     print(f"{match_length=}")
-    print(f"{write_report=}")
+    print(f"{write_best_hits_report=}")
+    print(f"{write_organism_report=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -65,7 +67,8 @@ def execute(
         blast_options["columns"] = "_".join(parts)
 
     target_paths_list = [
-        get_target_paths(path, output_path, write_report, timestamp, blast_options) for path in input_query_paths
+        get_target_paths(path, output_path, write_best_hits_report, write_organism_report, timestamp, blast_options)
+        for path in input_query_paths
     ]
 
     staging = StagingArea(work_dir)
@@ -94,7 +97,8 @@ def execute(
                     input_database_path=input_database_path,
                     blast_output_path=target.blast_output_path,
                     taxo_output_path=target.taxo_output_path,
-                    report_path=target.report_path,
+                    best_hits_report_path=target.best_hits_report_path,
+                    organism_report_path=target.organism_report_path,
                     blast_method=blast_method,
                     blast_outfmt=blast_outfmt,
                     blast_outfmt_options=blast_outfmt_options,
@@ -127,7 +131,8 @@ def execute_single(
     input_database_path: Path,
     blast_output_path: Path,
     taxo_output_path: Path,
-    report_path: Path | None,
+    best_hits_report_path: Path | None,
+    organism_report_path: Path | None,
     blast_method: str,
     blast_outfmt: int,
     blast_outfmt_options: str,
@@ -137,7 +142,7 @@ def execute_single(
     match_pident: float,
     match_length: int,
 ):
-    from itaxotools.blastax.core import assign_taxonomy, run_blast, write_best_hits_report
+    from itaxotools.blastax.core import assign_taxonomy, run_blast, write_best_hits_report, write_organism_report
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
@@ -173,10 +178,19 @@ def execute_single(
             min_pident=match_pident,
         )
 
-        if report_path:
+        if best_hits_report_path:
             write_best_hits_report(
                 blast_path=staging[blast_output_path],
-                report_path=report_path,
+                report_path=best_hits_report_path,
+                outfmt_columns=blast_outfmt_options.split(),
+                min_length=match_length,
+                min_pident=match_pident,
+            )
+
+        if organism_report_path:
+            write_organism_report(
+                blast_path=staging[blast_output_path],
+                report_path=organism_report_path,
                 outfmt_columns=blast_outfmt_options.split(),
                 min_length=match_length,
                 min_pident=match_pident,
@@ -189,7 +203,8 @@ def execute_single(
 def get_target_paths(
     query_path: Path,
     output_path: Path,
-    write_report: bool,
+    write_best_hits_report: bool,
+    write_organism_report: bool,
     timestamp: datetime | None,
     blast_options: dict[str, str],
 ) -> TargetPaths:
@@ -197,18 +212,27 @@ def get_target_paths(
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
     taxo_output_path = output_path / get_taxo_filename(query_path, timestamp=timestamp)
-    report_path = None
-    if write_report:
-        report_path = output_path / get_output_filename(
+    best_hits_report_path = None
+    if write_best_hits_report:
+        best_hits_report_path = output_path / get_output_filename(
             input_path=query_path,
             suffix=".tsv",
             description="best_hits",
+            timestamp=timestamp,
+        )
+    organism_report_path = None
+    if write_organism_report:
+        organism_report_path = output_path / get_output_filename(
+            input_path=query_path,
+            suffix=".tsv",
+            description="organism_counts",
             timestamp=timestamp,
         )
     error_log_path = output_path / get_error_filename(query_path, timestamp=timestamp)
     return TargetPaths(
         blast_output_path=blast_output_path,
         taxo_output_path=taxo_output_path,
-        report_path=report_path,
+        best_hits_report_path=best_hits_report_path,
+        organism_report_path=organism_report_path,
         error_log_path=error_log_path,
     )

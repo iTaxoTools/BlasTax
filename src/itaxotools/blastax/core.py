@@ -513,6 +513,49 @@ def write_best_hits_report(
             output_file.write(line)
 
 
+def write_organism_report(
+    blast_path: Path | str,
+    report_path: Path | str,
+    outfmt_columns: list[str],
+    min_length: int = 0,
+    min_pident: float = 0.0,
+):
+    qseqid_col = outfmt_columns.index("qseqid")
+    length_col = outfmt_columns.index("length")
+    pident_col = outfmt_columns.index("pident")
+    staxids_col = outfmt_columns.index("staxids")
+    sscinames_col = outfmt_columns.index("sscinames")
+
+    best_taxids: dict[str, str] = {}
+    best_names: dict[str, str] = {}
+    best_lengths: dict[str, int] = defaultdict(lambda: 0)
+    best_pidents: dict[str, float] = defaultdict(lambda: 0.0)
+
+    with FileHandler.Tabfile(blast_path) as blast_file:
+        for line in blast_file:
+            query_id = line[qseqid_col]
+            length = int(line[length_col])
+            pident = float(line[pident_col])
+            if length < min_length or pident < min_pident:
+                continue
+            if length > best_lengths[query_id] and pident > best_pidents[query_id]:
+                best_lengths[query_id] = length
+                best_pidents[query_id] = pident
+                best_taxids[query_id] = line[staxids_col]
+                best_names[query_id] = line[sscinames_col]
+
+    counts: dict[str, int] = defaultdict(lambda: 0)
+    taxid_names: dict[str, str] = {}
+    for query_id, taxid in best_taxids.items():
+        counts[taxid] += 1
+        taxid_names[taxid] = best_names[query_id]
+
+    columns = ["Nmatches", "taxID", "organism"]
+    with FileHandler.Tabfile(report_path, "w", columns=columns) as output_file:
+        for taxid, count in sorted(counts.items(), key=lambda x: x[1], reverse=True):
+            output_file.write([str(count), taxid, taxid_names[taxid]])
+
+
 def _get_decont_hits_dict(
     path: Path | str,
     column: int,
