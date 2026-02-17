@@ -31,6 +31,7 @@ def execute(
     blast_taxdb_path: Path,
     match_pident: float,
     match_length: int,
+    write_blast_headers: bool,
     write_best_hits_report: bool,
     write_organism_report: bool,
     append_timestamp: bool,
@@ -50,6 +51,7 @@ def execute(
     print(f"{blast_taxdb_path=}")
     print(f"{match_pident=}")
     print(f"{match_length=}")
+    print(f"{write_blast_headers=}")
     print(f"{write_best_hits_report=}")
     print(f"{write_organism_report=}")
     print(f"{append_timestamp=}")
@@ -105,6 +107,7 @@ def execute(
                     blast_evalue=blast_evalue,
                     blast_num_threads=blast_num_threads,
                     blast_taxdb_path=blast_taxdb_path,
+                    write_blast_headers=write_blast_headers,
                     match_pident=match_pident,
                     match_length=match_length,
                 )
@@ -139,6 +142,7 @@ def execute_single(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
+    write_blast_headers: bool,
     match_pident: float,
     match_length: int,
 ):
@@ -196,8 +200,17 @@ def execute_single(
                 min_pident=match_pident,
             )
 
+        if write_blast_headers:
+            prepend_blast_headers(staging[blast_output_path], blast_outfmt_options)
+
     finally:
         staging.unstage_outputs()
+
+
+def prepend_blast_headers(blast_path: Path, blast_outfmt_options: str):
+    header = "\t".join(blast_outfmt_options.split()) + "\n"
+    content = blast_path.read_text()
+    blast_path.write_text(header + content)
 
 
 def get_target_paths(

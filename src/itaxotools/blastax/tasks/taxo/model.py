@@ -26,8 +26,9 @@ class Model(BlastTaskModel):
     match_pident = Property(float, 70.000)
     match_length = Property(int, 100)
 
-    write_best_hits_report = Property(bool, False)
-    write_organism_report = Property(bool, False)
+    write_best_hits_report = Property(bool, True)
+    write_organism_report = Property(bool, True)
+    write_blast_headers = Property(bool, True)
 
     use_taxdb = Property(bool, False)
     blast_taxdb_path = Property(Path, Path())
@@ -88,6 +89,7 @@ class Model(BlastTaskModel):
             blast_taxdb_path=self.blast_taxdb_path if self.use_taxdb else None,
             match_pident=self.match_pident,
             match_length=self.match_length,
+            write_blast_headers=self.write_blast_headers,
             write_best_hits_report=self.write_best_hits_report,
             write_organism_report=self.write_organism_report,
             append_timestamp=self.append_timestamp,

@@ -164,13 +164,16 @@ class ReportSelector(Card):
 
         best_hits = QtWidgets.QCheckBox("Best hits: single best BLAST match per query sequence.")
         organism = QtWidgets.QCheckBox("Organism counts: number of matching queries per taxid.")
+        blast_headers = QtWidgets.QCheckBox("Add column headers to the BLAST output file.")
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
+        layout.addWidget(blast_headers)
         layout.addWidget(best_hits)
         layout.addWidget(organism)
 
+        self.controls.blast_headers = blast_headers
         self.controls.best_hits = best_hits
         self.controls.organism = organism
 
@@ -251,6 +254,9 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.match_pident, self.cards.filter_options.controls.pident.setValue)
         self.binder.bind(self.cards.filter_options.controls.pident.valueChangedSafe, object.properties.match_pident)
         self.cards.filter_options.controls.length.bind_property(object.properties.match_length)
+
+        self.binder.bind(object.properties.write_blast_headers, self.cards.reports.controls.blast_headers.setChecked)
+        self.binder.bind(self.cards.reports.controls.blast_headers.toggled, object.properties.write_blast_headers)
 
         self.binder.bind(object.properties.write_best_hits_report, self.cards.reports.controls.best_hits.setChecked)
         self.binder.bind(self.cards.reports.controls.best_hits.toggled, object.properties.write_best_hits_report)
