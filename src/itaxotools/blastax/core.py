@@ -466,6 +466,8 @@ def assign_taxonomy(
             staxid = line[3]
             ssciname = line[4]
             if length > lengths[query_id] and pident > pidents[query_id]:
+                lengths[query_id] = length
+                pidents[query_id] = pident
                 staxids[query_id] = staxid
                 sscinames[query_id] = ssciname
 
@@ -473,7 +475,7 @@ def assign_taxonomy(
         with SequenceHandler.Fasta(output_path, "w", line_width=0) as output_file:
             for sequence in query_file:
                 seqid = sequence.id
-                new_seqid = f"{seqid} [pident={pidents[seqid]}] [taxid={staxids[seqid]} [organism={sscinames[seqid]}]"
+                new_seqid = f"{seqid} [pident={pidents[seqid]}] [taxid={staxids[seqid]}] [organism={sscinames[seqid]}]"
                 output_file.write(Sequence(new_seqid, sequence.seq))
 
 
