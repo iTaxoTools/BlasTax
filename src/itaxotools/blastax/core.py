@@ -484,6 +484,35 @@ def assign_taxonomy(
                 output_file.write(Sequence(new_seqid, sequence.seq))
 
 
+def write_best_hits_report(
+    blast_path: Path | str,
+    report_path: Path | str,
+    outfmt_columns: list[str],
+    min_length: int = 0,
+    min_pident: float = 0.0,
+):
+    qseqid_col = outfmt_columns.index("qseqid")
+    length_col = outfmt_columns.index("length")
+    pident_col = outfmt_columns.index("pident")
+
+    best_hits: dict[str, list[str]] = {}
+
+    with FileHandler.Tabfile(blast_path) as blast_file:
+        for line in blast_file:
+            query_id = line[qseqid_col]
+            length = int(line[length_col])
+            pident = float(line[pident_col])
+            if length < min_length or pident < min_pident:
+                continue
+            prev = best_hits.get(query_id)
+            if prev is None or (length > int(prev[length_col]) and pident > float(prev[pident_col])):
+                best_hits[query_id] = line
+
+    with FileHandler.Tabfile(report_path, "w", columns=outfmt_columns) as output_file:
+        for line in best_hits.values():
+            output_file.write(line)
+
+
 def _get_decont_hits_dict(
     path: Path | str,
     column: int,

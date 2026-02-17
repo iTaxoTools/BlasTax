@@ -12,6 +12,7 @@ from ..common.view import (
     BatchQuerySelector,
     BlastTaskView,
     GraphicTitleCard,
+    OptionCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
     TaxDbCard,
@@ -167,6 +168,9 @@ class View(BlastTaskView):
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.filter_options = FilterOptionSelector(self)
+        self.cards.write_best_hits_report = OptionCard(
+            "Best hits report", "Save a tabular summary of the single best BLAST hit per query.", self
+        )
         self.cards.taxdb = TaxDbCard(self)
 
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
@@ -226,6 +230,9 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.match_pident, self.cards.filter_options.controls.pident.setValue)
         self.binder.bind(self.cards.filter_options.controls.pident.valueChangedSafe, object.properties.match_pident)
         self.cards.filter_options.controls.length.bind_property(object.properties.match_length)
+
+        self.binder.bind(object.properties.write_report, self.cards.write_best_hits_report.setChecked)
+        self.binder.bind(self.cards.write_best_hits_report.toggled, object.properties.write_report)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

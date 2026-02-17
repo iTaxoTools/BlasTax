@@ -31,6 +31,7 @@ def execute(
     blast_taxdb_path: Path,
     match_pident: float,
     match_length: int,
+    write_report: bool,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -48,6 +49,7 @@ def execute(
     print(f"{blast_taxdb_path=}")
     print(f"{match_pident=}")
     print(f"{match_length=}")
+    print(f"{write_report=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -56,16 +58,14 @@ def execute(
 
     timestamp = datetime.now() if append_timestamp else None
     blast_options: dict[str, str] = {}
-    match_options: dict[str, str] = {}
     if append_configuration:
         blast_options[blast_method] = None
         blast_options["evalue"] = blast_evalue
         parts = blast_outfmt_options.split(" ")
         blast_options["columns"] = "_".join(parts)
-        match_options[blast_method] = None
 
     target_paths_list = [
-        get_target_paths(path, output_path, timestamp, blast_options, match_options) for path in input_query_paths
+        get_target_paths(path, output_path, write_report, timestamp, blast_options) for path in input_query_paths
     ]
 
     staging = StagingArea(work_dir)
@@ -74,7 +74,7 @@ def execute(
         if not get_feedback(Confirmation.StagingRequired):
             abort()
 
-    if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
+    if any((path.exists() for target_paths in target_paths_list for path in target_paths if path)):
         if not get_feedback(Confirmation.OverwriteFiles):
             abort()
 
@@ -94,6 +94,7 @@ def execute(
                     input_database_path=input_database_path,
                     blast_output_path=target.blast_output_path,
                     taxo_output_path=target.taxo_output_path,
+                    report_path=target.report_path,
                     blast_method=blast_method,
                     blast_outfmt=blast_outfmt,
                     blast_outfmt_options=blast_outfmt_options,
@@ -126,6 +127,7 @@ def execute_single(
     input_database_path: Path,
     blast_output_path: Path,
     taxo_output_path: Path,
+    report_path: Path | None,
     blast_method: str,
     blast_outfmt: int,
     blast_outfmt_options: str,
@@ -135,7 +137,7 @@ def execute_single(
     match_pident: float,
     match_length: int,
 ):
-    from itaxotools.blastax.core import assign_taxonomy, run_blast
+    from itaxotools.blastax.core import assign_taxonomy, run_blast, write_best_hits_report
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
 
     if is_fastq(input_query_path):
@@ -171,6 +173,15 @@ def execute_single(
             min_pident=match_pident,
         )
 
+        if report_path:
+            write_best_hits_report(
+                blast_path=staging[blast_output_path],
+                report_path=report_path,
+                outfmt_columns=blast_outfmt_options.split(),
+                min_length=match_length,
+                min_pident=match_pident,
+            )
+
     finally:
         staging.unstage_outputs()
 
@@ -178,17 +189,26 @@ def execute_single(
 def get_target_paths(
     query_path: Path,
     output_path: Path,
+    write_report: bool,
     timestamp: datetime | None,
     blast_options: dict[str, str],
-    match_options: dict[str, str],
 ) -> TargetPaths:
-    from itaxotools.blastax.core import get_blast_filename, get_error_filename, get_taxo_filename
+    from itaxotools.blastax.core import get_blast_filename, get_error_filename, get_output_filename, get_taxo_filename
 
     blast_output_path = output_path / get_blast_filename(query_path, outfmt=6, timestamp=timestamp, **blast_options)
-    taxo_output_path = output_path / get_taxo_filename(query_path, timestamp=timestamp, **match_options)
+    taxo_output_path = output_path / get_taxo_filename(query_path, timestamp=timestamp)
+    report_path = None
+    if write_report:
+        report_path = output_path / get_output_filename(
+            input_path=query_path,
+            suffix=".tsv",
+            description="best_hits",
+            timestamp=timestamp,
+        )
     error_log_path = output_path / get_error_filename(query_path, timestamp=timestamp)
     return TargetPaths(
         blast_output_path=blast_output_path,
         taxo_output_path=taxo_output_path,
+        report_path=report_path,
         error_log_path=error_log_path,
     )
