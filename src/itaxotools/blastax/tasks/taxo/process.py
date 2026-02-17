@@ -65,7 +65,7 @@ def execute(
     ]
 
     staging = StagingArea(work_dir)
-    staging.add(db_paths=[input_database_path])
+    staging.add(db_paths=[input_database_path], taxdb_path=blast_taxdb_path)
     if staging.requires_copy():
         if not get_feedback(Confirmation.StagingRequired):
             abort()
@@ -152,7 +152,7 @@ def execute_single(
             num_threads=blast_num_threads,
             outfmt=f"{blast_outfmt} {blast_outfmt_options}",
             other="",
-            blastdb_path=blast_taxdb_path,
+            blastdb_path=staging[blast_taxdb_path],
             debug=True,
         )
         assign_taxonomy(

@@ -95,6 +95,7 @@ class StagingArea:
         input_paths: list[Path] = (),
         output_paths: list[Path] = (),
         db_paths: list[Path] = (),
+        taxdb_path: Path | None = None,
     ) -> None:
         for path in input_paths:
             if not path or _is_str_safe(str(path)):
@@ -124,11 +125,20 @@ class StagingArea:
                 self._map[sidecar] = staged_sidecar
                 self._pending_copies.append((sidecar, staged_sidecar))
 
+        if taxdb_path and not _is_str_safe(str(taxdb_path)):
+            taxdb_dir = self._input_dir / "taxdb"
+            self._map[taxdb_path] = taxdb_dir
+            for name in ("taxdb.btd", "taxdb.bti"):
+                src = taxdb_path / name
+                if src.exists():
+                    self._pending_copies.append((src, taxdb_dir / name))
+
     def stage(self, verbose: bool = False) -> None:
         """Stage pending files. Uses symlinks where available, copies otherwise."""
         if self._pending_copies:
             self._input_dir.mkdir(exist_ok=True)
             for src, dst in self._pending_copies:
+                dst.parent.mkdir(exist_ok=True)
                 if self._can_symlink:
                     os.symlink(src.resolve(), dst)
                     if verbose:
