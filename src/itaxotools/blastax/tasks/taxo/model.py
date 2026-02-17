@@ -5,7 +5,7 @@ from pathlib import Path
 from itaxotools.common.bindings import Instance, Property
 from itaxotools.taxi_gui.model.tasks import SubtaskModel
 
-from ..common.model import BatchDatabaseModel, BatchQueryModel, BlastTaskModel
+from ..common.model import BatchQueryModel, BlastTaskModel
 from ..common.types import BlastMethod
 from ..common.utils import get_database_index_from_path
 from . import process, title
@@ -15,7 +15,7 @@ class Model(BlastTaskModel):
     task_name = title.replace(" ", "_")
 
     input_queries = Property(BatchQueryModel, Instance)
-    input_databases = Property(BatchDatabaseModel, Instance)
+    input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
     blast_method = Property(BlastMethod, BlastMethod.blastn)
@@ -42,9 +42,7 @@ class Model(BlastTaskModel):
 
         for handle in [
             self.input_queries.properties.ready,
-            self.input_databases.properties.ready,
-            self.input_queries.properties.batch_mode,
-            self.input_databases.properties.batch_mode,
+            self.properties.input_database_path,
             self.properties.output_path,
             self.properties.blast_method,
             self.properties.use_taxdb,
@@ -56,13 +54,9 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def isReady(self):
-        if self.input_queries.batch_mode:
-            return False
-        if self.input_databases.batch_mode:
-            return False
         if not self.input_queries.ready:
             return False
-        if not self.input_databases.ready:
+        if self.input_database_path == Path():
             return False
         if self.output_path == Path():
             return False
@@ -80,7 +74,7 @@ class Model(BlastTaskModel):
             process.execute,
             work_dir=work_dir,
             input_query_paths=self.input_queries.get_all_paths(),
-            input_database_paths=self.input_databases.get_all_paths(),
+            input_database_path=self.input_database_path,
             output_path=self.output_path,
             blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
@@ -98,6 +92,6 @@ class Model(BlastTaskModel):
 
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
-            self.input_databases.open(db)
+            self.input_database_path = db
         else:
             self.input_queries.open(path)

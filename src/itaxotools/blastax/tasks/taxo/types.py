@@ -12,12 +12,3 @@ class TargetPaths:
 
     def __iter__(self):
         return iter(vars(self).values())
-
-
-@dataclass
-class TargetXPaths:
-    blast_output_path: Path
-    error_log_path: Path
-
-    def __iter__(self):
-        return iter(vars(self).values())
