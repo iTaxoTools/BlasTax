@@ -6,4 +6,4 @@ description = "Convert to FASTA format"
 pixmap = task_pixmaps_large.about
 pixmap_medium = task_pixmaps_medium.about
 
-long_description = "WIP"
+long_description = "Extract sequences from a BLAST database and save them in FASTA format. "
