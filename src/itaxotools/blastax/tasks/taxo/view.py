@@ -5,6 +5,7 @@ from pathlib import Path
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import RichCheckBox
 
 from ..common.types import BlastMethod
 from ..common.view import (
@@ -162,16 +163,16 @@ class ReportSelector(Card):
         title.setMinimumWidth(150)
         self.addWidget(title)
 
-        best_hits = QtWidgets.QCheckBox("Best hits: single best BLAST match per query sequence.")
-        organism = QtWidgets.QCheckBox("Organism counts: number of matching queries per taxid.")
+        best_hits = RichCheckBox("Best hits:", "single best BLAST match per query sequence.")
+        organism = RichCheckBox("Organism counts:", "number of matching queries per taxid.")
         blast_headers = QtWidgets.QCheckBox("Add column headers to the BLAST output file.")
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
-        layout.addWidget(blast_headers)
         layout.addWidget(best_hits)
         layout.addWidget(organism)
+        layout.addWidget(blast_headers)
 
         self.controls.blast_headers = blast_headers
         self.controls.best_hits = best_hits
