@@ -452,6 +452,8 @@ def assign_taxonomy(
     query_path: Path | str,
     blast_path: Path | str,
     output_path: Path | str,
+    min_length: int = 0,
+    min_pident: float = 0.0,
 ):
     lengths: dict[str, int] = defaultdict(lambda: 0)
     pidents: dict[str, float] = defaultdict(lambda: 0.0)
@@ -465,6 +467,8 @@ def assign_taxonomy(
             pident = float(line[2])
             staxid = line[3]
             ssciname = line[4]
+            if length < min_length or pident < min_pident:
+                continue
             if length > lengths[query_id] and pident > pidents[query_id]:
                 lengths[query_id] = length
                 pidents[query_id] = pident

@@ -29,6 +29,8 @@ def execute(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
+    match_pident: float,
+    match_length: int,
     append_timestamp: bool,
     append_configuration: bool,
 ) -> BatchResults:
@@ -44,6 +46,8 @@ def execute(
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
     print(f"{blast_taxdb_path=}")
+    print(f"{match_pident=}")
+    print(f"{match_length=}")
     print(f"{append_timestamp=}")
     print(f"{append_configuration=}")
 
@@ -96,6 +100,8 @@ def execute(
                     blast_evalue=blast_evalue,
                     blast_num_threads=blast_num_threads,
                     blast_taxdb_path=blast_taxdb_path,
+                    match_pident=match_pident,
+                    match_length=match_length,
                 )
             except Exception as e:
                 if total == 1:
@@ -126,6 +132,8 @@ def execute_single(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
+    match_pident: float,
+    match_length: int,
 ):
     from itaxotools.blastax.core import assign_taxonomy, run_blast
     from itaxotools.blastax.utils import fastq_to_fasta, is_fastq, remove_gaps
@@ -159,6 +167,8 @@ def execute_single(
             query_path=input_query_path,
             blast_path=staging[blast_output_path],
             output_path=taxo_output_path,
+            min_length=match_length,
+            min_pident=match_pident,
         )
 
     finally:

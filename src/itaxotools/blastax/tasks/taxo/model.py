@@ -23,6 +23,9 @@ class Model(BlastTaskModel):
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 length pident qseqid sseqid staxids sscinames"')
 
+    match_pident = Property(float, 70.000)
+    match_length = Property(int, 100)
+
     use_taxdb = Property(bool, False)
     blast_taxdb_path = Property(Path, Path())
 
@@ -80,6 +83,8 @@ class Model(BlastTaskModel):
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             blast_taxdb_path=self.blast_taxdb_path if self.use_taxdb else None,
+            match_pident=self.match_pident,
+            match_length=self.match_length,
             append_timestamp=self.append_timestamp,
             append_configuration=self.append_configuration,
         )

@@ -23,6 +23,7 @@ from ..common.widgets import (
     ElidedLineEdit,
     FloatPropertyLineEdit,
     IntPropertyLineEdit,
+    PidentSpinBox,
 )
 from . import long_description, pixmap_medium, title
 
@@ -108,6 +109,52 @@ class BlastOptionSelector(Card):
         self.addLayout(options_long_layout)
 
 
+class FilterOptionSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("Filter options:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        description = QtWidgets.QLabel("Set minimum thresholds for taxonomy assignment.")
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(description, 1)
+        title_layout.setSpacing(16)
+
+        options_layout = QtWidgets.QGridLayout()
+        options_layout.setColumnMinimumWidth(0, 16)
+        options_layout.setColumnMinimumWidth(1, 54)
+        options_layout.setColumnStretch(3, 1)
+        options_layout.setHorizontalSpacing(32)
+        options_layout.setVerticalSpacing(8)
+        row = 0
+
+        name = QtWidgets.QLabel("Length:")
+        field = IntPropertyLineEdit()
+        description = QtWidgets.QLabel("Minimum alignment sequence length")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        self.controls.length = field
+        row += 1
+
+        name = QtWidgets.QLabel("Identity:")
+        field = PidentSpinBox()
+        description = QtWidgets.QLabel("Minimum identity percentage (pident)")
+        description.setStyleSheet("QLabel { font-style: italic; }")
+        options_layout.addWidget(name, row, 1)
+        options_layout.addWidget(field, row, 2)
+        options_layout.addWidget(description, row, 3)
+        self.controls.pident = field
+        row += 1
+
+        self.addLayout(title_layout)
+        self.addLayout(options_layout)
+
+
 class TaxDbCard(OptionCard):
     selectedPath = QtCore.Signal(Path)
 
@@ -181,6 +228,7 @@ class View(BlastTaskView):
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
+        self.cards.filter_options = FilterOptionSelector(self)
         self.cards.taxdb = TaxDbCard(self)
 
         layout = QtWidgets.QVBoxLayout()
@@ -234,6 +282,10 @@ class View(BlastTaskView):
         self.cards.blast_options.controls.blast_num_threads.bind_property(object.properties.blast_num_threads)
         self.cards.blast_options.controls.blast_evalue.bind_property(object.properties.blast_evalue)
         self.cards.blast_options.controls.blast_extra_args.bind_property(object.properties.blast_extra_args)
+
+        self.binder.bind(object.properties.match_pident, self.cards.filter_options.controls.pident.setValue)
+        self.binder.bind(self.cards.filter_options.controls.pident.valueChangedSafe, object.properties.match_pident)
+        self.cards.filter_options.controls.length.bind_property(object.properties.match_length)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 

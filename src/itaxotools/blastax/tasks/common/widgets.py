@@ -434,7 +434,6 @@ class BatchQueryHelp(QtWidgets.QPlainTextEdit):
 class PidentSpinBox(GDoubleSpinBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setFixedWidth(120)
         self.setMinimum(0)
         self.setMaximum(100)
         self.setSingleStep(1)
