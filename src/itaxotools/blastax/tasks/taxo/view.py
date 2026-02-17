@@ -231,6 +231,8 @@ class View(BlastTaskView):
         self.cards.filter_options = FilterOptionSelector(self)
         self.cards.taxdb = TaxDbCard(self)
 
+        self.cards.database.set_placeholder_text("Match all query sequences against this database")
+
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
             layout.addWidget(card)
