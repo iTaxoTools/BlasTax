@@ -12,7 +12,7 @@ from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from .model import BatchDatabaseModel, BatchQueryModel
 from .types import BatchResults, Confirmation, DoubleBatchResults, Results, WarnResults
-from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView
+from .widgets import BatchQueryHelp, ElidedLineEdit, ElidedLongLabel, GrowingListView, IOLabel
 
 
 class BlastTaskView(ScrollTaskView):
@@ -203,13 +203,13 @@ class GraphicTitleCard(Card):
 class PathSelector(Card):
     selectedPath = QtCore.Signal(Path)
 
-    def __init__(self, text, parent=None):
+    def __init__(self, text, direction="?", parent=None):
         super().__init__(parent)
-        self.draw_main(text)
+        self.draw_main(text, direction)
         self.set_placeholder_text("---")
 
-    def draw_main(self, text):
-        label = QtWidgets.QLabel(text + ":")
+    def draw_main(self, text, direction):
+        label = IOLabel(text, direction)
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
@@ -341,8 +341,8 @@ class BatchQuerySelector(Card):
         super().__init__(parent)
         self.binder = Binder()
         self.draw_mode()
-        self.draw_single("\u25B6  ", text)
-        self.draw_batch("\u25B6  ", text)
+        self.draw_single(text)
+        self.draw_batch(text)
 
     def draw_mode(self):
         label = QtWidgets.QLabel("Input mode:")
@@ -373,10 +373,8 @@ class BatchQuerySelector(Card):
         self.controls.batch_mode = group
         self.controls.header = widget
 
-    def draw_single(self, symbol, text):
-        label = QtWidgets.QLabel(f"{symbol}{text}:")
-        label.setStyleSheet("""font-size: 16px;""")
-        label.setMinimumWidth(150)
+    def draw_single(self, text):
+        label = IOLabel(text, "in")
 
         field = ElidedLineEdit()
         field.setPlaceholderText("Sequences to match against database contents (FASTA or FASTQ)")
@@ -403,15 +401,8 @@ class BatchQuerySelector(Card):
         self.controls.single_query = widget
         self.controls.single_field = field
 
-    def draw_batch(self, symbol, text):
-        label_symbol = QtWidgets.QLabel(symbol)
-        label_symbol.setStyleSheet("""font-size: 16px;""")
-
-        label_text = QtWidgets.QLabel(text + ":")
-        label_text.setStyleSheet("""font-size: 16px;""")
-
-        label_spacer = QtWidgets.QLabel("")
-        label_spacer.setMinimumWidth(150)
+    def draw_batch(self, text):
+        label = IOLabel(text, "in")
 
         label_total = QtWidgets.QLabel("Total: 0")
 
@@ -433,11 +424,10 @@ class BatchQuerySelector(Card):
         labels.setHorizontalSpacing(0)
         labels.setVerticalSpacing(16)
         labels.setColumnStretch(1, 1)
+        labels.setColumnMinimumWidth(0, 14)
         labels.setRowStretch(3, 1)
-        labels.addWidget(label_symbol, 0, 0)
-        labels.addWidget(label_text, 0, 1)
+        labels.addWidget(label, 0, 0, 1, 2)
         labels.addWidget(label_total, 1, 1)
-        labels.addWidget(label_spacer, 2, 0, 1, 2)
 
         buttons = QtWidgets.QVBoxLayout()
         buttons.setSpacing(8)
@@ -558,8 +548,8 @@ class BatchDatabaseSelector(BatchQuerySelector):
         self.controls.single_database = self.controls.single_query
         self.controls.batch_database = self.controls.batch_query
 
-    def draw_batch(self, symbol, text):
-        super().draw_batch(symbol, text + "s")
+    def draw_batch(self, text):
+        super().draw_batch(text + "s")
 
     def bind_batch_model(self, binder: Binder, object: BatchDatabaseModel):
         super().bind_batch_model(binder, object)

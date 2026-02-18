@@ -178,7 +178,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.input = BatchQuerySelector("Input sequences")
-        self.cards.output_path = PathDirectorySelector("\u25C0  Output folder")
+        self.cards.output_path = PathDirectorySelector("Output folder", "out")
         self.cards.database_name = NameSelector("Database name")
         self.cards.database_type = TypeSelector("Database type")
         self.cards.parse_ids = ParseIdsCard("Include TaxIDs")
