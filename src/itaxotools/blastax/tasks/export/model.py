@@ -78,7 +78,6 @@ class Model(BlastTaskModel):
         self.subtask_init.start(process.initialize)
 
     def _update_output_paths(self) -> Path:
-        print("_update_output_paths")
         match self.operation_mode:
             case OperationMode.database_to_fasta:
                 self.output_placeholder = "Exported sequences as FASTA file"
@@ -161,7 +160,7 @@ class Model(BlastTaskModel):
 
     def start(self):
         super().start()
-        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S%f")
         work_dir = self.temporary_path / timestamp
         work_dir.mkdir()
 
@@ -197,6 +196,8 @@ class Model(BlastTaskModel):
                     output_fasta_path=self.output_fasta_path,
                     output_map_path=self.output_path,
                 )
+            case _:
+                self.busy = False
 
     def onDone(self, report: ReportDone):
         if self.operation_mode == OperationMode.database_check_taxid:

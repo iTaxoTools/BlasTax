@@ -59,7 +59,7 @@ class Model(BlastTaskModel):
 
     def start(self):
         super().start()
-        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S%f")
         work_dir = self.temporary_path / timestamp
         work_dir.mkdir()
 
