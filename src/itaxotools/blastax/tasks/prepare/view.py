@@ -262,7 +262,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Sequence files", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.sanitize = SanitizeOptionCard(
             "Sanitize",
             "Replace special characters with their ASCII representation, or an underscore if not applicable.",

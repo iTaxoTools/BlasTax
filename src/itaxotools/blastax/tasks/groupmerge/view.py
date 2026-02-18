@@ -177,8 +177,8 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.input = PathDirectorySelector("\u25B6  Input folder", self)
-        self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
+        self.cards.input = PathDirectorySelector("Input folder", "in", self)
+        self.cards.output = PathDirectorySelector("Output folder", "out", self)
         self.cards.rule = MatchingRuleSelector("Matching rule")
         self.cards.duplicates = DiscardDuplicatesSelector("On duplicate sequence identifiers")
 

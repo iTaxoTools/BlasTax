@@ -246,9 +246,9 @@ class View(BlastTaskView):
         self.cards = AttrDict()
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
-        self.cards.query = PathFileSelector("\u25B6  Query sequences", self)
-        self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.query = PathFileSelector("Query sequences", "in", self)
+        self.cards.database = PathDatabaseSelector("BLAST database", "in", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.format_options = FormatOptionsSelector(self)
 

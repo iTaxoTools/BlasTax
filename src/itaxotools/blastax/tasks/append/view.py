@@ -242,7 +242,7 @@ class View(BlastTaskView):
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = BatchDatabaseSelector("BLAST database", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.match_options = MatchOptionSelector(self)
         self.cards.specify_identifier = SpecifyIdentifierCard(

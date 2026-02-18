@@ -96,7 +96,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Input sequences", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.strategy = StrategySelector(self)
         self.cards.adjust_direction = AdjustDirectionSelector(self)
 

@@ -155,9 +155,9 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
-        self.cards.ingroup = PathDatabaseSelector("\u25B6  BLAST ingroup", self)
-        self.cards.outgroup = PathDatabaseSelector("\u25B6  BLAST outgroup", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.ingroup = PathDatabaseSelector("BLAST ingroup", "in", self)
+        self.cards.outgroup = PathDatabaseSelector("BLAST outgroup", "in", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.decont_variable = DecontVariableSelector(self)
 

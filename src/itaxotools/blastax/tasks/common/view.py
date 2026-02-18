@@ -301,7 +301,7 @@ class PathDatabaseSelector(PathSelector):
 
 class OutputDirectorySelector(PathDirectorySelector):
     def __init__(self, text, parent=None):
-        super().__init__(text, parent)
+        super().__init__(text, "out", parent)
         self.set_placeholder_text("All output files will be saved here")
         self.draw_config()
 

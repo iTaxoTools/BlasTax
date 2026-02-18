@@ -182,7 +182,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Input sequences", self)
-        self.cards.output = OutputDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.tag_method = TagMethodSelector(self)
         self.cards.amalgamation_method = AmalgamationMethodSelector(self)
         self.cards.outlier_factor = OutlierFactorSelector(self)
