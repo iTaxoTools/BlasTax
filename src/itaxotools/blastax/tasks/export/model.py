@@ -44,7 +44,6 @@ class Model(BlastTaskModel):
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
-    has_taxids = Property(bool | None, None)
     blast_outfmt = Property(str, ">%a [taxid=%T] [organism=%S]\\n%s\\n")
 
     blast_taxdb_path = Property(Path, Path())
@@ -57,9 +56,7 @@ class Model(BlastTaskModel):
         self.subtask_init = SubtaskModel(self, bind_busy=False)
         self.subtask_check = CheckInfoModel(self, bind_busy=True)
 
-        self.binder.bind(self.subtask_check.has_taxids, self.properties.has_taxids)
         self.binder.bind(self.properties.operation_mode, self._update_shown_cards)
-        self.binder.bind(self.properties.input_database_path, self.properties.has_taxids, lambda x: None)
         self.binder.bind(
             self.properties.input_database_path, self.properties.output_path, lambda x: self._get_output_path(x)
         )
@@ -112,14 +109,35 @@ class Model(BlastTaskModel):
         work_dir = self.temporary_path / timestamp
         work_dir.mkdir()
 
-        self.exec(
-            process.execute,
-            work_dir=work_dir,
-            input_database_path=self.input_database_path,
-            output_path=self.output_path,
-            blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
-            blast_taxdb_path=self.blast_taxdb_path if self.blast_taxdb_path != Path() else None,
-        )
+        match self.operation_mode:
+            case OperationMode.database_to_fasta:
+                self.exec(
+                    process.database_to_fasta,
+                    work_dir=work_dir,
+                    input_database_path=self.input_database_path,
+                    output_path=self.output_path,
+                    blast_outfmt=self.blast_outfmt or self.properties.blast_outfmt.default,
+                    blast_taxdb_path=self.blast_taxdb_path if self.blast_taxdb_path != Path() else None,
+                )
+            case OperationMode.database_check_taxid:
+                self.exec(
+                    process.database_check_taxid,
+                    work_dir=work_dir,
+                    input_database_path=self.input_database_path,
+                )
+
+    def onDone(self, report: ReportDone):
+        if self.operation_mode == OperationMode.database_check_taxid:
+            if report.result is None:
+                self.notification.emit(Notification.Error("Could not read taxonomy IDs from the database."))
+            elif report.result:
+                self.notification.emit(Notification.Info("Database DOES contain taxonomy ID mappings."))
+            else:
+                self.notification.emit(Notification.Warn("Database does NOT contain taxonomy ID mappings."))
+            self.busy = False
+            return
+
+        super().onDone(report)
 
     def outfmt_restore_defaults(self):
         self.blast_outfmt = self.properties.blast_outfmt.default
@@ -127,13 +145,3 @@ class Model(BlastTaskModel):
     def open(self, path: Path):
         if db := get_database_index_from_path(path):
             self.input_database_path = db
-
-    def check_taxids(self):
-        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-        work_dir = self.temporary_path / timestamp
-        work_dir.mkdir()
-
-        self.subtask_check.start(
-            work_dir=work_dir,
-            input_database_path=self.input_database_path,
-        )

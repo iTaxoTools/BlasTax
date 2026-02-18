@@ -13,7 +13,7 @@ def initialize():
     import itaxotools.blastax.utils  # noqa
 
 
-def execute(
+def database_to_fasta(
     work_dir: Path,
     input_database_path: Path,
     output_path: Path,
@@ -61,7 +61,7 @@ def execute(
     return Results(output_path, tf - ts)
 
 
-def check(
+def database_check_taxid(
     work_dir: Path,
     input_database_path: Path,
 ) -> Results:
