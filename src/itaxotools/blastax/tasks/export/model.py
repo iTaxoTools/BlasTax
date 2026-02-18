@@ -11,6 +11,7 @@ from itaxotools.taxi_gui.types import Notification
 from ..common.model import BlastTaskModel
 from ..common.utils import get_database_index_from_path
 from . import process, title
+from .types import OperationMode
 
 
 class CheckInfoModel(SubtaskModel):
@@ -34,6 +35,12 @@ class CheckInfoModel(SubtaskModel):
 class Model(BlastTaskModel):
     task_name = title.replace(" ", "_")
 
+    operation_mode = Property(OperationMode, OperationMode.database_to_fasta)
+    show_input_database = Property(bool, False)
+    show_input_taxdb = Property(bool, False)
+    show_output_path = Property(bool, False)
+    show_outfmt = Property(bool, False)
+
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
 
@@ -51,6 +58,7 @@ class Model(BlastTaskModel):
         self.subtask_check = CheckInfoModel(self, bind_busy=True)
 
         self.binder.bind(self.subtask_check.has_taxids, self.properties.has_taxids)
+        self.binder.bind(self.properties.operation_mode, self._update_shown_cards)
         self.binder.bind(self.properties.input_database_path, self.properties.has_taxids, lambda x: None)
         self.binder.bind(
             self.properties.input_database_path, self.properties.output_path, lambda x: self._get_output_path(x)
@@ -72,6 +80,24 @@ class Model(BlastTaskModel):
         output_path = input_path.with_stem(input_path.stem + "_exported")
         output_path = output_path.with_suffix(".fasta")
         return output_path
+
+    def _update_shown_cards(self, mode: OperationMode):
+        match mode:
+            case OperationMode.database_to_fasta:
+                self.show_input_database = True
+                self.show_input_taxdb = True
+                self.show_output_path = True
+                self.show_outfmt = True
+            case OperationMode.database_check_taxid:
+                self.show_input_database = True
+                self.show_input_taxdb = False
+                self.show_output_path = False
+                self.show_outfmt = False
+            case _:
+                self.show_input_database = False
+                self.show_input_taxdb = False
+                self.show_output_path = False
+                self.show_outfmt = False
 
     def isReady(self):
         if self.input_database_path == Path():

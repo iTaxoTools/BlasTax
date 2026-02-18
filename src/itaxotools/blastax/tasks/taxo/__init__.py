@@ -1,7 +1,7 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
 title = "Assign taxonomy"
-description = "Identify taxid and organism"
+description = "Identify taxID and organism"
 
 pixmap = task_pixmaps_large.taxo
 pixmap_medium = task_pixmaps_medium.taxo
