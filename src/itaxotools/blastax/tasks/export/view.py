@@ -14,6 +14,7 @@ from ..common.view import (
     PathFileSelector,
 )
 from ..common.widgets import (
+    BasePropertyLineEdit,
     ConsolePropertyLineEdit,
 )
 from . import long_description, pixmap_medium, title
@@ -49,7 +50,7 @@ class ModeSelectCard(Card):
         group.valueChanged.connect(self._handle_value_changed)
         for index, mode in enumerate(OperationMode):
             button = QtWidgets.QRadioButton(mode.label)
-            mode_layout.addWidget(button, 2 + index // 2, index % 2)
+            mode_layout.addWidget(button, 2 + index % 3, index // 3)
             group.add(button, mode)
 
         pixmap_layout = QtWidgets.QVBoxLayout()
@@ -81,6 +82,25 @@ class ModeSelectCard(Card):
 
     def _handle_value_changed(self, value: OperationMode):
         self.modeChanged.emit(value)
+
+
+class TaxidSelector(Card):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        label = QtWidgets.QLabel("TaxID:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        field = BasePropertyLineEdit()
+        field.setPlaceholderText("Taxonomy ID to assign to all sequences (inferred from filename)")
+        self.controls.taxid = field
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(field, 1)
+        layout.setSpacing(16)
+
+        self.addLayout(layout)
 
 
 class OutfmtSelector(Card):
@@ -115,6 +135,7 @@ class View(BlastTaskView):
         self.cards.fasta_input = PathFileSelector("FASTA input", "in", self)
         self.cards.fasta_output = PathFileOutSelector("FASTA output", "out", self)
         self.cards.output = PathFileOutSelector("Output file", "out", self)
+        self.cards.taxid = TaxidSelector()
         self.cards.outfmt = OutfmtSelector()
 
         self.cards.database.set_placeholder_text("Input database for processing")
@@ -156,6 +177,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.show_input_database, self.cards.database.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_input_taxdb, self.cards.taxdb.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_output_path, self.cards.output.roll.setAnimatedVisible)
+        self.binder.bind(object.properties.show_kraken_taxid, self.cards.taxid.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_outfmt, self.cards.outfmt.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_input_fasta_path, self.cards.fasta_input.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_output_fasta_path, self.cards.fasta_output.roll.setAnimatedVisible)
@@ -177,6 +199,7 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.output_fasta_path, self.cards.fasta_output.set_path)
         self.binder.bind(self.cards.fasta_output.selectedPath, object.properties.output_fasta_path)
 
+        self.cards.taxid.controls.taxid.bind_property(object.properties.kraken_taxid)
         self.cards.outfmt.controls.outfmt.bind_property(object.properties.blast_outfmt, default_placeholder=True)
 
         self.binder.bind(object.properties.editable, self.setEditable)

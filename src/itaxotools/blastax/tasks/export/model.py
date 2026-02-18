@@ -42,6 +42,7 @@ class Model(BlastTaskModel):
     show_input_fasta_path = Property(bool, False)
     show_output_fasta_path = Property(bool, False)
     show_outfmt = Property(bool, False)
+    show_kraken_taxid = Property(bool, False)
 
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
@@ -50,6 +51,8 @@ class Model(BlastTaskModel):
     output_fasta_path = Property(Path, Path())
 
     blast_outfmt = Property(str, ">%a [taxid=%T] [organism=%S]\\n%s\\n")
+
+    kraken_taxid = Property(str, "")
 
     blast_taxdb_path = Property(Path, Path())
 
@@ -71,6 +74,7 @@ class Model(BlastTaskModel):
             self.properties.output_path,
             self.properties.input_fasta_path,
             self.properties.output_fasta_path,
+            self.properties.kraken_taxid,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -105,6 +109,17 @@ class Model(BlastTaskModel):
                 self.output_fasta_path = output_path.with_suffix(".fasta")
                 output_path = input_path.with_stem(input_path.stem + "_taxid_map")
                 self.output_path = output_path.with_suffix(".tsv")
+            case OperationMode.kraken_style:
+                self.output_placeholder = "Kraken2 accession2taxid mapping file"
+                input_path = self.input_fasta_path
+                if input_path == Path():
+                    self.output_fasta_path = Path()
+                    return
+                self.kraken_taxid = "_".join(input_path.stem.split("_")[:2])
+                output_path = input_path.with_stem(input_path.stem + "_kraken")
+                self.output_fasta_path = output_path.with_suffix(".fasta")
+                output_path = input_path.with_stem(input_path.stem + "_accession2taxid")
+                self.output_path = output_path.with_suffix(".tsv")
             case _:
                 self.output_path = Path()
 
@@ -117,6 +132,7 @@ class Model(BlastTaskModel):
                 self.show_input_fasta_path = False
                 self.show_output_fasta_path = False
                 self.show_outfmt = True
+                self.show_kraken_taxid = False
             case OperationMode.database_check_taxid:
                 self.show_input_database = True
                 self.show_input_taxdb = False
@@ -124,6 +140,7 @@ class Model(BlastTaskModel):
                 self.show_input_fasta_path = False
                 self.show_output_fasta_path = False
                 self.show_outfmt = False
+                self.show_kraken_taxid = False
             case OperationMode.taxid_map_from_database:
                 self.show_input_database = True
                 self.show_input_taxdb = False
@@ -131,6 +148,7 @@ class Model(BlastTaskModel):
                 self.show_input_fasta_path = False
                 self.show_output_fasta_path = False
                 self.show_outfmt = False
+                self.show_kraken_taxid = False
             case OperationMode.taxid_map_from_fasta:
                 self.show_input_database = False
                 self.show_input_taxdb = False
@@ -138,6 +156,15 @@ class Model(BlastTaskModel):
                 self.show_input_fasta_path = True
                 self.show_output_fasta_path = True
                 self.show_outfmt = False
+                self.show_kraken_taxid = False
+            case OperationMode.kraken_style:
+                self.show_input_database = False
+                self.show_input_taxdb = False
+                self.show_output_path = True
+                self.show_input_fasta_path = True
+                self.show_output_fasta_path = True
+                self.show_outfmt = False
+                self.show_kraken_taxid = True
             case _:
                 self.show_input_database = False
                 self.show_input_taxdb = False
@@ -145,6 +172,7 @@ class Model(BlastTaskModel):
                 self.show_input_fasta_path = False
                 self.show_output_fasta_path = False
                 self.show_outfmt = False
+                self.show_kraken_taxid = False
         self._update_output_paths()
 
     def isReady(self):
@@ -155,6 +183,8 @@ class Model(BlastTaskModel):
         if self.show_input_fasta_path and self.input_fasta_path == Path():
             return False
         if self.show_output_fasta_path and self.output_fasta_path == Path():
+            return False
+        if self.show_kraken_taxid and not self.kraken_taxid.strip():
             return False
         return True
 
@@ -195,6 +225,14 @@ class Model(BlastTaskModel):
                     input_fasta_path=self.input_fasta_path,
                     output_fasta_path=self.output_fasta_path,
                     output_map_path=self.output_path,
+                )
+            case OperationMode.kraken_style:
+                self.exec(
+                    process.kraken_from_fasta,
+                    input_fasta_path=self.input_fasta_path,
+                    output_fasta_path=self.output_fasta_path,
+                    output_map_path=self.output_path,
+                    taxid=self.kraken_taxid.strip(),
                 )
             case _:
                 self.busy = False

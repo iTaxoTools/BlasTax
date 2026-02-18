@@ -503,6 +503,23 @@ def taxid_map_from_fasta(
                     map_file.write((clean, taxid))
 
 
+def kraken_from_fasta(
+    input_fasta_path: Path,
+    output_fasta_path: Path,
+    output_map_path: Path,
+    taxid: str,
+):
+    with SequenceHandler.Fasta(input_fasta_path) as input_file:
+        with FileHandler.Tabfile(output_map_path, "w") as map_file:
+            with SequenceHandler.Fasta(output_fasta_path, "w", line_width=0) as output_file:
+                for sequence in input_file:
+                    kraken_id = f"{sequence.id}|kraken:taxid|{taxid}"
+                    output_file.write(Sequence(kraken_id, sequence.seq))
+                    acc = sequence.id.split()[0]
+                    acc_no_version = acc.split(".")[0]
+                    map_file.write((acc_no_version, acc, taxid, "na"))
+
+
 def write_best_hits_report(
     blast_path: Path | str,
     report_path: Path | str,
