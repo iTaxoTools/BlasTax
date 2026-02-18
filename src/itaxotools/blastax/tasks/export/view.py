@@ -114,7 +114,7 @@ class View(BlastTaskView):
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.outfmt = OutfmtSelector()
 
-        self.cards.database.set_placeholder_text("Database to be processed")
+        self.cards.database.set_placeholder_text("Input database for processing")
         self.cards.output.set_placeholder_text("Exported sequence file")
         self.cards.taxdb.set_placeholder_text("Directory containing taxdb.btd and taxdb.bti (leave empty to skip)")
 
@@ -148,6 +148,8 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.show_input_taxdb, self.cards.taxdb.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_output_path, self.cards.output.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_outfmt, self.cards.outfmt.roll.setAnimatedVisible)
+
+        self.binder.bind(object.properties.output_placeholder, self.cards.output.set_placeholder_text)
 
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)

@@ -43,6 +43,7 @@ class Model(BlastTaskModel):
 
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
+    output_placeholder = Property(str, "Output file")
 
     blast_outfmt = Property(str, ">%a [taxid=%T] [organism=%S]\\n%s\\n")
 
@@ -57,11 +58,10 @@ class Model(BlastTaskModel):
         self.subtask_check = CheckInfoModel(self, bind_busy=True)
 
         self.binder.bind(self.properties.operation_mode, self._update_shown_cards)
-        self.binder.bind(
-            self.properties.input_database_path, self.properties.output_path, lambda x: self._get_output_path(x)
-        )
+        self.binder.bind(self.properties.input_database_path, self._update_output_path)
 
         for handle in [
+            self.properties.operation_mode,
             self.properties.input_database_path,
             self.properties.output_path,
         ]:
@@ -70,13 +70,26 @@ class Model(BlastTaskModel):
 
         self.subtask_init.start(process.initialize)
 
-    @staticmethod
-    def _get_output_path(input_path: Path) -> Path:
-        if input_path == Path():
-            return Path()
-        output_path = input_path.with_stem(input_path.stem + "_exported")
-        output_path = output_path.with_suffix(".fasta")
-        return output_path
+    def _update_output_path(self) -> Path:
+        match self.operation_mode:
+            case OperationMode.database_to_fasta:
+                self.output_placeholder = "Exported sequences as FASTA file"
+                input_path = self.input_database_path
+                if input_path == Path():
+                    self.output_path = Path()
+                    return
+                output_path = input_path.with_stem(input_path.stem + "_exported")
+                self.output_path = output_path.with_suffix(".fasta")
+            case OperationMode.taxid_mapping_from_database:
+                self.output_placeholder = "Extracted taxID map as Tabfile"
+                input_path = self.input_database_path
+                if input_path == Path():
+                    self.output_path = Path()
+                    return
+                output_path = input_path.with_stem(input_path.stem + "_taxid_map")
+                self.output_path = output_path.with_suffix(".tsv")
+            case _:
+                self.output_path = Path()
 
     def _update_shown_cards(self, mode: OperationMode):
         match mode:
@@ -90,16 +103,22 @@ class Model(BlastTaskModel):
                 self.show_input_taxdb = False
                 self.show_output_path = False
                 self.show_outfmt = False
+            case OperationMode.taxid_mapping_from_database:
+                self.show_input_database = True
+                self.show_input_taxdb = False
+                self.show_output_path = True
+                self.show_outfmt = False
             case _:
                 self.show_input_database = False
                 self.show_input_taxdb = False
                 self.show_output_path = False
                 self.show_outfmt = False
+        self._update_output_path()
 
     def isReady(self):
-        if self.input_database_path == Path():
+        if self.show_input_database and self.input_database_path == Path():
             return False
-        if self.output_path == Path():
+        if self.show_output_path and self.output_path == Path():
             return False
         return True
 
@@ -124,6 +143,15 @@ class Model(BlastTaskModel):
                     process.database_check_taxid,
                     work_dir=work_dir,
                     input_database_path=self.input_database_path,
+                )
+            case OperationMode.taxid_mapping_from_database:
+                self.exec(
+                    process.database_to_fasta,
+                    work_dir=work_dir,
+                    input_database_path=self.input_database_path,
+                    output_path=self.output_path,
+                    blast_outfmt="%a\\t%T",
+                    blast_taxdb_path=None,
                 )
 
     def onDone(self, report: ReportDone):
