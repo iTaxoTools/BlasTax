@@ -102,3 +102,34 @@ def database_check_taxid(
             return False
 
     return True
+
+
+def taxid_map_from_fasta(
+    input_fasta_path: Path,
+    output_fasta_path: Path,
+    output_map_path: Path,
+) -> Results:
+    from itaxotools import abort, get_feedback, progress_handler
+    from itaxotools.blastax.core import taxid_map_from_fasta
+
+    print(f"{input_fasta_path=}")
+    print(f"{output_fasta_path=}")
+    print(f"{output_map_path=}")
+
+    if output_fasta_path.exists() or output_map_path.exists():
+        if not get_feedback(Confirmation.OverwriteFiles):
+            abort()
+
+    ts = perf_counter()
+
+    progress_handler("Running script", 0, 0, 0)
+    taxid_map_from_fasta(
+        input_fasta_path=input_fasta_path,
+        output_fasta_path=output_fasta_path,
+        output_map_path=output_map_path,
+    )
+    progress_handler("Done.", 1, 0, 1)
+
+    tf = perf_counter()
+
+    return Results(output_map_path.parent, tf - ts)

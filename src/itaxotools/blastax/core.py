@@ -1,3 +1,4 @@
+import re
 import shutil
 import string
 from collections import defaultdict
@@ -482,6 +483,24 @@ def assign_taxonomy(
                 seqid = sequence.id
                 new_seqid = f"{seqid} [pident={pidents[seqid]}] [taxid={staxids[seqid]}] [organism={sscinames[seqid]}]"
                 output_file.write(Sequence(new_seqid, sequence.seq))
+
+
+def taxid_map_from_fasta(
+    input_fasta_path: Path,
+    output_fasta_path: Path,
+    output_map_path: Path,
+):
+    with SequenceHandler.Fasta(input_fasta_path) as input_file:
+        with FileHandler.Tabfile(output_map_path, "w") as map_file:
+            with SequenceHandler.Fasta(output_fasta_path, "w", line_width=0) as output_file:
+                for sequence in input_file:
+                    taxid_match = re.search(r"\[taxid=(\d+)\]", sequence.id)
+                    taxid = taxid_match.group(1) if taxid_match else None
+                    if not taxid:
+                        raise Exception(f"No taxid tag found for {repr(sequence.id)}")
+                    clean = re.sub(r"\s*\[.*?\]", "", sequence.id).strip()
+                    output_file.write(Sequence(clean, sequence.seq))
+                    map_file.write((clean, taxid))
 
 
 def write_best_hits_report(

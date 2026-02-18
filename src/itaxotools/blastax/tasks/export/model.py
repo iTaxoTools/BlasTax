@@ -39,11 +39,15 @@ class Model(BlastTaskModel):
     show_input_database = Property(bool, False)
     show_input_taxdb = Property(bool, False)
     show_output_path = Property(bool, False)
+    show_input_fasta_path = Property(bool, False)
+    show_output_fasta_path = Property(bool, False)
     show_outfmt = Property(bool, False)
 
     input_database_path = Property(Path, Path())
     output_path = Property(Path, Path())
     output_placeholder = Property(str, "Output file")
+    input_fasta_path = Property(Path, Path())
+    output_fasta_path = Property(Path, Path())
 
     blast_outfmt = Property(str, ">%a [taxid=%T] [organism=%S]\\n%s\\n")
 
@@ -58,19 +62,23 @@ class Model(BlastTaskModel):
         self.subtask_check = CheckInfoModel(self, bind_busy=True)
 
         self.binder.bind(self.properties.operation_mode, self._update_shown_cards)
-        self.binder.bind(self.properties.input_database_path, self._update_output_path)
+        self.binder.bind(self.properties.input_database_path, self._update_output_paths)
+        self.binder.bind(self.properties.input_fasta_path, self._update_output_paths)
 
         for handle in [
             self.properties.operation_mode,
             self.properties.input_database_path,
             self.properties.output_path,
+            self.properties.input_fasta_path,
+            self.properties.output_fasta_path,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
 
         self.subtask_init.start(process.initialize)
 
-    def _update_output_path(self) -> Path:
+    def _update_output_paths(self) -> Path:
+        print("_update_output_paths")
         match self.operation_mode:
             case OperationMode.database_to_fasta:
                 self.output_placeholder = "Exported sequences as FASTA file"
@@ -80,12 +88,22 @@ class Model(BlastTaskModel):
                     return
                 output_path = input_path.with_stem(input_path.stem + "_exported")
                 self.output_path = output_path.with_suffix(".fasta")
-            case OperationMode.taxid_mapping_from_database:
+            case OperationMode.taxid_map_from_database:
                 self.output_placeholder = "Extracted taxID map as Tabfile"
                 input_path = self.input_database_path
                 if input_path == Path():
                     self.output_path = Path()
                     return
+                output_path = input_path.with_stem(input_path.stem + "_taxid_map")
+                self.output_path = output_path.with_suffix(".tsv")
+            case OperationMode.taxid_map_from_fasta:
+                self.output_placeholder = "Extracted taxID map as Tabfile"
+                input_path = self.input_fasta_path
+                if input_path == Path():
+                    self.output_fasta_path = Path()
+                    return
+                output_path = input_path.with_stem(input_path.stem + "_no_tags")
+                self.output_fasta_path = output_path.with_suffix(".fasta")
                 output_path = input_path.with_stem(input_path.stem + "_taxid_map")
                 self.output_path = output_path.with_suffix(".tsv")
             case _:
@@ -97,28 +115,47 @@ class Model(BlastTaskModel):
                 self.show_input_database = True
                 self.show_input_taxdb = True
                 self.show_output_path = True
+                self.show_input_fasta_path = False
+                self.show_output_fasta_path = False
                 self.show_outfmt = True
             case OperationMode.database_check_taxid:
                 self.show_input_database = True
                 self.show_input_taxdb = False
                 self.show_output_path = False
+                self.show_input_fasta_path = False
+                self.show_output_fasta_path = False
                 self.show_outfmt = False
-            case OperationMode.taxid_mapping_from_database:
+            case OperationMode.taxid_map_from_database:
                 self.show_input_database = True
                 self.show_input_taxdb = False
                 self.show_output_path = True
+                self.show_input_fasta_path = False
+                self.show_output_fasta_path = False
+                self.show_outfmt = False
+            case OperationMode.taxid_map_from_fasta:
+                self.show_input_database = False
+                self.show_input_taxdb = False
+                self.show_output_path = True
+                self.show_input_fasta_path = True
+                self.show_output_fasta_path = True
                 self.show_outfmt = False
             case _:
                 self.show_input_database = False
                 self.show_input_taxdb = False
                 self.show_output_path = False
+                self.show_input_fasta_path = False
+                self.show_output_fasta_path = False
                 self.show_outfmt = False
-        self._update_output_path()
+        self._update_output_paths()
 
     def isReady(self):
         if self.show_input_database and self.input_database_path == Path():
             return False
         if self.show_output_path and self.output_path == Path():
+            return False
+        if self.show_input_fasta_path and self.input_fasta_path == Path():
+            return False
+        if self.show_output_fasta_path and self.output_fasta_path == Path():
             return False
         return True
 
@@ -144,7 +181,7 @@ class Model(BlastTaskModel):
                     work_dir=work_dir,
                     input_database_path=self.input_database_path,
                 )
-            case OperationMode.taxid_mapping_from_database:
+            case OperationMode.taxid_map_from_database:
                 self.exec(
                     process.database_to_fasta,
                     work_dir=work_dir,
@@ -152,6 +189,13 @@ class Model(BlastTaskModel):
                     output_path=self.output_path,
                     blast_outfmt="%a\\t%T",
                     blast_taxdb_path=None,
+                )
+            case OperationMode.taxid_map_from_fasta:
+                self.exec(
+                    process.taxid_map_from_fasta,
+                    input_fasta_path=self.input_fasta_path,
+                    output_fasta_path=self.output_fasta_path,
+                    output_map_path=self.output_path,
                 )
 
     def onDone(self, report: ReportDone):
@@ -171,5 +215,8 @@ class Model(BlastTaskModel):
         self.blast_outfmt = self.properties.blast_outfmt.default
 
     def open(self, path: Path):
-        if db := get_database_index_from_path(path):
-            self.input_database_path = db
+        if self.show_input_database:
+            if db := get_database_index_from_path(path):
+                self.input_database_path = db
+        else:
+            self.input_fasta_path = path

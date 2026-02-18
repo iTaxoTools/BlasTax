@@ -11,6 +11,7 @@ from ..common.view import (
     PathDatabaseSelector,
     PathDirectorySelector,
     PathFileOutSelector,
+    PathFileSelector,
 )
 from ..common.widgets import (
     ConsolePropertyLineEdit,
@@ -111,12 +112,20 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.database = PathDatabaseSelector("\u25B6  BLAST database", self)
         self.cards.taxdb = PathDirectorySelector("\u25B6  TaxDB (optional)", self)
+        self.cards.fasta_input = PathFileSelector("\u25B6  FASTA input", self)
+        self.cards.fasta_output = PathFileOutSelector("\u25C0  FASTA output", self)
         self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
         self.cards.outfmt = OutfmtSelector()
 
         self.cards.database.set_placeholder_text("Input database for processing")
         self.cards.output.set_placeholder_text("Exported sequence file")
         self.cards.taxdb.set_placeholder_text("Directory containing taxdb.btd and taxdb.bti (leave empty to skip)")
+        self.cards.fasta_input.set_placeholder_text(
+            "Sequence file with identifiers containing bracket tags in the form of [taxid=...]"
+        )
+        self.cards.fasta_output.set_placeholder_text(
+            "Resulting sequence file with all bracket tags removed from identifiers"
+        )
 
         for card in self.cards:
             card.roll = VerticalRollAnimation(card)
@@ -148,6 +157,8 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.show_input_taxdb, self.cards.taxdb.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_output_path, self.cards.output.roll.setAnimatedVisible)
         self.binder.bind(object.properties.show_outfmt, self.cards.outfmt.roll.setAnimatedVisible)
+        self.binder.bind(object.properties.show_input_fasta_path, self.cards.fasta_input.roll.setAnimatedVisible)
+        self.binder.bind(object.properties.show_output_fasta_path, self.cards.fasta_output.roll.setAnimatedVisible)
 
         self.binder.bind(object.properties.output_placeholder, self.cards.output.set_placeholder_text)
 
@@ -160,6 +171,12 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.blast_taxdb_path, self.cards.taxdb.set_path)
         self.binder.bind(self.cards.taxdb.selectedPath, object.properties.blast_taxdb_path)
 
+        self.binder.bind(object.properties.input_fasta_path, self.cards.fasta_input.set_path)
+        self.binder.bind(self.cards.fasta_input.selectedPath, object.properties.input_fasta_path)
+
+        self.binder.bind(object.properties.output_fasta_path, self.cards.fasta_output.set_path)
+        self.binder.bind(self.cards.fasta_output.selectedPath, object.properties.output_fasta_path)
+
         self.cards.outfmt.controls.outfmt.bind_property(object.properties.blast_outfmt, default_placeholder=True)
 
         self.binder.bind(object.properties.editable, self.setEditable)
@@ -170,4 +187,7 @@ class View(BlastTaskView):
         self.cards.progress.setEnabled(True)
 
     def open(self):
-        self.cards.database._handle_browse()
+        if self.object.show_input_database:
+            self.cards.database._handle_browse()
+        else:
+            self.cards.fasta_input._handle_browse()
