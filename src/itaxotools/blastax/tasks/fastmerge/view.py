@@ -115,7 +115,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = BatchProgressCard(self)
         self.cards.input = BatchQuerySelector("Input sequences", self)
-        self.cards.output = PathFileOutSelector("\u25C0  Output file", self)
+        self.cards.output = PathFileOutSelector("Output file", "out", self)
         self.cards.group = FormatGroupSelector("File types", self)
         self.cards.compress = OptionCard("Compress output", "", self)
 

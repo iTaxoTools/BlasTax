@@ -188,7 +188,7 @@ class View(BlastTaskView):
         self.cards.title = GraphicTitleCard(title, long_description, pixmap_medium.resource, self)
         self.cards.progress = ProgressCard(self)
         self.cards.input = BatchQuerySelector("Input sequences", self)
-        self.cards.output = PathDirectorySelector("\u25C0  Output folder", self)
+        self.cards.output = PathDirectorySelector("Output folder", "out", self)
         self.cards.output_filename = FilenameSelector("Output filename", self)
         self.cards.mode = ModeSelector("Translation mode", self)
         self.cards.code = CodonTableSelector("Codon table", self)

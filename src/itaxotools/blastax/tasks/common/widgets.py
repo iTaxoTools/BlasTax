@@ -1,5 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from typing import Literal
+
+from itaxotools.blastax.resources import pixmaps
 from itaxotools.common.bindings import Binder, PropertyRef
 from itaxotools.common.utility import Guard, override
 from itaxotools.taxi_gui.utility import type_convert
@@ -440,3 +443,36 @@ class PidentSpinBox(GDoubleSpinBox):
         self.setDecimals(3)
         self.setSuffix("%")
         self.setValue(97)
+
+
+class IOLabel(QtWidgets.QWidget):
+    def __init__(self, text="", direction: Literal["in", "out", "?"] = "in", parent=None):
+        super().__init__(parent)
+
+        pixmap = {
+            "in": pixmaps.arrow_in,
+            "out": pixmaps.arrow_out,
+            "?": pixmaps.dot,
+        }.get(direction, pixmaps.arrow_out)
+
+        self.arrow = QtWidgets.QLabel()
+        self.arrow.setPixmap(pixmap.resource)
+        self.arrow.setFixedWidth(8)
+
+        self.label = QtWidgets.QLabel(f"{text}:")
+        self.label.setStyleSheet("font-size: 16px;")
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.arrow)
+        layout.addWidget(self.label)
+
+        self.setMinimumWidth(150)
+
+    def setText(self, text):
+        self.label.setText(f"{text}:")
+
+    def text(self):
+        text = self.label.text()
+        return text[:-1] if text.endswith(":") else text

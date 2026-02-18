@@ -53,6 +53,21 @@ pixmaps = LazyResourceCollection(
         size=QtCore.QSize(170, 48),
         colormap=skin.colormap_icon,
     ),
+    dot=lambda: VectorPixmap(
+        get_data("graphics/dot.svg"),
+        size=QtCore.QSize(8, 16),
+        colormap=skin.colormap_icon,
+    ),
+    arrow_in=lambda: VectorPixmap(
+        get_data("graphics/arrow.svg"),
+        size=QtCore.QSize(8, 16),
+        colormap=skin.colormap_icon,
+    ),
+    arrow_out=lambda: VectorPixmap(
+        get_data("graphics/arrow.svg"),
+        size=QtCore.QSize(8, 16),
+        colormap=skin.colormap_icon,
+    ).transformed(QtGui.QTransform().scale(-1, 1)),
 )
 
 
