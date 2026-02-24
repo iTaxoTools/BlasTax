@@ -22,7 +22,7 @@ class View(BlastTaskView):
         self.cards.progress = ProgressCard(self)
         self.cards.output = PathDirectorySelector("Target directory", "out", self)
 
-        self.cards.output.set_placeholder_text("Directory to extract taxdump and taxdb files")
+        self.cards.output.set_placeholder_text("Directory in which to extract taxdump and taxdb files")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:

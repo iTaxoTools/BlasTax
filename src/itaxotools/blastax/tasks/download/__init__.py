@@ -1,13 +1,13 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "Download extras"
-description = "Download taxdump and taxdb"
+title = "Download taxonomic extras"
+description = "Get taxdump and taxdb from NCBI"
 
-pixmap = task_pixmaps_large.about
-pixmap_medium = task_pixmaps_medium.about
+pixmap = task_pixmaps_large.download
+pixmap_medium = task_pixmaps_medium.download
 
 long_description = (
-    "Download and extract taxdump and taxdb files from NCBI: ftp://ftp.ncbi.nlm.nih.gov/ "
+    "Download and extract the latest taxdump and taxdb files from the NCBI server: ftp://ftp.ncbi.nlm.nih.gov/ "
     "\n"
     "These files are required for taxonomy-aware BLAST operations. "
 )
