@@ -3,8 +3,8 @@ from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 title = "Taxonomic decontamination"
 description = "Filter sequences by taxonomy"
 
-pixmap = task_pixmaps_large.decont
-pixmap_medium = task_pixmaps_medium.decont
+pixmap = task_pixmaps_large.decont2
+pixmap_medium = task_pixmaps_medium.decont2
 
 long_description = (
     "Given a query file and a BLAST database, search the database for sequence matches "

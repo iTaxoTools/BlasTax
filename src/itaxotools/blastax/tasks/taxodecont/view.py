@@ -107,7 +107,7 @@ class DecontOptionSelector(Card):
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
-        description = QtWidgets.QLabel("Matches above any enabled threshold are considered contaminants.")
+        description = QtWidgets.QLabel("Matches above all enabled threshold are considered contaminants.")
 
         title_layout = QtWidgets.QHBoxLayout()
         title_layout.addWidget(label)
