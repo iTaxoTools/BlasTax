@@ -12,6 +12,8 @@ import requests
 OS = Literal["win64", "macosx", "linux"]
 
 BLAST_URL = "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/"
+TAXDUMP_URL = "ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
+TAXDB_URL = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
 
 REQUIRED_BLAST_BINARIES = [
     "makeblastdb",
@@ -185,19 +187,31 @@ def trim_blast(target: Path | None = None):
     print(f"Trimmed {count} binaries!")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries")
+def get_extras(
+    target: Path | None = None,
+    handler: Callable | None = None,
+):
+    target = target or Path.cwd() / "extras"
+    raise NotImplementedError(())
 
-    parser.add_argument("-o", "--output", type=Path, default=None, help="Directory to install binaries")
+
+def main():
+    parser = argparse.ArgumentParser(description="Get the latest BLAST+ binaries or extra files")
+
+    parser.add_argument("-o", "--output", type=Path, default=None, help="Directory to install binaries/extras")
     parser.add_argument("-v", "--version", type=str, default="", help="Download a specific version")
     parser.add_argument("-s", "--os", type=str, default="", help="Specify target operating system")
     parser.add_argument("-t", "--trim", action="store_true", help="Trim unrequired binaries")
+    parser.add_argument("-e", "--extras", action="store_true", help="Download taxdump and taxdb instead")
 
     args = parser.parse_args()
 
-    get_blast(args.output, args.version, args.os)
-    if args.trim:
-        trim_blast(args.output)
+    if args.extras:
+        get_extras(args.output)
+    else:
+        get_blast(args.output, args.version, args.os)
+        if args.trim:
+            trim_blast(args.output)
 
 
 if __name__ == "__main__":
