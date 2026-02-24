@@ -14,7 +14,7 @@ import requests
 OS = Literal["win64", "macosx", "linux"]
 
 BLAST_URL = "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/"
-TAXDUMP_URL = "ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz"
+TAXDUMP_URL = "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
 TAXDB_URL = "ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz"
 
 REQUIRED_BLAST_BINARIES = [
