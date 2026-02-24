@@ -11,7 +11,7 @@ from itaxotools.taxi_gui.types import Notification
 from ..common.model import BlastTaskModel
 from ..common.utils import get_database_index_from_path
 from . import process, title
-from .types import OperationMode
+from .types import DatabaseInfo, OperationMode
 
 
 class CheckInfoModel(SubtaskModel):
@@ -206,7 +206,7 @@ class Model(BlastTaskModel):
                 )
             case OperationMode.database_check_taxid:
                 self.exec(
-                    process.database_check_taxid,
+                    process.database_check_info,
                     work_dir=work_dir,
                     input_database_path=self.input_database_path,
                 )
@@ -239,12 +239,35 @@ class Model(BlastTaskModel):
 
     def onDone(self, report: ReportDone):
         if self.operation_mode == OperationMode.database_check_taxid:
-            if report.result is None:
-                self.notification.emit(Notification.Error("Could not read taxonomy IDs from the database."))
-            elif report.result:
-                self.notification.emit(Notification.Info("Database DOES contain taxonomy ID mappings."))
+            info: DatabaseInfo = report.result
+            parts = []
+
+            if info.db_type is not None:
+                parts.append(f"Database type: {info.db_type}")
             else:
-                self.notification.emit(Notification.Warn("Database does NOT contain taxonomy ID mappings."))
+                parts.append("Could not determine database type.")
+
+            if info.version is not None:
+                parts.append(f"Schema version: v{info.version}")
+            else:
+                parts.append("Could not determine database schema version.")
+
+            if info.has_taxids is None:
+                parts.append("Could not read taxonomy IDs from the database.")
+            elif info.has_taxids:
+                parts.append("Database DOES contain taxonomy ID mappings.")
+            else:
+                parts.append("Database does NOT contain taxonomy ID mappings.")
+
+            message = "\n".join(parts)
+
+            if info.has_taxids is None:
+                self.notification.emit(Notification.Error(message))
+            elif info.has_taxids and info.version is not None:
+                self.notification.emit(Notification.Info(message))
+            else:
+                self.notification.emit(Notification.Warn(message))
+
             self.busy = False
             return
 

@@ -70,6 +70,19 @@ def run_blast_export(
     return execute_blast_command(args, blastdb_path=blastdb_path, debug=debug)
 
 
+def get_database_info(
+    database_path: str,
+    debug: bool = False,
+) -> str:
+    args = [
+        get_blast_binary("blastdbcmd"),
+        "-db",
+        database_path,
+        "-info",
+    ]
+    return execute_blast_command(args, debug=debug)
+
+
 def run_blast(
     blast_binary: str,
     query_path: Path | str,
