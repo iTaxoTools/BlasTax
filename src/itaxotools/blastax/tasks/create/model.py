@@ -15,6 +15,7 @@ class Model(BlastTaskModel):
     input = Property(BatchQueryModel, Instance)
     output_path = Property(Path, Path())
     database_type = Property(str, "nucl")
+    schema_version = Property(int, 4)
     database_name = Property(str, "")
     parse_ids = Property(bool, False)
     taxid_map_path = Property(Path, Path())
@@ -69,6 +70,7 @@ class Model(BlastTaskModel):
             input_paths=self.input.get_all_paths(),
             output_path=self.output_path,
             type=self.database_type,
+            version=self.schema_version,
             name=self.database_name,
             taxid_map_path=self.taxid_map_path if self.parse_ids else Path(),
         )

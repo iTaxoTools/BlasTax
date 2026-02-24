@@ -20,6 +20,7 @@ def execute(
     input_paths: list[Path],
     output_path: Path,
     type: Literal["nucl", "prot"],
+    version: int,
     name: str,
     taxid_map_path: Path,
 ) -> BatchResults:
@@ -32,6 +33,7 @@ def execute(
     print(f"{input_paths=}")
     print(f"{output_path=}")
     print(f"{type=}")
+    print(f"{version=}")
     print(f"{name=}")
     print(f"{taxid_map_path=}")
 
@@ -68,6 +70,7 @@ def execute(
                     input_path=staging[path],
                     output_path=staging[output_path],
                     type=type,
+                    version=version,
                     name=name if total == 1 else staging[path].stem,
                     taxid_map_path=staging[taxid_map_path] if taxid_map_path else None,
                 )
@@ -90,6 +93,7 @@ def execute_single(
     input_path: list[Path],
     output_path: Path,
     type: Literal["nucl", "prot"],
+    version: int,
     name: str,
     taxid_map_path: Path | None = None,
 ):
@@ -111,7 +115,7 @@ def execute_single(
         output_path=str(output_path),
         type=type,
         name=name,
-        version=4,
+        version=version,
         taxid_map_path=str(taxid_map_path) if taxid_map_path else None,
         debug=True,
     )

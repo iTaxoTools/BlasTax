@@ -108,6 +108,53 @@ class TypeSelector(Card):
         self.controls.type.setValue(type)
 
 
+class SchemaVersionSelector(Card):
+    versionChanged = QtCore.Signal(int)
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.binder = Binder()
+        self.draw_main(text)
+        self.draw_warning()
+
+    def draw_main(self, text):
+        label = QtWidgets.QLabel(text + ":")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        v4 = QtWidgets.QRadioButton("v4 (default)")
+        v5 = QtWidgets.QRadioButton("v5")
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_value_changed)
+        group.add(v4, 4)
+        group.add(v5, 5)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(v4)
+        layout.addWidget(v5, 1)
+        layout.addSpacing(136)
+        layout.setSpacing(16)
+        self.addLayout(layout)
+
+        self.controls.label = label
+        self.controls.v4 = v4
+        self.controls.v5 = v5
+        self.controls.version = group
+
+    def draw_warning(self):
+        warning = "WARNING:  BlasTax has only been tested with v4 databases. v5 should only be used for taxonomy-related tasks."
+        label = LongLabel(warning)
+        self.addWidget(label)
+
+    def _handle_value_changed(self, value):
+        self.versionChanged.emit(int(value))
+
+    def set_version(self, version: int):
+        self.controls.version.setValue(version)
+
+
 class ParseIdsCard(OptionCard):
     selectedPath = QtCore.Signal(Path)
 
@@ -181,6 +228,7 @@ class View(BlastTaskView):
         self.cards.output_path = PathDirectorySelector("Output folder", "out")
         self.cards.database_name = NameSelector("Database name")
         self.cards.database_type = TypeSelector("Database type")
+        self.cards.schema_version = SchemaVersionSelector("Schema version")
         self.cards.parse_ids = ParseIdsCard("Include TaxIDs")
 
         self.cards.input.set_placeholder_text("Sequences to go into the new database")
@@ -232,6 +280,9 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.database_type, self.cards.database_type.set_type)
         self.binder.bind(self.cards.database_type.typeChanged, object.properties.database_type)
+
+        self.binder.bind(object.properties.schema_version, self.cards.schema_version.set_version)
+        self.binder.bind(self.cards.schema_version.versionChanged, object.properties.schema_version)
 
         self.binder.bind(object.properties.editable, self.setEditable)
 
