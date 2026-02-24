@@ -2,10 +2,12 @@ import argparse
 import shutil
 import tarfile
 import tempfile
+from ftplib import FTP
 from pathlib import Path
 from platform import system
 from sys import stdout
 from typing import Callable, Literal
+from urllib.parse import urlparse
 
 import requests
 
@@ -28,6 +30,17 @@ REQUIRED_BLAST_BINARIES = [
 KEPT_SUFFIXES = [
     ".so",
     ".dll",
+]
+
+REQUIRED_TAXDUMP_FILES = [
+    "names.dmp",
+    "nodes.dmp",
+]
+
+REQUIRED_TAXDB_FILES = [
+    "taxdb.btd",
+    "taxdb.bti",
+    "taxonomy4blast.sqlite3",
 ]
 
 
@@ -187,12 +200,92 @@ def trim_blast(target: Path | None = None):
     print(f"Trimmed {count} binaries!")
 
 
+def parse_ftp_url(url: str) -> tuple[str, str]:
+    parsed = urlparse(url)
+    return parsed.hostname, parsed.path
+
+
+def get_ftp_size(host: str, path: str) -> int:
+    with FTP(host) as ftp:
+        ftp.login()
+        return ftp.size(path)
+
+
+def get_ftp_file(
+    url: str,
+    target: Path,
+    handler: Callable | None = None,
+    offset: int = 0,
+    total: int = 0,
+):
+    handler = handler or report_progress
+    host, path = parse_ftp_url(url)
+    downloaded_size = 0
+
+    print(f"Downloading: {url}")
+
+    with FTP(host) as ftp:
+        ftp.login()
+        with open(target, "wb") as f:
+
+            def callback(data):
+                nonlocal downloaded_size
+                f.write(data)
+                downloaded_size += len(data)
+                handler(offset + downloaded_size, total)
+
+            ftp.retrbinary(f"RETR {path}", callback)
+        print()
+
+    print(f"Saved as: {target}")
+    return downloaded_size
+
+
 def get_extras(
     target: Path | None = None,
     handler: Callable | None = None,
 ):
     target = target or Path.cwd() / "extras"
-    raise NotImplementedError(())
+
+    print("Fetching file sizes...")
+    taxdump_host, taxdump_path = parse_ftp_url(TAXDUMP_URL)
+    taxdb_host, taxdb_path = parse_ftp_url(TAXDB_URL)
+    taxdump_size = get_ftp_size(taxdump_host, taxdump_path)
+    taxdb_size = get_ftp_size(taxdb_host, taxdb_path)
+    total_size = taxdump_size + taxdb_size
+    print(f"Total download size: {human_readable_size(total_size)}")
+
+    with tempfile.TemporaryDirectory() as work_dir:
+        work_path = Path(work_dir)
+
+        taxdump_tar = work_path / "taxdump.tar.gz"
+        downloaded = get_ftp_file(TAXDUMP_URL, taxdump_tar, handler, offset=0, total=total_size)
+
+        taxdb_tar = work_path / "taxdb.tar.gz"
+        get_ftp_file(TAXDB_URL, taxdb_tar, handler, offset=downloaded, total=total_size)
+
+        target.mkdir(parents=True, exist_ok=True)
+
+        print(f"Extracting taxdump to: {target}")
+        with tarfile.open(taxdump_tar, "r:gz") as tar:
+            tar.extractall(path=target)
+
+        print(f"Extracting taxdb to: {target}")
+        with tarfile.open(taxdb_tar, "r:gz") as tar:
+            tar.extractall(path=target)
+
+    print("Done!")
+
+
+def trim_extras(target: Path | None = None):
+    target = target or Path.cwd() / "extras"
+    required = {f.lower() for f in REQUIRED_TAXDUMP_FILES + REQUIRED_TAXDB_FILES}
+    count = 0
+    for file in target.iterdir():
+        if file.name.lower() not in required:
+            file.unlink()
+            count += 1
+    print(f"Trimmed {count} extra files!")
 
 
 def main():
@@ -208,6 +301,8 @@ def main():
 
     if args.extras:
         get_extras(args.output)
+        if args.trim:
+            trim_extras(args.output)
     else:
         get_blast(args.output, args.version, args.os)
         if args.trim:
