@@ -113,7 +113,7 @@ class DecontOptionSelector(Card):
         label.setStyleSheet("""font-size: 16px;""")
         label.setMinimumWidth(150)
 
-        description = QtWidgets.QLabel("Matches above all enabled threshold are considered contaminants.")
+        description = QtWidgets.QLabel("Matches above all enabled thresholds are considered contaminants.")
 
         title_layout = QtWidgets.QHBoxLayout()
         title_layout.addWidget(label)
@@ -201,7 +201,7 @@ class TaxIdSelector(Card):
         # Text input widget
         text_edit = GrowingTextEdit()
         text_edit.document().setDocumentMargin(8)
-        text_edit.setPlaceholderText("Enter taxon IDs, one per line and/or separated by commas...")
+        text_edit.setPlaceholderText("Enter taxon IDs, one per line and/or separated by commas")
         fixed_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
         text_edit.setFont(fixed_font)
 

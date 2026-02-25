@@ -1,7 +1,7 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "Download taxonomic extras"
-description = "Get taxDump and taxDB from NCBI"
+title = "Download NCBI databases"
+description = "Get the latest taxDump and taxDB"
 
 pixmap = task_pixmaps_large.download
 pixmap_medium = task_pixmaps_medium.download

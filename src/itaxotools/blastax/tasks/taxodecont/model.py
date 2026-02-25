@@ -55,6 +55,9 @@ class Model(BlastTaskModel):
             self.input_queries.properties.ready,
             self.properties.input_database_path,
             self.properties.output_path,
+            self.properties.filter_pident,
+            self.properties.filter_bitscore,
+            self.properties.filter_length,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -67,6 +70,14 @@ class Model(BlastTaskModel):
         if self.input_database_path == Path():
             return False
         if self.output_path == Path():
+            return False
+        if not any(
+            (
+                self.filter_pident,
+                self.filter_bitscore,
+                self.filter_length,
+            )
+        ):
             return False
         return True
 

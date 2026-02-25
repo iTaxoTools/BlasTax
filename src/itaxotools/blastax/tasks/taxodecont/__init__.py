@@ -1,7 +1,7 @@
 from itaxotools.blastax.resources import task_pixmaps_large, task_pixmaps_medium
 
-title = "Taxonomic decontamination"
-description = "Filter sequences by taxonomy"
+title = "Decontamination by taxonomy"
+description = "Filter sequences by taxID"
 
 pixmap = task_pixmaps_large.decont2
 pixmap_medium = task_pixmaps_medium.decont2
