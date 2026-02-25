@@ -20,6 +20,9 @@ def execute(
     blast_method: str,
     blast_evalue: float,
     blast_num_threads: int,
+    blast_taxdb_path: Path,
+    taxid_list: str,
+    taxid_path: Path,
     threshold_pident: float | None,
     threshold_bitscore: float | None,
     threshold_length: float | None,
@@ -34,6 +37,9 @@ def execute(
     print(f"{blast_method=}")
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
+    print(f"{blast_taxdb_path=}")
+    print(f"{taxid_list=}")
+    print(f"{taxid_path=}")
     print(f"{threshold_pident=}")
     print(f"{threshold_bitscore=}")
     print(f"{threshold_length=}")

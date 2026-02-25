@@ -22,6 +22,13 @@ class Model(BlastTaskModel):
     blast_evalue = Property(float, 1e-5)
     blast_num_threads = Property(int, 1)
     blast_extra_args = Property(str, '-outfmt "6 qseqid sseqid pident bitscore length staxids"')
+    blast_taxdb_path = Property(Path, Path())
+
+    taxid_mode_text = Property(bool, True)
+    taxid_list = Property(str, "")
+    taxid_path = Property(Path, Path())
+    taxid_negative = Property(bool, False)
+    taxid_expand = Property(bool, True)
 
     filter_pident = Property(bool, True)
     filter_bitscore = Property(bool, False)
@@ -78,6 +85,9 @@ class Model(BlastTaskModel):
             blast_method=self.blast_method.executable,
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
+            blast_taxdb_path=self.blast_taxdb_path if self.blast_taxdb_path != Path() else None,
+            taxid_list=self.taxid_list,
+            taxid_path=self.taxid_path,
             threshold_pident=self.threshold_pident if self.filter_pident else None,
             threshold_bitscore=self.threshold_bitscore if self.filter_bitscore else None,
             threshold_length=self.threshold_length if self.filter_length else None,

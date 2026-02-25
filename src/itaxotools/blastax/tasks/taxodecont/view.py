@@ -1,10 +1,12 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from pathlib import Path
 
 from itaxotools.common.utility import AttrDict
 from itaxotools.taxi_gui import app
+from itaxotools.taxi_gui.view.animations import VerticalRollAnimation
 from itaxotools.taxi_gui.view.cards import Card
+from itaxotools.taxi_gui.view.widgets import RadioButtonGroup
 
 from ..common.types import BlastMethod
 from ..common.view import (
@@ -14,12 +16,16 @@ from ..common.view import (
     GraphicTitleCard,
     OutputDirectorySelector,
     PathDatabaseSelector,
+    PathDirectorySelector,
 )
 from ..common.widgets import (
     BlastMethodCombobox,
     ConsolePropertyLineEdit,
+    ElidedLineEdit,
     FloatPropertyLineEdit,
+    GrowingTextEdit,
     IntPropertyLineEdit,
+    PidentSpinBox,
 )
 from . import long_description, pixmap_medium, title
 
@@ -122,9 +128,9 @@ class DecontOptionSelector(Card):
         options_layout.setVerticalSpacing(8)
         row = 0
 
-        check_pident = QtWidgets.QCheckBox("pident")
-        field_pident = FloatPropertyLineEdit()
-        desc_pident = QtWidgets.QLabel("Percentage of identical matches")
+        check_pident = QtWidgets.QCheckBox("Identity")
+        field_pident = PidentSpinBox()
+        desc_pident = QtWidgets.QLabel("Minimum identity percentage (pident)")
         desc_pident.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(check_pident, row, 0)
         options_layout.addWidget(field_pident, row, 1)
@@ -133,9 +139,9 @@ class DecontOptionSelector(Card):
         self.controls.threshold_pident = field_pident
         row += 1
 
-        check_bitscore = QtWidgets.QCheckBox("bitscore")
+        check_bitscore = QtWidgets.QCheckBox("Bitscore")
         field_bitscore = FloatPropertyLineEdit()
-        desc_bitscore = QtWidgets.QLabel("Bit score threshold")
+        desc_bitscore = QtWidgets.QLabel("Minimum bit score")
         desc_bitscore.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(check_bitscore, row, 0)
         options_layout.addWidget(field_bitscore, row, 1)
@@ -144,9 +150,9 @@ class DecontOptionSelector(Card):
         self.controls.threshold_bitscore = field_bitscore
         row += 1
 
-        check_length = QtWidgets.QCheckBox("length")
+        check_length = QtWidgets.QCheckBox("Length")
         field_length = FloatPropertyLineEdit()
-        desc_length = QtWidgets.QLabel("Alignment length threshold")
+        desc_length = QtWidgets.QLabel("Minimum alignment sequence length")
         desc_length.setStyleSheet("QLabel { font-style: italic; }")
         options_layout.addWidget(check_length, row, 0)
         options_layout.addWidget(field_length, row, 1)
@@ -166,6 +172,126 @@ class DecontOptionSelector(Card):
         self.addLayout(options_layout)
 
 
+class TaxIdSelector(Card):
+    selectedPath = QtCore.Signal(Path)
+    modeChanged = QtCore.Signal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        label = QtWidgets.QLabel("TaxID filter:")
+        label.setStyleSheet("""font-size: 16px;""")
+        label.setMinimumWidth(150)
+
+        radio_text = QtWidgets.QRadioButton("Enter as text")
+        radio_file = QtWidgets.QRadioButton("From file")
+
+        group = RadioButtonGroup()
+        group.valueChanged.connect(self._handle_mode_changed)
+        group.add(radio_text, True)
+        group.add(radio_file, False)
+
+        title_layout = QtWidgets.QHBoxLayout()
+        title_layout.addWidget(label)
+        title_layout.addWidget(radio_text)
+        title_layout.addWidget(radio_file)
+        title_layout.addStretch(1)
+        title_layout.setSpacing(16)
+
+        # Text input widget
+        text_edit = GrowingTextEdit()
+        text_edit.document().setDocumentMargin(8)
+        text_edit.setPlaceholderText("Enter taxon IDs, one per line and/or separated by commas...")
+        fixed_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        text_edit.setFont(fixed_font)
+
+        text_layout = QtWidgets.QVBoxLayout()
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.addWidget(text_edit)
+
+        text_widget = QtWidgets.QWidget()
+        text_widget.setLayout(text_layout)
+        text_widget.roll = VerticalRollAnimation(text_widget)
+
+        # File input widget
+        file_field = ElidedLineEdit()
+        file_field.textDeleted.connect(self._handle_text_deleted)
+        file_field.setPlaceholderText("Text file containing taxon IDs, one per line")
+        file_field.setReadOnly(True)
+
+        browse = QtWidgets.QPushButton("Browse")
+        browse.clicked.connect(self._handle_browse)
+        browse.setFixedWidth(120)
+
+        file_layout = QtWidgets.QHBoxLayout()
+        file_layout.setContentsMargins(0, 0, 0, 0)
+        file_layout.addWidget(file_field, 1)
+        file_layout.addWidget(browse)
+        file_layout.setSpacing(16)
+
+        file_widget = QtWidgets.QWidget()
+        file_widget.setLayout(file_layout)
+        file_widget.roll = VerticalRollAnimation(file_widget)
+        file_widget.setVisible(False)
+
+        # Negative mode option
+        radio_positive = QtWidgets.QRadioButton(
+            "This list defines contaminants that are discarded on match (restrict search to include only the specified taxIDs)."
+        )
+        radio_negative = QtWidgets.QRadioButton(
+            "This list defines non-contaminants which are always kept (restrict search to everything except the specified taxIDs)."
+        )
+        checkbox_expand = QtWidgets.QCheckBox("Expand the provided taxIDs to include their descendant taxIDs.")
+
+        negative_group = RadioButtonGroup()
+        negative_group.add(radio_positive, False)
+        negative_group.add(radio_negative, True)
+
+        mode_layout = QtWidgets.QVBoxLayout()
+        mode_layout.setContentsMargins(0, 0, 0, 0)
+        mode_layout.setSpacing(8)
+        mode_layout.addWidget(radio_positive)
+        mode_layout.addWidget(radio_negative)
+        mode_layout.addWidget(checkbox_expand)
+
+        self.controls.mode = group
+        self.controls.negative = negative_group
+        self.controls.expand = checkbox_expand
+        self.controls.text_edit = text_edit
+        self.controls.text_widget = text_widget
+        self.controls.file_field = file_field
+        self.controls.file_widget = file_widget
+
+        self.addLayout(title_layout)
+        self.addWidget(text_widget)
+        self.addWidget(file_widget)
+        self.addLayout(mode_layout)
+
+    def _handle_mode_changed(self, value):
+        self.controls.text_widget.roll.setAnimatedVisible(value)
+        self.controls.file_widget.roll.setAnimatedVisible(not value)
+        self.modeChanged.emit(value)
+
+    def _handle_browse(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
+        if not filename:
+            return
+        self.selectedPath.emit(Path(filename))
+
+    def _handle_text_deleted(self):
+        self.selectedPath.emit(Path())
+
+    def set_path(self, path: Path):
+        text = str(path) if path != Path() else ""
+        self.controls.file_field.setText(text)
+
+    def set_mode(self, value: bool):
+        self.controls.mode.setValue(value)
+
+
 class View(BlastTaskView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -177,12 +303,15 @@ class View(BlastTaskView):
         self.cards.progress = BatchProgressCard(self)
         self.cards.query = BatchQuerySelector("Query sequences", self)
         self.cards.database = PathDatabaseSelector("BLAST database", "in", self)
+        self.cards.taxdb = PathDirectorySelector("TaxDB folder", "in", self)
         self.cards.output = OutputDirectorySelector("Output folder", self)
         self.cards.blast_options = BlastOptionSelector(self)
         self.cards.decont_options = DecontOptionSelector(self)
+        self.cards.taxid = TaxIdSelector(self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
         self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.taxdb.set_placeholder_text("Directory containing taxonomy4blast.sqlite3 (required by taxID filter)")
 
         layout = QtWidgets.QVBoxLayout()
         for card in self.cards:
@@ -209,9 +338,17 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.input_database_path, self.cards.database.set_path)
         self.binder.bind(self.cards.database.selectedPath, object.properties.input_database_path)
 
+        self.binder.bind(object.properties.blast_taxdb_path, self.cards.taxdb.set_path)
+        self.binder.bind(self.cards.taxdb.selectedPath, object.properties.blast_taxdb_path)
+
         self.binder.bind(object.properties.filter_pident, self.cards.decont_options.controls.check_pident.setChecked)
         self.binder.bind(self.cards.decont_options.controls.check_pident.toggled, object.properties.filter_pident)
-        self.cards.decont_options.controls.threshold_pident.bind_property(object.properties.threshold_pident)
+        self.binder.bind(
+            object.properties.threshold_pident, self.cards.decont_options.controls.threshold_pident.setValue
+        )
+        self.binder.bind(
+            self.cards.decont_options.controls.threshold_pident.valueChangedSafe, object.properties.threshold_pident
+        )
 
         self.binder.bind(
             object.properties.filter_bitscore, self.cards.decont_options.controls.check_bitscore.setChecked
@@ -222,6 +359,21 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.filter_length, self.cards.decont_options.controls.check_length.setChecked)
         self.binder.bind(self.cards.decont_options.controls.check_length.toggled, object.properties.filter_length)
         self.cards.decont_options.controls.threshold_length.bind_property(object.properties.threshold_length)
+
+        self.binder.bind(object.properties.taxid_mode_text, self.cards.taxid.set_mode)
+        self.binder.bind(self.cards.taxid.modeChanged, object.properties.taxid_mode_text)
+
+        self.binder.bind(object.properties.taxid_list, self.cards.taxid.controls.text_edit.setText)
+        self.binder.bind(self.cards.taxid.controls.text_edit.textEditedSafe, object.properties.taxid_list)
+
+        self.binder.bind(object.properties.taxid_path, self.cards.taxid.set_path)
+        self.binder.bind(self.cards.taxid.selectedPath, object.properties.taxid_path)
+
+        self.binder.bind(object.properties.taxid_negative, self.cards.taxid.controls.negative.setValue)
+        self.binder.bind(self.cards.taxid.controls.negative.valueChanged, object.properties.taxid_negative)
+
+        self.binder.bind(object.properties.taxid_expand, self.cards.taxid.controls.expand.setChecked)
+        self.binder.bind(self.cards.taxid.controls.expand.toggled, object.properties.taxid_expand)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)
