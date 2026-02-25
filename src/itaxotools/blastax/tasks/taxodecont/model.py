@@ -50,6 +50,7 @@ class Model(BlastTaskModel):
         self._update_num_threads_default()
 
         self.binder.bind(self.input_queries.properties.parent_path, self.properties.output_path)
+        self.binder.bind(self.properties.blast_taxdb_path, self._check_for_named_dmp_path)
 
         self.subtask_init = SubtaskModel(self, bind_busy=False)
 
@@ -60,6 +61,8 @@ class Model(BlastTaskModel):
             self.properties.filter_pident,
             self.properties.filter_bitscore,
             self.properties.filter_length,
+            self.properties.taxid_use_scinames,
+            self.properties.taxid_names_dmp_path,
         ]:
             self.binder.bind(handle, self.checkReady)
         self.checkReady()
@@ -80,6 +83,8 @@ class Model(BlastTaskModel):
                 self.filter_length,
             )
         ):
+            return False
+        if self.taxid_use_scinames and self.taxid_names_dmp_path == Path():
             return False
         return True
 
@@ -118,6 +123,11 @@ class Model(BlastTaskModel):
         property = self.properties.blast_num_threads
         setattr(property._parent, Property.key_default(property._key), cpus)
         property.set(cpus)
+
+    def _check_for_named_dmp_path(self, path: Path):
+        dmp = path / "names.dmp"
+        if dmp.exists():
+            self.taxid_names_dmp_path = dmp
 
     def open(self, path: Path):
         if db := get_database_index_from_path(path):

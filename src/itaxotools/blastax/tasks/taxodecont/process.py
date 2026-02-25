@@ -47,7 +47,7 @@ def execute(
 
     blast_outfmt_options = BLAST_OUTFMT_OPTIONS
 
-    taxid_text = parse_taxid_text(taxid_text)
+    taxid_text = parse_taxid_text(taxid_text, not taxid_use_scinames)
 
     print(f"{input_query_paths=}")
     print(f"{input_database_path=}")
@@ -179,12 +179,14 @@ def execute(
     return BatchResults(output_path, failed, tf - ts)
 
 
-def parse_taxid_text(text: str) -> str:
+def parse_taxid_text(text: str, require_digits: bool) -> str:
     ids = []
     for line in text.splitlines():
-        for part in line.replace(",", " ").split():
+        for part in line.split(","):
             part = part.strip()
             if part:
+                if require_digits and not part.isdigit():
+                    raise Exception(f"Expected taxIDs as digits only: {repr(part)}")
                 ids.append(part)
     return ",".join(ids) if ids else ""
 
