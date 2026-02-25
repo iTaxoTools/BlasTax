@@ -29,6 +29,8 @@ class Model(BlastTaskModel):
     taxid_path = Property(Path, Path())
     taxid_negative = Property(bool, False)
     taxid_expand = Property(bool, True)
+    taxid_use_scinames = Property(bool, False)
+    taxid_names_dmp_path = Property(Path, Path())
 
     filter_pident = Property(bool, True)
     filter_bitscore = Property(bool, False)
@@ -102,6 +104,8 @@ class Model(BlastTaskModel):
             taxid_path=self.taxid_path if self.taxid_path != Path() else None,
             taxid_negative=self.taxid_negative,
             taxid_expand=self.taxid_expand,
+            taxid_use_scinames=self.taxid_use_scinames,
+            taxid_names_dmp_path=self.taxid_names_dmp_path if self.taxid_names_dmp_path != Path() else None,
             threshold_pident=self.threshold_pident if self.filter_pident else None,
             threshold_bitscore=self.threshold_bitscore if self.filter_bitscore else None,
             threshold_length=self.threshold_length if self.filter_length else None,

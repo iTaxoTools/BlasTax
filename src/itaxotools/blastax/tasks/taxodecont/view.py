@@ -174,6 +174,7 @@ class DecontOptionSelector(Card):
 
 class TaxIdSelector(Card):
     selectedPath = QtCore.Signal(Path)
+    selectedNamesDmpPath = QtCore.Signal(Path)
     modeChanged = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
@@ -242,10 +243,34 @@ class TaxIdSelector(Card):
             "This list defines non-contaminants which are always kept (restrict search to everything except the specified taxIDs)."
         )
         checkbox_expand = QtWidgets.QCheckBox("Expand the provided taxIDs to include their descendant taxIDs.")
+        checkbox_scinames = QtWidgets.QCheckBox("Also allow scientific names in addition to taxon IDs.")
 
         negative_group = RadioButtonGroup()
         negative_group.add(radio_positive, False)
         negative_group.add(radio_negative, True)
+
+        # Names.dmp path selector (shown when scinames checkbox is checked)
+        names_dmp_field = ElidedLineEdit()
+        names_dmp_field.textDeleted.connect(self._handle_names_dmp_text_deleted)
+        names_dmp_field.setPlaceholderText("Path to names.dmp file (required for scientific name resolution)")
+        names_dmp_field.setReadOnly(True)
+
+        names_dmp_browse = QtWidgets.QPushButton("Browse")
+        names_dmp_browse.clicked.connect(self._handle_names_dmp_browse)
+        names_dmp_browse.setFixedWidth(120)
+
+        names_dmp_layout = QtWidgets.QHBoxLayout()
+        names_dmp_layout.setContentsMargins(0, 0, 0, 0)
+        names_dmp_layout.addWidget(names_dmp_field, 1)
+        names_dmp_layout.addWidget(names_dmp_browse)
+        names_dmp_layout.setSpacing(16)
+
+        names_dmp_widget = QtWidgets.QWidget()
+        names_dmp_widget.setLayout(names_dmp_layout)
+        names_dmp_widget.roll = VerticalRollAnimation(names_dmp_widget)
+        names_dmp_widget.setVisible(False)
+
+        checkbox_scinames.toggled.connect(names_dmp_widget.roll.setAnimatedVisible)
 
         mode_layout = QtWidgets.QVBoxLayout()
         mode_layout.setContentsMargins(0, 0, 0, 0)
@@ -253,10 +278,14 @@ class TaxIdSelector(Card):
         mode_layout.addWidget(radio_positive)
         mode_layout.addWidget(radio_negative)
         mode_layout.addWidget(checkbox_expand)
+        mode_layout.addWidget(checkbox_scinames)
 
         self.controls.mode = group
         self.controls.negative = negative_group
         self.controls.expand = checkbox_expand
+        self.controls.scinames = checkbox_scinames
+        self.controls.names_dmp_field = names_dmp_field
+        self.controls.names_dmp_widget = names_dmp_widget
         self.controls.text_edit = text_edit
         self.controls.text_widget = text_widget
         self.controls.file_field = file_field
@@ -266,6 +295,7 @@ class TaxIdSelector(Card):
         self.addWidget(text_widget)
         self.addWidget(file_widget)
         self.addLayout(mode_layout)
+        self.addWidget(names_dmp_widget)
 
     def _handle_mode_changed(self, value):
         self.controls.text_widget.roll.setAnimatedVisible(value)
@@ -284,9 +314,25 @@ class TaxIdSelector(Card):
     def _handle_text_deleted(self):
         self.selectedPath.emit(Path())
 
+    def _handle_names_dmp_browse(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self.window(),
+            caption=f"{app.config.title} - Browse file",
+        )
+        if not filename:
+            return
+        self.selectedNamesDmpPath.emit(Path(filename))
+
+    def _handle_names_dmp_text_deleted(self):
+        self.selectedNamesDmpPath.emit(Path())
+
     def set_path(self, path: Path):
         text = str(path) if path != Path() else ""
         self.controls.file_field.setText(text)
+
+    def set_names_dmp_path(self, path: Path):
+        text = str(path) if path != Path() else ""
+        self.controls.names_dmp_field.setText(text)
 
     def set_mode(self, value: bool):
         self.controls.mode.setValue(value)
@@ -376,6 +422,12 @@ class View(BlastTaskView):
 
         self.binder.bind(object.properties.taxid_expand, self.cards.taxid.controls.expand.setChecked)
         self.binder.bind(self.cards.taxid.controls.expand.toggled, object.properties.taxid_expand)
+
+        self.binder.bind(object.properties.taxid_use_scinames, self.cards.taxid.controls.scinames.setChecked)
+        self.binder.bind(self.cards.taxid.controls.scinames.toggled, object.properties.taxid_use_scinames)
+
+        self.binder.bind(object.properties.taxid_names_dmp_path, self.cards.taxid.set_names_dmp_path)
+        self.binder.bind(self.cards.taxid.selectedNamesDmpPath, object.properties.taxid_names_dmp_path)
 
         self.binder.bind(object.properties.output_path, self.cards.output.set_path)
         self.binder.bind(self.cards.output.selectedPath, object.properties.output_path)

@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 from traceback import print_exc
+from typing import Iterator
 
 from itaxotools.blastax.utils import make_str_blast_safe
 
@@ -34,6 +35,8 @@ def execute(
     taxid_path: Path | None,
     taxid_negative: bool,
     taxid_expand: bool,
+    taxid_use_scinames: bool,
+    taxid_names_dmp_path: Path | None,
     threshold_pident: float | None,
     threshold_bitscore: float | None,
     threshold_length: float | None,
@@ -58,6 +61,8 @@ def execute(
     print(f"{taxid_path=}")
     print(f"{taxid_negative=}")
     print(f"{taxid_expand=}")
+    print(f"{taxid_use_scinames=}")
+    print(f"{taxid_names_dmp_path=}")
     print(f"{threshold_pident=}")
     print(f"{threshold_bitscore=}")
     print(f"{threshold_length=}")
@@ -117,6 +122,17 @@ def execute(
 
     ts = perf_counter()
 
+    if taxid_use_scinames and taxid_names_dmp_path:
+        progress_handler("Resolving scientific names", 0, 0, 0)
+        names_dmp_iter = iter_names_dmp(taxid_names_dmp_path)
+
+        if taxid_mode_text and taxid_text:
+            taxid_text = resolve_scinames_in_text(taxid_text, names_dmp_iter)
+        elif not taxid_mode_text and taxid_path:
+            resolved_path = work_dir / (taxid_path.stem + "_resolved" + taxid_path.suffix)
+            resolve_scinames_in_file(taxid_path, resolved_path, names_dmp_iter)
+            taxid_path = resolved_path
+
     progress_handler("Staging database", 0, 0, 0)
     staging.stage(verbose=True)
 
@@ -141,6 +157,8 @@ def execute(
                     taxid_path=taxid_path,
                     taxid_negative=taxid_negative,
                     taxid_expand=taxid_expand,
+                    taxid_use_scinames=taxid_use_scinames,
+                    taxid_names_dmp_path=taxid_names_dmp_path,
                     threshold_pident=threshold_pident,
                     threshold_bitscore=threshold_bitscore,
                     threshold_length=threshold_length,
@@ -171,6 +189,75 @@ def parse_taxid_text(text: str) -> str:
     return ",".join(ids) if ids else ""
 
 
+def iter_names_dmp(names_dmp_path: Path) -> Iterator[tuple[str, str]]:
+    with open(names_dmp_path) as f:
+        for line_number, line in enumerate(f, 1):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            parts = line.split("\t|\t")
+            if len(parts) < 2:
+                raise ValueError(
+                    f"Unexpected format in {names_dmp_path.name} line {line_number}: "
+                    f"expected columns separated by '\\t|\\t'"
+                )
+            taxid = parts[0].strip()
+            sciname = parts[1].strip()
+            yield sciname, taxid
+
+
+def resolve_scinames_in_text(taxid_text: str, names_dmp_iter: Iterator) -> str:
+    taxids = taxid_text.split(",")
+    scinames = set()
+    digits = set()
+    for item in taxids:
+        item = item.strip()
+        if item:
+            if item.isdigit():
+                digits.add(item)
+            else:
+                scinames.add(item)
+
+    for sciname, taxid in names_dmp_iter:
+        if sciname in scinames:
+            digits.add(taxid)
+            scinames.remove(sciname)
+
+    if scinames:
+        raise ValueError(f"Could not resolve to taxon IDs: {', '.join(sorted(scinames))}")
+
+    return ",".join(digits)
+
+
+def resolve_scinames_in_file(
+    input_path: Path,
+    output_path: Path,
+    names_dmp_iter: Iterator,
+) -> None:
+    scinames = set()
+    digits = set()
+    with open(input_path) as f:
+        for line in f:
+            item = line.strip()
+            if item:
+                if item.isdigit():
+                    digits.add(item)
+                else:
+                    scinames.add(item)
+
+    for sciname, taxid in names_dmp_iter:
+        if sciname in scinames:
+            digits.add(taxid)
+            scinames.remove(sciname)
+
+    if scinames:
+        raise ValueError(f"Could not resolve to taxon IDs: {', '.join(sorted(scinames))}")
+
+    with open(output_path, "w") as outfile:
+        for taxid in digits:
+            outfile.write(taxid + "\n")
+
+
 def execute_single(
     work_dir: Path,
     staging: StagingArea,
@@ -188,6 +275,8 @@ def execute_single(
     taxid_path: Path | None,
     taxid_negative: bool,
     taxid_expand: bool,
+    taxid_use_scinames: bool,
+    taxid_names_dmp_path: Path | None,
     threshold_pident: float | None,
     threshold_bitscore: float | None,
     threshold_length: float | None,
