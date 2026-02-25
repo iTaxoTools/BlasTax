@@ -29,8 +29,11 @@ def execute(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
-    taxid_list: str,
-    taxid_path: Path,
+    taxid_mode_text: bool,
+    taxid_text: str,
+    taxid_path: Path | None,
+    taxid_negative: bool,
+    taxid_expand: bool,
     threshold_pident: float | None,
     threshold_bitscore: float | None,
     threshold_length: float | None,
@@ -41,6 +44,8 @@ def execute(
 
     blast_outfmt_options = BLAST_OUTFMT_OPTIONS
 
+    taxid_text = parse_taxid_text(taxid_text)
+
     print(f"{input_query_paths=}")
     print(f"{input_database_path=}")
     print(f"{output_path=}")
@@ -48,8 +53,11 @@ def execute(
     print(f"{blast_evalue=}")
     print(f"{blast_num_threads=}")
     print(f"{blast_taxdb_path=}")
-    print(f"{taxid_list=}")
+    print(f"{taxid_mode_text=}")
+    print(f"{taxid_text=}")
     print(f"{taxid_path=}")
+    print(f"{taxid_negative=}")
+    print(f"{taxid_expand=}")
     print(f"{threshold_pident=}")
     print(f"{threshold_bitscore=}")
     print(f"{threshold_length=}")
@@ -65,16 +73,40 @@ def execute(
     decont_options: dict[str, str] = {}
     if append_configuration:
         blast_options[blast_method] = None
+        if taxid_mode_text and taxid_text:
+            if taxid_negative:
+                blast_options["negative_taxids"] = None
+            else:
+                blast_options["taxids"] = None
+            if not taxid_expand:
+                blast_options["no_taxid_expansion"] = None
+        if not taxid_mode_text and taxid_path:
+            if taxid_negative:
+                blast_options["negative_taxidlist"] = None
+            else:
+                blast_options["taxidlist"] = None
+            if not taxid_expand:
+                blast_options["no_taxid_expansion"] = None
         blast_options["evalue"] = blast_evalue
         parts = blast_outfmt_options.split(" ")
         blast_options["columns"] = "_".join(parts)
+        if threshold_pident is not None:
+            decont_options["pident"] = threshold_pident
+        if threshold_bitscore is not None:
+            decont_options["bitscore"] = threshold_bitscore
+        if threshold_length is not None:
+            decont_options["length"] = threshold_length
 
     target_paths_list = [
         get_target_paths(path, output_path, timestamp, blast_options, decont_options) for path in input_query_paths
     ]
 
     staging = StagingArea(work_dir)
-    staging.add(db_paths=[input_database_path], taxdb_path=blast_taxdb_path)
+    staging.add(
+        input_paths=[taxid_path] if not taxid_mode_text else [],
+        db_paths=[input_database_path],
+        taxdb_path=blast_taxdb_path,
+    )
     if staging.requires_copy():
         if not get_feedback(Confirmation.StagingRequired):
             abort()
@@ -82,9 +114,6 @@ def execute(
     if any((path.exists() for target_paths in target_paths_list for path in target_paths)):
         if not get_feedback(Confirmation.OverwriteFiles):
             abort()
-
-    taxids = parse_taxid_list(taxid_list)
-    taxids_arg = ",".join(taxids) if taxids else ""
 
     ts = perf_counter()
 
@@ -107,7 +136,11 @@ def execute(
                     blast_evalue=blast_evalue,
                     blast_num_threads=blast_num_threads,
                     blast_taxdb_path=blast_taxdb_path,
-                    taxids_arg=taxids_arg,
+                    taxid_mode_text=taxid_mode_text,
+                    taxid_text=taxid_text,
+                    taxid_path=taxid_path,
+                    taxid_negative=taxid_negative,
+                    taxid_expand=taxid_expand,
                     threshold_pident=threshold_pident,
                     threshold_bitscore=threshold_bitscore,
                     threshold_length=threshold_length,
@@ -128,14 +161,14 @@ def execute(
     return BatchResults(output_path, failed, tf - ts)
 
 
-def parse_taxid_list(text: str) -> list[str]:
+def parse_taxid_text(text: str) -> str:
     ids = []
     for line in text.splitlines():
         for part in line.replace(",", " ").split():
             part = part.strip()
             if part:
                 ids.append(part)
-    return ids
+    return ",".join(ids) if ids else ""
 
 
 def execute_single(
@@ -150,7 +183,11 @@ def execute_single(
     blast_evalue: float,
     blast_num_threads: int,
     blast_taxdb_path: Path,
-    taxids_arg: str,
+    taxid_mode_text: bool,
+    taxid_text: str,
+    taxid_path: Path | None,
+    taxid_negative: bool,
+    taxid_expand: bool,
     threshold_pident: float | None,
     threshold_bitscore: float | None,
     threshold_length: float | None,
@@ -171,7 +208,22 @@ def execute_single(
     staging.stage()
 
     blast_outfmt = f"6 {BLAST_OUTFMT_OPTIONS}"
-    other = f"-taxids {taxids_arg}" if taxids_arg else ""
+
+    other = ""
+    if taxid_mode_text and taxid_text:
+        if taxid_negative:
+            other += f"-negative_taxids {taxid_text} "
+        else:
+            other += f"-taxids {taxid_text} "
+        if not taxid_expand:
+            other += "-no_taxid_expansion"
+    if not taxid_mode_text and taxid_path:
+        if taxid_negative:
+            other += f"-negative_taxidlist '{str(staging[taxid_path])}' "
+        else:
+            other += f"-taxidlist '{str(staging[taxid_path])}' "
+        if not taxid_expand:
+            other += "-no_taxid_expansion"
 
     try:
         run_blast(
@@ -270,14 +322,12 @@ def get_target_paths(
         "decontaminated",
         timestamp=timestamp,
         **decont_options,
-        **blast_options,
     )
     contaminants_path = output_path / get_decont_sequences_filename(
         query_path,
         "contaminants",
         timestamp=timestamp,
         **decont_options,
-        **blast_options,
     )
     error_log_path = output_path / get_error_filename(query_path, timestamp=timestamp)
     return TargetPaths(

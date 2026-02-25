@@ -25,7 +25,7 @@ class Model(BlastTaskModel):
     blast_taxdb_path = Property(Path, Path())
 
     taxid_mode_text = Property(bool, True)
-    taxid_list = Property(str, "")
+    taxid_text = Property(str, "")
     taxid_path = Property(Path, Path())
     taxid_negative = Property(bool, False)
     taxid_expand = Property(bool, True)
@@ -86,8 +86,11 @@ class Model(BlastTaskModel):
             blast_evalue=self.blast_evalue or self.properties.blast_evalue.default,
             blast_num_threads=self.blast_num_threads or self.properties.blast_num_threads.default,
             blast_taxdb_path=self.blast_taxdb_path if self.blast_taxdb_path != Path() else None,
-            taxid_list=self.taxid_list,
-            taxid_path=self.taxid_path,
+            taxid_mode_text=self.taxid_mode_text,
+            taxid_text=self.taxid_text,
+            taxid_path=self.taxid_path if self.taxid_path != Path() else None,
+            taxid_negative=self.taxid_negative,
+            taxid_expand=self.taxid_expand,
             threshold_pident=self.threshold_pident if self.filter_pident else None,
             threshold_bitscore=self.threshold_bitscore if self.filter_bitscore else None,
             threshold_length=self.threshold_length if self.filter_length else None,

@@ -242,6 +242,13 @@ class Model(BlastTaskModel):
             info: DatabaseInfo = report.result
             parts = []
 
+            if info.has_taxids is None:
+                parts.append("Could not read taxonomy IDs from the database.")
+            elif info.has_taxids:
+                parts.append("Database DOES contain taxonomy ID mappings.")
+            else:
+                parts.append("Database does NOT contain taxonomy ID mappings.")
+
             if info.db_type is not None:
                 parts.append(f"Database type: {info.db_type}")
             else:
@@ -251,13 +258,6 @@ class Model(BlastTaskModel):
                 parts.append(f"Schema version: v{info.version}")
             else:
                 parts.append("Could not determine database schema version.")
-
-            if info.has_taxids is None:
-                parts.append("Could not read taxonomy IDs from the database.")
-            elif info.has_taxids:
-                parts.append("Database DOES contain taxonomy ID mappings.")
-            else:
-                parts.append("Database does NOT contain taxonomy ID mappings.")
 
             message = "\n".join(parts)
 

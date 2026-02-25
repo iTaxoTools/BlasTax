@@ -310,7 +310,9 @@ class View(BlastTaskView):
         self.cards.taxid = TaxIdSelector(self)
 
         self.cards.query.set_placeholder_text("Sequences to match against database contents (FASTA or FASTQ)")
-        self.cards.database.set_placeholder_text("Match all query sequences against this database")
+        self.cards.database.set_placeholder_text(
+            "Database should be schema v5 and contain taxIDs for filtering to work"
+        )
         self.cards.taxdb.set_placeholder_text("Directory containing taxonomy4blast.sqlite3 (required by taxID filter)")
 
         layout = QtWidgets.QVBoxLayout()
@@ -363,8 +365,8 @@ class View(BlastTaskView):
         self.binder.bind(object.properties.taxid_mode_text, self.cards.taxid.set_mode)
         self.binder.bind(self.cards.taxid.modeChanged, object.properties.taxid_mode_text)
 
-        self.binder.bind(object.properties.taxid_list, self.cards.taxid.controls.text_edit.setText)
-        self.binder.bind(self.cards.taxid.controls.text_edit.textEditedSafe, object.properties.taxid_list)
+        self.binder.bind(object.properties.taxid_text, self.cards.taxid.controls.text_edit.setText)
+        self.binder.bind(self.cards.taxid.controls.text_edit.textEditedSafe, object.properties.taxid_text)
 
         self.binder.bind(object.properties.taxid_path, self.cards.taxid.set_path)
         self.binder.bind(self.cards.taxid.selectedPath, object.properties.taxid_path)

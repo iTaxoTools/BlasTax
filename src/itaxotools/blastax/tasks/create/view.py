@@ -144,7 +144,7 @@ class SchemaVersionSelector(Card):
         self.controls.version = group
 
     def draw_warning(self):
-        warning = "WARNING:  BlasTax has only been tested with v4 databases. v5 should only be used for taxonomy-related tasks."
+        warning = "WARNING: most BlasTax methods are meant to work with v4 databases. v5 should only be used for taxonomy-related tasks."
         label = LongLabel(warning)
         self.addWidget(label)
 
