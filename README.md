@@ -18,7 +18,10 @@ A graphical user interface to run BLAST and parse hits:
 - **BLAST-Append**: Append the aligned part of matching sequences to the original query sequences
 - **BLAST-Append-X**: Like BLAST-Append, but appends nucleotides c orresponding to the protein database
 - **Decontaminate**: Remove contaminants from query sequences based on two ingroup and outgroup databases
+- **Decontamination by taxonomy**: Filter query sequences based on BLAST matches and taxon IDs
+- **Assign taxonomy**: Assign taxonomic information to each query sequence based on the best BLAST hit
 - **Museoscript**: Create sequence files from BLAST matches
+- **Database operations**: Extract sequences from a BLAST database and save them in FASTA format
 
 The program also includes a variety of tools for processing FASTA files:
 
@@ -39,7 +42,7 @@ Some extra tools are also available:
 
 Input sequences must be in the FASTA or FASTQ file formats.
 
-![Screenshot](https://raw.githubusercontent.com/iTaxoTools/BlasTax/main/images/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/iTaxoTools/BlasTax/v1.0.0/images/screenshot.png)
 
 ## Executables
 
