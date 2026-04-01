@@ -1,7 +1,6 @@
 name: Windows
 
 on: workflow_dispatch
-# on: push
 
 env:
   ARTIFACT_EXECUTABLE: itaxotools-blast-gui-windows
@@ -15,12 +14,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12
 
@@ -36,7 +35,7 @@ jobs:
       - name: Make executable
         uses: iTaxoTools/TaxIGui/.github/actions/make-executable@main
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ env.ARTIFACT_EXECUTABLE }}
           path: dist/*.exe
