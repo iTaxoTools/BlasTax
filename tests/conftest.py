@@ -6,7 +6,7 @@ import pytest
 # to be removed later
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def terminate_child_processes():
     yield
     for child in multiprocessing.active_children():
