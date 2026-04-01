@@ -16,6 +16,7 @@ __pycache__/
 .ruff_cache
 .cache
 .tox
+.claude
 
 Pipfile
 Pipfile.lock
