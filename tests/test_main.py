@@ -32,6 +32,9 @@ def test_main(qapp):
     Main()
 
 
+# Skipped due to BrokenPipeError on macOS CI caused by orphaned worker processes.
+# Fixed by TaxiGui commit @54897f1 - unskip once taxi-gui is updated.
+@pytest.mark.skip
 @pytest.mark.parametrize("module", [
     about,
     append,
@@ -58,6 +61,6 @@ def test_main(qapp):
 ], ids=lambda m: m.__name__.split(".")[-1])
 def test_task(qapp, module):
     task = app.Task.from_module(module)
-    task.view()
+    task.view(None)
     model = task.model()
     model.close()
